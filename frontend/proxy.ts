@@ -6,7 +6,7 @@ const PROTECTED_ROUTES = ["/painel", "/comprador", "/admin", "/onboarding"];
 /** Rotas que redirecionam para o painel se já estiver logado E com onboarding completo */
 const AUTH_ROUTES = ["/login", "/registro", "/cadastro"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -28,7 +28,9 @@ EXPOSE 3000
 CMD ["node", "server.js"]
 
 # ── 3. Desenvolvimento com hot-reload ─────────────────────────────────────────
-FROM node:20-alpine AS dev
+# node:20 (Debian/glibc) é necessário — Alpine (musl) não tem glibc e
+# o Turbopack/SWC do Next.js exige os bindings nativos linux-x64-gnu
+FROM node:20 AS dev
 WORKDIR /app
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
