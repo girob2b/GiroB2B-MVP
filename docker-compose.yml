@@ -1,0 +1,148 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# GiroB2B — Docker Compose local
+# ───────────────────────────────────────────────────────────────────────────────
+#
+#  COMO USAR:
+#
+#    Só o app principal (Next.js 16):
+#      docker compose --profile girob2b up
+#
+#    Só a landing page:
+#      docker compose --profile landing up
+#
+#    Stack legada (Express + Vite + MySQL):
+#      docker compose --profile legacy up
+#
+#    Tudo junto:
+#      docker compose --profile full up
+#
+#    Background:  adicione -d    |    Rebuild forçado: adicione --build
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── PRINCIPAL: Next.js 16 + Supabase ─────────────────────────────────────────
+  girob2b-app:
+    profiles: [girob2b, full]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: girob2b-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    volumes:
+      - ./frontend:/app
+      # - girob2b_frontend_nm:/app/node_modules
+      - girob2b_frontend_next:/app/.next
+    environment:
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:3001"
+      BACKEND_URL: "http://girob2b-backend:3001"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - girob2b-backend
+    restart: unless-stopped
+
+  girob2b-backend:
+    profiles: [girob2b, full]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: girob2b-backend
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - girob2b_backend_nm:/app/node_modules
+    environment:
+      PORT: "3001"
+      NODE_ENV: "development"
+    restart: unless-stopped
+
+  # ── LANDING PAGE (React + Vite) ───────────────────────────────────────────────
+  # Será migrada para dentro do girob2b em sprint futura
+  landing-page:
+    profiles: [landing, full]
+    build:
+      context: ../_legacy/saas-landing-page
+      dockerfile: Dockerfile
+    container_name: girob2b-landing
+    ports:
+      - "3030:3030"
+    volumes:
+      - ../_legacy/saas-landing-page:/app
+      - landing_nm:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    restart: unless-stopped
+
+  # ── LEGADA: MySQL 8.4 ─────────────────────────────────────────────────────────
+  mysql:
+    profiles: [legacy, full]
+    image: mysql:8.4
+    container_name: bmarket-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: b2b_saas
+    volumes:
+      - bmarket-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # ── LEGADA: Express API ───────────────────────────────────────────────────────
+  legacy-backend:
+    profiles: [legacy, full]
+    build:
+      context: ../_legacy/backend
+      dockerfile: Dockerfile
+    container_name: bmarket-backend
+    env_file:
+      - ../_legacy/backend/.env
+    environment:
+      DATABASE_URL: mysql://root:root@mysql:3306/b2b_saas
+      PORT: "4000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  # ── LEGADA: React + Vite frontend ─────────────────────────────────────────────
+  legacy-frontend:
+    profiles: [legacy, full]
+    build:
+      context: ./_legacy/frontend
+      dockerfile: Dockerfile
+    container_name: bmarket-frontend
+    depends_on:
+      - legacy-backend
+    environment:
+      VITE_API_PROXY_TARGET: http://legacy-backend:4000
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./_legacy/frontend:/app
+      - legacy_frontend_nm:/app/node_modules
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+
+volumes:
+  girob2b_frontend_nm:
+  girob2b_frontend_next:
+  girob2b_backend_nm:
+  landing_nm:
+  bmarket-mysql-data:
+  legacy_frontend_nm:

@@ -1,0 +1,23 @@
+# Subir só o frontend legado (React + Vite):
+#   docker compose -f docker-compose.frontend.yml up --build
+# Obs: exige o backend rodando em :4000 (host ou outro container)
+services:
+  legacy-frontend:
+    build:
+      context: ./_legacy/frontend
+      dockerfile: Dockerfile
+    container_name: bmarket-frontend
+    environment:
+      VITE_API_PROXY_TARGET: http://host.docker.internal:4000
+      CHOKIDAR_USEPOLLING: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./_legacy/frontend:/app
+      - legacy_frontend_nm:/app/node_modules
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+
+volumes:
+  legacy_frontend_nm:
