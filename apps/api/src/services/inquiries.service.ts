@@ -1,10 +1,11 @@
 import crypto from "node:crypto";
+import { syncDerivedUserRole } from "../lib/user-role.js";
 import { createAdminClient, createClient } from "../lib/supabase.js";
 import type { CreateInquiryInput } from "../schemas/inquiries.schema.js";
-import type { SupplierPlan } from "@girob2b/shared";
 
 const INQUIRY_DAILY_LIMIT = 10;
 const INQUIRY_DEDUP_HOURS = 48;
+type SupplierPlan = "free" | "starter" | "pro" | "premium";
 
 type UserProfileRow = {
   full_name: string | null;
@@ -164,24 +165,6 @@ async function ensureSupplier(
   return supplier;
 }
 
-async function syncUserRole(userId: string) {
-  const admin = createAdminClient();
-  const { data: supplier } = await admin
-    .from("suppliers")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle<{ id: string }>();
-
-  const { data: profile } = await admin
-    .from("user_profiles")
-    .select("role")
-    .eq("id", userId)
-    .maybeSingle<{ role: string }>();
-
-  const nextRole = profile?.role === "admin" ? "admin" : supplier ? "supplier" : "buyer";
-  await admin.from("user_profiles").update({ role: nextRole }).eq("id", userId);
-}
-
 async function getOrCreateBuyer(
   userId: string,
   userEmail: string,
@@ -234,7 +217,7 @@ async function getOrCreateBuyer(
       }
     }
 
-    await syncUserRole(userId);
+    await syncDerivedUserRole(userId);
 
     return {
       ...existing,
@@ -280,7 +263,7 @@ async function getOrCreateBuyer(
     throw new InquiryValidationError("Nao foi possivel ativar o perfil de comprador.", 500);
   }
 
-  await syncUserRole(userId);
+  await syncDerivedUserRole(userId);
   return created;
 }
 

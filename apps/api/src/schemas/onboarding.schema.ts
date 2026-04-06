@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CompleteOnboardingSchema = z.object({
-  segment: z.enum(["buyer", "supplier", "both"]),
+  segment: z.enum(["buyer", "supplier", "both"]).optional(),
   trade_name:         z.string().min(2).optional(),
   cnpj:               z.string().optional(),
   phone:              z.string().optional(),

@@ -3,21 +3,58 @@ import {
   authHeaderSchema,
   bearerAuth,
   errorSchema,
+  onboardingResponseSchema,
   successSchema,
   supplierResponseSchema,
+  supplierUpgradeBodySchema,
   supplierUpdateResponseSchema,
   updateProfileBodySchema,
   updateSettingsBodySchema,
   validationErrorSchema,
 } from "../lib/api-docs.js";
-import { UpdateProfileSchema, UpdateSettingsSchema } from "../schemas/supplier.schema.js";
 import {
+  UpgradeSupplierSchema,
+  UpdateProfileSchema,
+  UpdateSettingsSchema,
+} from "../schemas/supplier.schema.js";
+import {
+  createSupplierUpgrade,
   getSupplierByUserId,
   updateSupplierProfile,
   updateSupplierSettings,
 } from "../services/supplier.service.js";
 
 export default async function supplierRoutes(app: FastifyInstance) {
+  app.post("/upgrade", {
+    preHandler: app.authenticate,
+    schema: {
+      tags: ["Supplier"],
+      summary: "Cria o perfil de fornecedor para o usuario autenticado",
+      security: bearerAuth,
+      headers: authHeaderSchema,
+      body: supplierUpgradeBodySchema,
+      response: {
+        200: successSchema,
+        400: validationErrorSchema,
+        401: errorSchema,
+        422: onboardingResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const parsed = UpgradeSupplierSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors });
+    }
+
+    const result = await createSupplierUpgrade(request.userId, request.userEmail, parsed.data);
+
+    if ("errors" in result || "message" in result) {
+      return reply.status(422).send(result);
+    }
+
+    return reply.send(result);
+  });
+
   // GET /supplier/me
   app.get("/me", {
     preHandler: app.authenticate,

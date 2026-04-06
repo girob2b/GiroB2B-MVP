@@ -182,7 +182,18 @@ export const onboardingBodySchema = {
     purchase_frequency: { type: "string" },
     custom_category: { type: "string" },
   },
-  required: ["segment"],
+};
+
+export const supplierUpgradeBodySchema = {
+  type: "object",
+  properties: {
+    trade_name: { type: "string" },
+    cnpj: { type: "string" },
+    phone: { type: "string" },
+    segments_json: { type: "string" },
+    custom_category: { type: "string" },
+  },
+  required: ["trade_name", "cnpj", "phone"],
 };
 
 export const onboardingResponseSchema = {

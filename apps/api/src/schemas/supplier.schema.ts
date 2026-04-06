@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const UpgradeSupplierSchema = z.object({
+  trade_name: z.string().min(2),
+  cnpj: z.string().min(14),
+  phone: z.string().min(8),
+  segments_json: z.string().optional(),
+  custom_category: z.string().optional(),
+});
+
 export const UpdateProfileSchema = z.object({
   description:     z.string().nullable().optional(),
   logo_url:        z.string().url().nullable().optional(),
@@ -40,5 +48,6 @@ export const UpdateSettingsSchema = z.object({
   ]).nullable().optional(),
 });
 
+export type UpgradeSupplierInput = z.infer<typeof UpgradeSupplierSchema>;
 export type UpdateProfileInput   = z.infer<typeof UpdateProfileSchema>;
 export type UpdateSettingsInput  = z.infer<typeof UpdateSettingsSchema>;
