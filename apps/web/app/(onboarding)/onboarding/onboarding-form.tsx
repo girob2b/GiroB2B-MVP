@@ -110,7 +110,7 @@ function Header({ step, total, title, sub, onBack }: HeaderProps) {
           </p>
         )}
         <h1 className="text-2xl font-bold tracking-tight text-slate-950 pt-1">{title}</h1>
-        <p className="text-sm text-slate-500 leading-relaxed">{sub}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{sub}</p>
       </div>
     </div>
   );
@@ -265,7 +265,7 @@ export default function OnboardingForm() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-slate-900">{title}</p>
-                  <p className="mt-0.5 text-sm leading-relaxed text-slate-500">{description}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{description}</p>
                 </div>
                 {segment === value && <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand-green-600)]" />}
               </div>
@@ -397,7 +397,7 @@ export default function OnboardingForm() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900">{label}</p>
-                  <p className="text-sm text-slate-500">{sub}</p>
+                  <p className="text-sm text-muted-foreground">{sub}</p>
                 </div>
                 {purchaseFrequency === value && <CheckCircle2 className="h-5 w-5 shrink-0 text-[color:var(--brand-green-600)]" />}
               </div>

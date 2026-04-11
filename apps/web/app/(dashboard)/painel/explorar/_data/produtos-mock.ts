@@ -1,5 +1,7 @@
 export interface ProdutoMock {
   id: string;
+  productId?: string;
+  supplierId?: string;
   nome: string;
   fornecedor: string;
   categoria: string;

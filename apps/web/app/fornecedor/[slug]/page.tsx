@@ -12,35 +12,75 @@ export const metadata = { title: "Perfil do Fornecedor" };
 type PublicBlockKey = "hero" | "about" | "gallery" | "products" | "contact";
 type PublicBlock = { key: PublicBlockKey; enabled: boolean };
 
+const DEFAULT_LAYOUT: PublicBlock[] = [
+  { key: "hero", enabled: true },
+  { key: "about", enabled: true },
+  { key: "gallery", enabled: true },
+  { key: "products", enabled: true },
+  { key: "contact", enabled: true },
+];
+
+interface SupplierPublicRow {
+  id: string;
+  trade_name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  website: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+  founded_year: number | null;
+  employee_count: string | null;
+  operating_hours: string | null;
+  categories: string[] | null;
+  photos: string[] | null;
+  plan: string | null;
+  is_verified: boolean;
+  public_profile_layout?: unknown | null;
+}
+
+interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  images: string[] | null;
+  price_min_cents: number | null;
+  price_max_cents: number | null;
+}
+
+function isPublicBlockKey(key: unknown): key is PublicBlockKey {
+  return key === "hero" || key === "about" || key === "gallery" || key === "products" || key === "contact";
+}
+
+function isMissingColumnError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: string }).code === "PGRST204"
+  );
+}
+
 function normalizeLayout(raw: unknown): PublicBlock[] {
-  if (!Array.isArray(raw)) {
-    return [
-      { key: "hero", enabled: true },
-      { key: "about", enabled: true },
-      { key: "gallery", enabled: true },
-      { key: "products", enabled: true },
-      { key: "contact", enabled: true },
-    ];
-  }
+  if (!Array.isArray(raw)) return DEFAULT_LAYOUT;
 
   const next: PublicBlock[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
-    const key = (item as any).key as string | undefined;
-    const enabled = (item as any).enabled;
-    if (key === "hero" || key === "about" || key === "gallery" || key === "products" || key === "contact") {
+    const record = item as { key?: unknown; enabled?: unknown };
+    const key = record.key;
+    const enabled = record.enabled;
+    if (isPublicBlockKey(key)) {
       next.push({ key, enabled: enabled !== false });
     }
   }
-  return next.length
-    ? next
-    : [
-        { key: "hero", enabled: true },
-        { key: "about", enabled: true },
-        { key: "gallery", enabled: true },
-        { key: "products", enabled: true },
-        { key: "contact", enabled: true },
-      ];
+  return next.length ? next : DEFAULT_LAYOUT;
 }
 
 function formatPhoneForWhatsApp(phone: string) {
@@ -66,7 +106,7 @@ export default async function FornecedorPublicoPage({
     .eq("suspended", false)
     .maybeSingle();
 
-  if (supplierRes.error && (supplierRes.error as any).code === "PGRST204") {
+  if (supplierRes.error && isMissingColumnError(supplierRes.error)) {
     supplierRes = await supabase
       .from("suppliers")
       .select(supplierSelectBase)
@@ -75,11 +115,11 @@ export default async function FornecedorPublicoPage({
       .maybeSingle();
   }
 
-  const supplier = supplierRes.data as any | null;
+  const supplier = supplierRes.data as SupplierPublicRow | null;
 
   if (!supplier) notFound();
 
-  const { data: products } = await supabase
+  const { data: productsData } = await supabase
     .from("products")
     .select("id, name, slug, description, images, price_min_cents, price_max_cents")
     .eq("supplier_id", supplier.id)
@@ -87,9 +127,10 @@ export default async function FornecedorPublicoPage({
     .order("created_at", { ascending: false })
     .limit(12);
 
-  const layout = normalizeLayout((supplier as any).public_profile_layout).filter((b) => b.enabled);
-  const categories = ((supplier as any).categories as string[] | null) ?? [];
-  const photos = ((supplier as any).photos as string[] | null) ?? [];
+  const products = (productsData as ProductRow[] | null) ?? [];
+  const layout = normalizeLayout(supplier.public_profile_layout).filter((b) => b.enabled);
+  const categories = supplier.categories ?? [];
+  const photos = supplier.photos ?? [];
   const locationLabel =
     [supplier.city, supplier.state].filter((v) => typeof v === "string" && v.trim().length > 0).join(" / ") ||
     "Brasil";
@@ -132,14 +173,14 @@ export default async function FornecedorPublicoPage({
               <Badge variant="outline" className="rounded-xl border-slate-200 text-slate-700">
                 <MapPin className="w-3 h-3" /> {locationLabel}
               </Badge>
-              {(supplier as any).is_verified && (
+              {supplier.is_verified && (
                 <Badge className="rounded-xl bg-[color:var(--brand-green-600)] text-white">
                   Verificado
                 </Badge>
               )}
-              {(supplier as any).plan && (
+              {supplier.plan && (
                 <Badge variant="secondary" className="rounded-xl">
-                  Plano {(supplier as any).plan}
+                  Plano {supplier.plan}
                 </Badge>
               )}
             </div>
@@ -190,22 +231,22 @@ export default async function FornecedorPublicoPage({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {(supplier as any).founded_year && (
+          {supplier.founded_year && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Fundação</div>
-              <div className="mt-1 text-slate-900 font-bold">{(supplier as any).founded_year}</div>
+              <div className="mt-1 text-slate-900 font-bold">{supplier.founded_year}</div>
             </div>
           )}
-          {(supplier as any).employee_count && (
+          {supplier.employee_count && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Equipe</div>
-              <div className="mt-1 text-slate-900 font-bold">{(supplier as any).employee_count}</div>
+              <div className="mt-1 text-slate-900 font-bold">{supplier.employee_count}</div>
             </div>
           )}
-          {(supplier as any).operating_hours && (
+          {supplier.operating_hours && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Horário</div>
-              <div className="mt-1 text-slate-900 font-bold">{(supplier as any).operating_hours}</div>
+              <div className="mt-1 text-slate-900 font-bold">{supplier.operating_hours}</div>
             </div>
           )}
         </div>
@@ -250,11 +291,11 @@ export default async function FornecedorPublicoPage({
         <CardTitle className="text-lg font-bold">Produtos em destaque</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        {!products || products.length === 0 ? (
+        {products.length === 0 ? (
           <p className="text-slate-500">Este fornecedor ainda não publicou produtos.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map((p: any) => (
+            {products.map((p) => (
               <div key={p.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-40 bg-slate-50">
                   {p.images?.[0] ? (

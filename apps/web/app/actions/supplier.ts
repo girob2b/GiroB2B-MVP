@@ -9,6 +9,10 @@ export type ProfileState = {
   success?: boolean;
 };
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message || fallback : fallback;
+}
+
 export async function updateProfile(
   _prevState: ProfileState,
   formData: FormData
@@ -45,8 +49,8 @@ export async function updateProfile(
   try {
     const client = apiClient(session.access_token);
     await client.patch("/supplier/me", fields);
-  } catch (error: any) {
-    return { error: error.message || "Erro ao salvar perfil." };
+  } catch (error) {
+    return { error: errorMessage(error, "Erro ao salvar perfil.") };
   }
 
   revalidatePath("/painel");
@@ -82,8 +86,8 @@ export async function updateCompanySettings(
   try {
     const client = apiClient(session.access_token);
     await client.patch("/supplier/settings", fields);
-  } catch (error: any) {
-    return { error: error.message || "Erro ao salvar configurações." };
+  } catch (error) {
+    return { error: errorMessage(error, "Erro ao salvar configurações.") };
   }
 
   revalidatePath("/painel/configuracoes");

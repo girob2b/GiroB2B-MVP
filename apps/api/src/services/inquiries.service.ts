@@ -1,10 +1,11 @@
 import crypto from "node:crypto";
 import { createAdminClient, createClient } from "../lib/supabase.js";
 import type { CreateInquiryInput } from "../schemas/inquiries.schema.js";
-import type { SupplierPlan } from "@girob2b/shared";
 
 const INQUIRY_DAILY_LIMIT = 10;
 const INQUIRY_DEDUP_HOURS = 48;
+
+type SupplierPlan = "free" | "starter" | "pro" | "premium";
 
 type UserProfileRow = {
   full_name: string | null;

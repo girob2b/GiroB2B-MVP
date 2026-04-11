@@ -161,7 +161,7 @@ export default function CookieBanner() {
           </div>
 
           <div className="flex flex-col gap-3 lg:min-w-72">
-            <Button className="w-full bg-slate-900 hover:bg-slate-800" onClick={acceptAll}>
+            <Button className="w-full btn-primary" onClick={acceptAll}>
               Aceitar todos
             </Button>
             <Button variant="outline" className="w-full" onClick={acceptOnlyEssential}>

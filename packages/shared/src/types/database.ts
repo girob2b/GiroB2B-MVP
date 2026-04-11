@@ -11,9 +11,20 @@ export type Json =
   | Json[];
 
 export type SupplierPlan = "free" | "starter" | "pro" | "premium";
-export type UserRole = "buyer" | "supplier" | "admin";
+export type UserRole = "user" | "buyer" | "supplier" | "admin";
+export type UserSegment = "buyer" | "supplier" | "both";
 export type ProductStatus = "active" | "paused" | "deleted";
-export type InquiryStatus = "new" | "viewed" | "replied" | "archived" | "spam";
+export type InquiryStatus = "new" | "viewed" | "responded" | "archived" | "reported";
+export type InquiryType = "directed" | "generic";
+export type PublicProfileSectionKey = "hero" | "about" | "gallery" | "products" | "contact";
+export type ConversationContextType = "inquiry" | "direct_purchase" | "direct";
+export type ConversationStatus = "active" | "archived" | "blocked";
+export type ChatMessageType = "text" | "inquiry_ref" | "product_ref" | "system";
+
+export interface PublicProfileLayoutItem {
+  key: PublicProfileSectionKey;
+  enabled?: boolean;
+}
 
 export interface Database {
   public: {
@@ -22,15 +33,27 @@ export interface Database {
         Row: {
           id: string;
           role: UserRole;
+          full_name: string | null;
+          phone: string | null;
+          city: string | null;
+          state: string | null;
           created_at: string;
         };
         Insert: {
           id: string;
           role?: UserRole;
+          full_name?: string | null;
+          phone?: string | null;
+          city?: string | null;
+          state?: string | null;
           created_at?: string;
         };
         Update: {
           role?: UserRole;
+          full_name?: string | null;
+          phone?: string | null;
+          city?: string | null;
+          state?: string | null;
         };
       };
       suppliers: {
@@ -43,9 +66,10 @@ export interface Database {
           slug: string;
           description: string | null;
           logo_url: string | null;
-          city: string;
-          state: string;
+          city: string | null;
+          state: string | null;
           address: string | null;
+          cep: string | null;
           phone: string;
           whatsapp: string | null;
           website: string | null;
@@ -61,6 +85,10 @@ export interface Database {
           plan_expires_at: string | null;
           is_verified: boolean;
           cnpj_status: string | null;
+          inscricao_municipal: string | null;
+          inscricao_estadual: string | null;
+          situacao_fiscal: string | null;
+          public_profile_layout: PublicProfileLayoutItem[] | null;
           suspended: boolean;
           suspension_reason: string | null;
           created_at: string;
@@ -75,9 +103,10 @@ export interface Database {
           slug: string;
           description?: string | null;
           logo_url?: string | null;
-          city: string;
-          state: string;
+          city?: string | null;
+          state?: string | null;
           address?: string | null;
+          cep?: string | null;
           phone: string;
           whatsapp?: string | null;
           website?: string | null;
@@ -93,6 +122,10 @@ export interface Database {
           plan_expires_at?: string | null;
           is_verified?: boolean;
           cnpj_status?: string | null;
+          inscricao_municipal?: string | null;
+          inscricao_estadual?: string | null;
+          situacao_fiscal?: string | null;
+          public_profile_layout?: PublicProfileLayoutItem[] | null;
           suspended?: boolean;
           suspension_reason?: string | null;
         };
@@ -170,11 +203,17 @@ export interface Database {
           email: string;
           phone: string | null;
           company: string | null;
+          company_name: string | null;
+          cnpj: string | null;
           city: string | null;
           state: string | null;
+          segments: string[] | null;
+          purchase_frequency: string | null;
           lgpd_consent: boolean;
           lgpd_consent_at: string | null;
+          blocked_until: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -183,50 +222,80 @@ export interface Database {
           email: string;
           phone?: string | null;
           company?: string | null;
+          company_name?: string | null;
+          cnpj?: string | null;
           city?: string | null;
           state?: string | null;
+          segments?: string[] | null;
+          purchase_frequency?: string | null;
           lgpd_consent: boolean;
           lgpd_consent_at?: string | null;
+          blocked_until?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["buyers"]["Insert"]>;
       };
       inquiries: {
         Row: {
           id: string;
-          supplier_id: string;
+          supplier_id: string | null;
           product_id: string | null;
           buyer_id: string | null;
-          buyer_name: string;
-          buyer_email: string;
+          category_id: string | null;
+          inquiry_type: InquiryType;
+          buyer_name: string | null;
+          buyer_email: string | null;
           buyer_phone: string | null;
           buyer_company: string | null;
           buyer_city: string | null;
+          buyer_state: string | null;
+          buyer_consent_to_share: boolean;
           description: string;
-          quantity: string | null;
-          deadline: string | null;
+          quantity_estimate: string | null;
+          desired_deadline: string | null;
+          max_proposals: number | null;
           status: InquiryStatus;
           viewed_at: string | null;
+          responded_at: string | null;
+          archived_at: string | null;
           replied_at: string | null;
           contact_unlocked: boolean;
+          unlocked_at: string | null;
+          unlocked_by_credit: boolean;
           credits_used: number;
+          report_count: number;
+          dedup_key: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
-          supplier_id: string;
+          supplier_id?: string | null;
           product_id?: string | null;
           buyer_id?: string | null;
-          buyer_name: string;
-          buyer_email: string;
+          category_id?: string | null;
+          inquiry_type?: InquiryType;
+          buyer_name?: string | null;
+          buyer_email?: string | null;
           buyer_phone?: string | null;
           buyer_company?: string | null;
           buyer_city?: string | null;
+          buyer_state?: string | null;
+          buyer_consent_to_share?: boolean;
           description: string;
-          quantity?: string | null;
-          deadline?: string | null;
+          quantity_estimate?: string | null;
+          desired_deadline?: string | null;
+          max_proposals?: number | null;
           status?: InquiryStatus;
+          viewed_at?: string | null;
+          responded_at?: string | null;
+          archived_at?: string | null;
+          replied_at?: string | null;
           contact_unlocked?: boolean;
+          unlocked_at?: string | null;
+          unlocked_by_credit?: boolean;
           credits_used?: number;
+          report_count?: number;
+          dedup_key?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["inquiries"]["Insert"]>;
       };
@@ -262,6 +331,80 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["email_notifications"]["Insert"]>;
       };
+      search_suggestions: {
+        Row: {
+          id: string;
+          user_id: string;
+          query: string;
+          context: string | null;
+          status: "new" | "reviewed" | "implemented" | "dismissed";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          query: string;
+          context?: string | null;
+          status?: "new" | "reviewed" | "implemented" | "dismissed";
+        };
+        Update: Partial<Database["public"]["Tables"]["search_suggestions"]["Insert"]>;
+      };
+      conversations: {
+        Row: {
+          id: string;
+          buyer_id: string;
+          supplier_id: string;
+          inquiry_id: string | null;
+          context_type: ConversationContextType;
+          product_id: string | null;
+          product_name: string | null;
+          status: ConversationStatus;
+          last_message_at: string | null;
+          last_message_preview: string | null;
+          buyer_unread: number;
+          supplier_unread: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          buyer_id: string;
+          supplier_id: string;
+          inquiry_id?: string | null;
+          context_type?: ConversationContextType;
+          product_id?: string | null;
+          product_name?: string | null;
+          status?: ConversationStatus;
+          last_message_at?: string | null;
+          last_message_preview?: string | null;
+          buyer_unread?: number;
+          supplier_unread?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["conversations"]["Insert"]>;
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          message_type: ChatMessageType;
+          metadata: Record<string, unknown> | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          message_type?: ChatMessageType;
+          metadata?: Record<string, unknown> | null;
+          read_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["chat_messages"]["Insert"]>;
+      };
     };
     Views: {
       product_listings: {
@@ -283,8 +426,8 @@ export interface Database {
           created_at: string;
           supplier_name: string;
           supplier_slug: string;
-          supplier_city: string;
-          supplier_state: string;
+          supplier_city: string | null;
+          supplier_state: string | null;
           is_verified: boolean;
           supplier_plan: SupplierPlan;
           supplier_logo: string | null;

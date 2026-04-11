@@ -19,7 +19,7 @@ export default function ComparadorPage() {
           Em desenvolvimento
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Comparador</h1>
-        <p className="text-base text-slate-500 leading-relaxed max-w-xl">
+        <p className="text-base text-muted-foreground leading-relaxed max-w-xl">
           Compare até 3 cotações lado a lado antes de fechar negócio. Preço, prazo, distância
           e reputação — tudo em uma visão clara para você tomar a melhor decisão de compra.
         </p>
@@ -65,7 +65,7 @@ export default function ComparadorPage() {
               </div>
               <div>
                 <p className="font-semibold text-sm text-slate-800">{label}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
               </div>
             </div>
           ))}

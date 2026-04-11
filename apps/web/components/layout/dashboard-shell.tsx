@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, MessageSquare, User, LogOut,
   ExternalLink, Globe, Menu, X, Search, Scale,
-  PanelLeftClose, PanelLeftOpen, Settings, CreditCard, ChevronUp,
+  PanelLeftClose, PanelLeftOpen, Settings, ChevronUp,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,10 +51,11 @@ interface SidebarProps {
 
 const NAV_SECTIONS_BUYER: NavSection[] = [
   { items: [
-    { href: "/painel",            label: "Início",         icon: LayoutDashboard },
-    { href: "/painel/explorar",   label: "Explorar",       icon: Search },
-    { href: "/painel/comparador", label: "Comparador",     icon: Scale },
-    { href: "/painel/chat",       label: "Chat",           icon: MessageSquare },
+    { href: "/painel",            label: "Início",           icon: LayoutDashboard },
+    { href: "/painel/explorar",   label: "Explorar",         icon: Search },
+    { href: "/painel/inquiries",  label: "Minhas Cotações",  icon: MessageSquare },
+    { href: "/painel/comparador", label: "Comparador",       icon: Scale },
+    { href: "/painel/chat",       label: "Chat de Compras",  icon: MessageSquare },
   ]},
 ];
 
@@ -62,6 +63,7 @@ const NAV_SECTIONS_SUPPLIER: NavSection[] = [
   { items: [
     { href: "/painel",            label: "Início",         icon: LayoutDashboard },
     { href: "/painel/produtos",   label: "Meus Produtos",  icon: Package },
+    { href: "/painel/inquiries",  label: "Cotações",       icon: MessageSquare },
     { href: "/painel/catalogo",   label: "Catálogo",       icon: Globe },
     { href: "/painel/meu-perfil", label: "Meu Perfil",     icon: User },
     { href: "/painel/chat",       label: "Chat de Vendas", icon: MessageSquare },
@@ -70,18 +72,18 @@ const NAV_SECTIONS_SUPPLIER: NavSection[] = [
 
 const NAV_SECTIONS_BOTH: NavSection[] = [
   { items: [
-    { href: "/painel", label: "Início", icon: LayoutDashboard },
+    { href: "/painel",          label: "Início",    icon: LayoutDashboard },
+    { href: "/painel/inquiries", label: "Cotações", icon: MessageSquare },
+    { href: "/painel/chat",     label: "Chat",      icon: MessageSquare },
   ]},
   { label: "Comprador", items: [
     { href: "/painel/explorar",   label: "Explorar",   icon: Search },
     { href: "/painel/comparador", label: "Comparador", icon: Scale },
-    { href: "/painel/chat",       label: "Chat",       icon: MessageSquare },
   ]},
   { label: "Fornecedor", items: [
-    { href: "/painel/produtos",   label: "Meus Produtos",  icon: Package },
-    { href: "/painel/catalogo",   label: "Catálogo",       icon: Globe },
-    { href: "/painel/meu-perfil", label: "Meu Perfil",     icon: User },
-    { href: "/painel/chat-vendas", label: "Chat de Vendas", icon: MessageSquare },
+    { href: "/painel/produtos",   label: "Meus Produtos", icon: Package },
+    { href: "/painel/catalogo",   label: "Catálogo",      icon: Globe },
+    { href: "/painel/meu-perfil", label: "Meu Perfil",    icon: User },
   ]},
 ];
 
@@ -124,13 +126,12 @@ function Sidebar({
         "h-20 flex items-center border-b border-border shrink-0 transition-all duration-200",
         collapsed ? "px-0 justify-center" : "px-4"
       )}>
-        <Link href="/painel" className={cn("flex items-center min-w-0", collapsed ? "justify-center" : "flex-1")}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src="/icon.png" 
-            alt="GiroB2B" 
-            className={cn("object-contain transition-all", collapsed ? "h-8 w-8" : "h-10 w-auto")}
-          />
+        <Link
+          href="/painel"
+          aria-label="GiroB2B"
+          className={cn("flex items-center min-w-0", collapsed ? "justify-center" : "flex-1")}
+        >
+          <GiroLogo size={collapsed ? 32 : 40} iconOnly />
           {!collapsed && (
             <span className="ml-2.5 font-bold text-lg tracking-tight text-slate-900 truncate">GiroB2B</span>
           )}
@@ -187,7 +188,7 @@ function Sidebar({
                     {/* Sub-item: Ver perfil público — só quando "Meu Perfil" está ativo */}
                     {isProfile && active && !collapsed && supplier && user.role !== "buyer" && (
                       <Link
-                        href={`/empresa/${supplier.slug}`}
+                        href={`/fornecedor/${supplier.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 ml-3 pl-4 pr-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors border-l-2 border-[color:var(--brand-green-200)]"
@@ -275,14 +276,6 @@ function Sidebar({
                 <Settings className="w-4 h-4 text-slate-400 shrink-0" />
                 Configurações
               </Link>
-              <Link
-                href="/painel/assinatura"
-                onClick={() => setAccountOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-muted transition-colors"
-              >
-                <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
-                Assinatura
-              </Link>
               <div className="my-1 border-t border-border" />
               <form action={logout}>
                 <button
@@ -340,7 +333,12 @@ export default function DashboardShell({ children, user, supplier, buyer }: Dash
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="absolute left-0 top-0 bottom-0 z-50">
             <Sidebar {...sidebarProps} mobile />
           </div>
@@ -354,13 +352,8 @@ export default function DashboardShell({ children, user, supplier, buyer }: Dash
           <button onClick={() => setMobileOpen(true)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Abrir menu">
             <Menu className="w-6 h-6" />
           </button>
-          <Link href="/painel" className="mx-auto">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/icon.png" 
-              alt="GiroB2B" 
-              className="h-7 w-7 object-contain"
-            />
+          <Link href="/painel" aria-label="GiroB2B" className="mx-auto">
+            <GiroLogo size={28} iconOnly />
           </Link>
           <div className="w-8" />
         </header>

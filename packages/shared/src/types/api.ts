@@ -1,6 +1,8 @@
 // ─── GiroB2B — API Contract Types ────────────────────────────────────────────
 // Request and response shapes shared between apps/web and apps/api.
 
+import type { PublicProfileLayoutItem } from "./database.js";
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
@@ -21,6 +23,9 @@ export interface CompleteOnboardingRequest {
   trade_name?: string;
   cnpj?: string;
   phone?: string;
+  segments_json?: string;
+  purchase_frequency?: string;
+  custom_category?: string;
 }
 
 export interface OnboardingResponse {
@@ -45,6 +50,7 @@ export interface UpdateProfileRequest {
   operating_hours?: string | null;
   categories?: string[];
   photos?: string[];
+  public_profile_layout?: PublicProfileLayoutItem[] | null;
 }
 
 export interface UpdateSettingsRequest {
@@ -67,8 +73,8 @@ export interface SupplierResponse {
   slug: string;
   description: string | null;
   logo_url: string | null;
-  city: string;
-  state: string;
+  city: string | null;
+  state: string | null;
   address: string | null;
   cep: string | null;
   phone: string;
@@ -84,6 +90,10 @@ export interface SupplierResponse {
   inscricao_municipal: string | null;
   inscricao_estadual: string | null;
   situacao_fiscal: string | null;
+  operating_hours: string | null;
+  categories: string[] | null;
+  photos: string[] | null;
+  public_profile_layout: PublicProfileLayoutItem[] | null;
 }
 
 // ── Products ──────────────────────────────────────────────────────────────────
@@ -92,6 +102,7 @@ export interface CreateProductRequest {
   name: string;
   description?: string | null;
   category_id?: string | null;
+  subcategory_id?: string | null;
   unit?: string | null;
   min_order?: number | null;
   price_min_cents?: number | null;
@@ -110,6 +121,7 @@ export interface ProductResponse {
   slug: string;
   description: string | null;
   category_id: string | null;
+  subcategory_id: string | null;
   unit: string | null;
   min_order: number | null;
   price_min_cents: number | null;
@@ -127,27 +139,38 @@ export interface CreateInquiryRequest {
   supplier_id: string;
   product_id?: string | null;
   description: string;
-  quantity?: string | null;
-  deadline?: string | null;
+  quantity_estimate?: string | null;
+  desired_deadline?: string | null;
+  company_name?: string | null;
+  cnpj?: string | null;
   lgpd_consent: true;
 }
 
 export interface InquiryResponse {
   id: string;
-  supplier_id: string;
+  inquiry_type: "directed" | "generic";
+  supplier_id: string | null;
   product_id: string | null;
   buyer_id: string | null;
-  buyer_name: string;
-  buyer_email: string;
+  buyer_name: string | null;
+  buyer_email: string | null;
   buyer_phone: string | null;
   buyer_company: string | null;
   buyer_city: string | null;
+  buyer_state: string | null;
   description: string;
-  quantity: string | null;
-  deadline: string | null;
-  status: "new" | "viewed" | "replied" | "archived" | "spam";
+  quantity_estimate: string | null;
+  desired_deadline: string | null;
+  status: "new" | "viewed" | "responded" | "archived" | "reported";
   contact_unlocked: boolean;
   created_at: string;
+}
+
+export interface CreateInquiryResponse {
+  success: true;
+  deduplicated: boolean;
+  supplier_name: string;
+  inquiry: InquiryResponse;
 }
 
 // ── CNPJ ──────────────────────────────────────────────────────────────────────

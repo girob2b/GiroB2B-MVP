@@ -38,17 +38,17 @@ export default function RecuperarSenhaForm() {
 
   if (status === "sent") {
     return (
-      <Card className="w-full max-w-md shadow-xl border border-emerald-100">
+      <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-green-100)]">
         <CardContent className="pt-8 text-center space-y-4">
-          <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
+          <CheckCircle2 className="w-16 h-16 text-[color:var(--brand-green-500)] mx-auto" />
           <h2 className="text-2xl font-bold">Email enviado!</h2>
           <p className="text-muted-foreground leading-relaxed">
             Verifique sua caixa de entrada, procure pelo email de recuperação e use o link para criar uma nova senha.
           </p>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-left text-sm text-emerald-800">
+          <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-left text-sm text-[color:var(--brand-green-800)]">
             Se não encontrar o email em alguns minutos, confira a pasta de spam ou tente reenviar.
           </div>
-          <Button render={<Link href="/login" />} variant="outline" className="w-full">
+          <Button render={<Link href="/login" />} className="w-full btn-secondary rounded-xl h-11">
             Voltar ao login
           </Button>
         </CardContent>
@@ -57,7 +57,7 @@ export default function RecuperarSenhaForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-xl border border-emerald-100">
+    <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-green-100)]">
       <CardHeader className="space-y-2">
         <CardTitle className="text-2xl font-bold">Recuperar senha</CardTitle>
         <CardDescription>

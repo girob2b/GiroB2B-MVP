@@ -10,6 +10,10 @@ export type OnboardingState = {
   message?: string;
 };
 
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "";
+}
+
 export async function completeOnboarding(
   _prevState: OnboardingState | undefined,
   formData: FormData
@@ -38,16 +42,17 @@ export async function completeOnboarding(
       purchase_frequency,
       custom_category,
     });
-  } catch (error: any) {
+  } catch (error) {
     // Se o backend retornou erro de validação (422), ele vem no formato { errors, message }
+    const message = errorMessage(error);
     try {
-      const parsedError = JSON.parse(error.message);
+      const parsedError = JSON.parse(message);
       return {
         errors: parsedError.errors,
         message: parsedError.message,
       };
     } catch {
-      return { message: error.message || "Erro ao processar onboarding." };
+      return { message: message || "Erro ao processar onboarding." };
     }
   }
 

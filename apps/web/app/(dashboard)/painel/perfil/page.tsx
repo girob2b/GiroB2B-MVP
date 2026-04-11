@@ -37,6 +37,15 @@ interface SupplierRow {
   public_profile_layout: unknown | null;
 }
 
+function isMissingColumnError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: string }).code === "PGRST204"
+  );
+}
+
 export default async function PerfilPage() {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
@@ -53,7 +62,7 @@ export default async function PerfilPage() {
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (supplierRes.error && (supplierRes.error as any).code === "PGRST204") {
+  if (supplierRes.error && isMissingColumnError(supplierRes.error)) {
     supplierRes = await supabase
       .from("suppliers")
       .select(supplierSelectBase)

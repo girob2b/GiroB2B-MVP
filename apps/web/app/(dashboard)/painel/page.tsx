@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Package, MessageSquare, Eye, TrendingUp, ArrowRight, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -78,7 +78,7 @@ export default async function PainelPage() {
         <div className="text-center space-y-3">
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
           <p className="text-muted-foreground">Perfil de fornecedor não encontrado.</p>
-          <Button render={<Link href="/registro" />}>Criar perfil</Button>
+          <Button render={<Link href="/cadastro" />}>Criar perfil</Button>
         </div>
       </div>
     );
@@ -129,27 +129,27 @@ export default async function PainelPage() {
         <StatCard
           title="Produtos ativos"
           value={stats.totalProducts}
-          icon={<Package className="w-5 h-5 text-emerald-600" />}
+          icon={<Package className="w-5 h-5 text-[color:var(--brand-green-600)]" />}
           href="/painel/produtos"
           emptyMessage={stats.totalProducts === 0 ? "Adicione seu primeiro produto" : undefined}
         />
         <StatCard
           title="Inquiries recebidas"
           value={stats.totalInquiries}
-          icon={<MessageSquare className="w-5 h-5 text-blue-600" />}
+          icon={<MessageSquare className="w-5 h-5 text-slate-500" />}
           href="/painel/inquiries"
         />
         <StatCard
           title="Novas (não lidas)"
           value={stats.newInquiries}
-          icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
+          icon={<TrendingUp className="w-5 h-5 text-[color:var(--brand-green-600)]" />}
           href="/painel/inquiries"
           highlight={stats.newInquiries > 0}
         />
         <StatCard
           title="Completude do perfil"
           value={`${supplier.profile_completeness}%`}
-          icon={<Eye className="w-5 h-5 text-orange-500" />}
+          icon={<Eye className="w-5 h-5 text-slate-500" />}
           href="/painel/perfil"
         />
       </div>
@@ -222,21 +222,21 @@ export default async function PainelPage() {
 
       {/* CTA se não tem produtos */}
       {stats.totalProducts === 0 && (
-        <Card className="border-emerald-200 bg-emerald-50/50">
+        <Card className="border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)]/50">
           <CardContent className="py-6 px-5">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <Package className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-full bg-[color:var(--brand-green-100)] flex items-center justify-center shrink-0">
+                <Package className="w-5 h-5 text-[color:var(--brand-green-600)]" />
               </div>
               <div className="space-y-2">
-                <p className="font-semibold text-emerald-900">Adicione seus produtos para aparecer nas buscas</p>
-                <p className="text-sm text-emerald-800">
+                <p className="font-semibold text-[color:var(--brand-green-900)]">Adicione seus produtos para aparecer nas buscas</p>
+                <p className="text-sm text-[color:var(--brand-green-800)]">
                   Cada produto que você cadastrar vira uma página indexada no Google.
                 </p>
                 <Button
                   size="sm"
                   render={<Link href="/painel/produtos/novo" />}
-                  className="bg-emerald-500 hover:bg-emerald-600 mt-2"
+                  className="btn-primary mt-2"
                 >
                   Adicionar primeiro produto
                 </Button>
@@ -262,7 +262,7 @@ function StatCard({
   return (
     <Link href={href} className={[
       "block rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow",
-      highlight ? "border-purple-200 bg-purple-50/50" : "border-border",
+      highlight ? "border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)]/50" : "border-border",
     ].join(" ")}>
       <div className="flex flex-row items-center justify-between p-4 pb-2">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -279,13 +279,13 @@ function StatCard({
 }
 
 function InquiryStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-    new:      { label: "Nova",        variant: "default" },
-    viewed:   { label: "Visualizada", variant: "secondary" },
-    replied:  { label: "Respondida",  variant: "outline" },
-    archived: { label: "Arquivada",   variant: "outline" },
-    spam:     { label: "Spam",        variant: "destructive" },
+  const map: Record<string, { label: string; className: string }> = {
+    new:      { label: "Nova",        className: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
+    viewed:   { label: "Visualizada", className: "bg-slate-100 text-slate-600 border-slate-200" },
+    responded:{ label: "Respondida",  className: "bg-slate-100 text-slate-600 border-slate-200" },
+    archived: { label: "Arquivada",   className: "bg-slate-100 text-slate-500 border-slate-200" },
+    reported: { label: "Denunciada",  className: "bg-destructive/10 text-destructive border-destructive/20" },
   };
-  const info = map[status] ?? { label: status, variant: "secondary" };
-  return <Badge variant={info.variant}>{info.label}</Badge>;
+  const info = map[status] ?? { label: status, className: "bg-slate-100 text-slate-600 border-slate-200" };
+  return <Badge variant="outline" className={info.className}>{info.label}</Badge>;
 }

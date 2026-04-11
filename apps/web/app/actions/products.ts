@@ -9,6 +9,10 @@ export type ProductState = {
   success?: boolean;
 };
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message || fallback : fallback;
+}
+
 function parseProductFormData(formData: FormData) {
   const name = (formData.get("name") as string)?.trim() ?? "";
   const description = (formData.get("description") as string) || null;
@@ -49,8 +53,8 @@ export async function createProduct(
   try {
     const client = apiClient(session.access_token);
     await client.post("/products", fields);
-  } catch (error: any) {
-    return { error: error.message || "Erro ao criar produto." };
+  } catch (error) {
+    return { error: errorMessage(error, "Erro ao criar produto.") };
   }
 
   revalidatePath("/painel/produtos");
@@ -74,14 +78,97 @@ export async function updateProduct(
   try {
     const client = apiClient(session.access_token);
     await client.patch(`/products/${productId}`, fields);
-  } catch (error: any) {
-    return { error: error.message || "Erro ao atualizar produto." };
+  } catch (error) {
+    return { error: errorMessage(error, "Erro ao atualizar produto.") };
   }
 
   revalidatePath("/painel/produtos");
   revalidatePath(`/painel/produtos/${productId}`);
 
   return { success: true };
+}
+
+// ─── bulkCreateProducts ───────────────────────────────────────────────────────
+
+export interface BulkProductRow {
+  nome: string;
+  descricao?: string | null;
+  categoria?: string | null;
+  unidade?: string | null;
+  pedido_minimo?: number | null;
+  preco_min?: number | null;  // em reais
+  preco_max?: number | null;  // em reais
+  tags?: string | null;
+  status?: string | null;
+}
+
+export interface BulkResult {
+  index: number;
+  nome: string;
+  ok: boolean;
+  error?: string;
+}
+
+export async function bulkCreateProducts(
+  rows: BulkProductRow[]
+): Promise<{ results: BulkResult[]; created: number; failed: number }> {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { results: [], created: 0, failed: rows.length };
+
+  const client = apiClient(session.access_token);
+  const results: BulkResult[] = [];
+  let created = 0;
+  let failed = 0;
+
+  // Buscar mapa de categorias (nome → id) uma única vez
+  const { data: categoriesData } = await supabase
+    .from("categories")
+    .select("id, name")
+    .eq("active", true);
+
+  const categoryMap = new Map<string, string>(
+    (categoriesData ?? []).map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
+  );
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row.nome?.trim()) {
+      results.push({ index: i, nome: row.nome ?? `Linha ${i + 2}`, ok: false, error: "Nome é obrigatório." });
+      failed++;
+      continue;
+    }
+
+    const categoryId = row.categoria
+      ? (categoryMap.get(row.categoria.trim().toLowerCase()) ?? null)
+      : null;
+
+    const payload = {
+      name: row.nome.trim(),
+      description: row.descricao?.trim() || null,
+      category_id: categoryId,
+      unit: row.unidade?.trim() || null,
+      min_order: row.pedido_minimo ?? null,
+      price_min_cents: row.preco_min != null ? Math.round(row.preco_min * 100) : null,
+      price_max_cents: row.preco_max != null ? Math.round(row.preco_max * 100) : null,
+      tags: row.tags ? row.tags.split(",").map((t) => t.trim()).filter(Boolean) : null,
+      status: ["active", "paused"].includes(row.status ?? "") ? row.status : "active",
+    };
+
+    try {
+      await client.post("/products", payload);
+      results.push({ index: i, nome: row.nome, ok: true });
+      created++;
+    } catch (err) {
+      results.push({ index: i, nome: row.nome, ok: false, error: errorMessage(err, "Erro ao criar produto.") });
+      failed++;
+    }
+  }
+
+  revalidatePath("/painel/produtos");
+  revalidatePath("/painel");
+
+  return { results, created, failed };
 }
 
 export async function deleteProduct(productId: string): Promise<void> {

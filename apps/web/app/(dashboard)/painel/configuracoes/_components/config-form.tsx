@@ -1,10 +1,8 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 import { updateCompanySettings } from "@/app/actions/supplier";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 const SITUACAO_FISCAL = [
@@ -83,10 +81,10 @@ export default function ConfigForm({ supplier, userRole }: { supplier: Supplier,
   };
 
   const PLAN_LABELS: Record<string, { label: string; color: string }> = {
-    free:    { label: "Gratuito", color: "bg-slate-100 text-slate-600" },
-    starter: { label: "Starter",  color: "bg-blue-100 text-blue-700" },
-    pro:     { label: "Pro",      color: "bg-purple-100 text-purple-700" },
-    premium: { label: "Premium",  color: "bg-green-100 text-green-700" },
+    free:    { label: "Gratuito", color: "bg-slate-100 text-slate-600 border-slate-200" },
+    starter: { label: "Starter",  color: "bg-slate-100 text-slate-700 border-slate-200" },
+    pro:     { label: "Pro",      color: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
+    premium: { label: "Premium",  color: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
   };
   const plan = PLAN_LABELS[supplier.plan] ?? PLAN_LABELS.free;
 
@@ -145,13 +143,13 @@ export default function ConfigForm({ supplier, userRole }: { supplier: Supplier,
 
         {/* Feedback */}
         {state.success && (
-          <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-700)]">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             Informações salvas com sucesso.
           </div>
         )}
         {state.error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="w-4 h-4 shrink-0" />
             {state.error}
           </div>

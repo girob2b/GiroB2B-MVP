@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search, MapPin, Clock, Package, X, ChevronLeft, ChevronRight,
-  Building2, Tag, MessageSquare, DollarSign, Scale, Store,
+  Tag, MessageSquare, DollarSign, Scale, Store,
   Trash2, LayoutList, LayoutGrid, SlidersHorizontal, Filter,
   CheckCircle2, Plus, Loader2, Sparkles,
 } from "lucide-react";
 import { PRODUTOS_MOCK, CATEGORIAS, type ProdutoMock } from "../_data/produtos-mock";
 import { createClient } from "@/lib/supabase/client";
 import { apiClient } from "@/lib/api-client";
+import { createOrGetConversation } from "@/app/actions/chat";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ const CAT_BG: Record<string, string> = {
   autopecas:              "bg-zinc-100",
   "industria-manufatura": "bg-slate-100",
   tecnologia:             "bg-indigo-100",
-  agronegocio:            "bg-green-100",
+  agronegocio:            "bg-[color:var(--brand-green-100)]",
   "limpeza-higiene":      "bg-teal-100",
 };
 
@@ -62,6 +63,18 @@ function formatBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatPriceDraft(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "a negociar";
+
+  const normalized = trimmed.includes(",")
+    ? trimmed.replace(/\./g, "").replace(",", ".")
+    : trimmed;
+  const parsed = Number(normalized);
+
+  return Number.isFinite(parsed) ? formatBRL(parsed) : trimmed;
+}
+
 // ─── Filter state ─────────────────────────────────────────────────────────────
 
 interface Filters {
@@ -79,14 +92,59 @@ const DEFAULT_FILTERS: Filters = {
   moqIndex: 0, prazoIndex: 0, sortBy: "relevancia",
 };
 
+type OriginPreference = "national" | "imported" | "any";
+type FreightPayer = "buyer" | "supplier" | "split" | "negotiable";
+type FreightType = "carrier" | "own_freight" | "pickup" | "negotiable";
+
+type CreateInquiryApiResponse = {
+  success: true;
+  deduplicated: boolean;
+  supplier_name: string;
+  inquiry: { id: string };
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function hasRealInquiryIds(product: ProdutoMock): product is ProdutoMock & { productId: string; supplierId: string } {
+  return Boolean(product.productId && product.supplierId && UUID_RE.test(product.productId) && UUID_RE.test(product.supplierId));
+}
+
+function originLabel(origin: OriginPreference) {
+  const labels: Record<OriginPreference, string> = {
+    national: "Mercado nacional",
+    imported: "Importação",
+    any: "Aberto a nacional ou importado",
+  };
+  return labels[origin];
+}
+
+function freightPayerLabel(value: FreightPayer) {
+  const labels: Record<FreightPayer, string> = {
+    buyer: "Comprador paga",
+    supplier: "Fornecedor paga",
+    split: "Dividir frete",
+    negotiable: "Negociável",
+  };
+  return labels[value];
+}
+
+function freightTypeLabel(value: FreightType) {
+  const labels: Record<FreightType, string> = {
+    carrier: "Transportadora",
+    own_freight: "Frete próprio",
+    pickup: "Retirada",
+    negotiable: "Negociável",
+  };
+  return labels[value];
+}
+
 // ─── Sidebar de filtros ───────────────────────────────────────────────────────
 
 function FilterSidebar({
-  filters, onChange, results,
+  filters, onChange,
 }: {
   filters: Filters;
   onChange: (f: Partial<Filters>) => void;
-  results: ProdutoMock[];
 }) {
   function toggleArr<T>(arr: T[], val: T) {
     return arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
@@ -352,17 +410,150 @@ function ProdutoCardGrid({ p, onClick, onCompare, inCompare }: {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-function ProdutoModal({ p, onClose, onCompare, inCompare }: {
-  p: ProdutoMock; onClose: () => void; onCompare: (p: ProdutoMock) => void; inCompare: boolean;
+function ProdutoModal({ p, onClose, onCompare, onSupplierSearch, inCompare }: {
+  p: ProdutoMock;
+  onClose: () => void;
+  onCompare: (p: ProdutoMock) => void;
+  onSupplierSearch: (supplier: string) => void;
+  inCompare: boolean;
 }) {
   const router = useRouter();
   const bg = CAT_BG[p.categoriaSlug] ?? "bg-slate-100";
+  const [showNegotiationForm, setShowNegotiationForm] = useState(false);
+  const [quantity, setQuantity] = useState(String(p.pedidoMinimo));
+  const [targetPrice, setTargetPrice] = useState(String(p.precoMin));
+  const [desiredDeadline, setDesiredDeadline] = useState(`${p.prazoEntrega} dias úteis`);
+  const [materialType, setMaterialType] = useState(p.tags[0] ?? p.categoria);
+  const [originPreference, setOriginPreference] = useState<OriginPreference>(p.tipo === "importacao" ? "imported" : "national");
+  const [freightPayer, setFreightPayer] = useState<FreightPayer>("negotiable");
+  const [freightType, setFreightType] = useState<FreightType>("carrier");
+  const [negotiationNotes, setNegotiationNotes] = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "saved" | "sent">("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [directContactLoading, setDirectContactLoading] = useState(false);
 
-  function goChat(negociar = false) {
-    const params = new URLSearchParams({ produto: p.nome, fornecedor: p.fornecedor });
-    if (negociar) { params.set("negociar", "true"); params.set("preco", String(p.precoMin)); }
-    router.push(`/painel/chat?${params}`);
-    onClose();
+  function buildDescription() {
+    return [
+      `Tenho interesse em negociar a compra de ${quantity || "quantidade a definir"} ${p.unidade} de ${p.nome}.`,
+      `Preço alvo: ${formatPriceDraft(targetPrice)} por ${p.unidade}.`,
+      `Prazo desejado: ${desiredDeadline || "a negociar"}.`,
+      `Tipo de material/especificação: ${materialType || p.categoria}.`,
+      `Origem preferida: ${originLabel(originPreference)}.`,
+      `Frete: ${freightPayerLabel(freightPayer)} usando ${freightTypeLabel(freightType).toLowerCase()}.`,
+      negotiationNotes ? `Observações: ${negotiationNotes}` : "",
+    ].filter(Boolean).join("\n");
+  }
+
+  async function handleDirectNegotiationSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitError(null);
+    setSubmitState("submitting");
+
+    const draft = {
+      source: hasRealInquiryIds(p) ? "database_product" : "explorer_mock",
+      product: {
+        mock_id: p.id,
+        product_id: p.productId ?? null,
+        supplier_id: p.supplierId ?? null,
+        name: p.nome,
+        supplier: p.fornecedor,
+        category: p.categoria,
+        location: `${p.cidade}, ${p.estado}`,
+        reference_price_min: p.precoMin,
+        reference_price_max: p.precoMax,
+        unit: p.unidade,
+      },
+      negotiation: {
+        quantity,
+        target_price: targetPrice,
+        desired_deadline: desiredDeadline,
+        material_type: materialType,
+        origin_preference: originPreference,
+        freight_payer: freightPayer,
+        freight_type: freightType,
+        notes: negotiationNotes,
+        description: buildDescription(),
+      },
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      window.sessionStorage.setItem("girob2b:direct-negotiation-draft", JSON.stringify(draft));
+
+      if (hasRealInquiryIds(p)) {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Sessão expirada. Faça login novamente.");
+
+        const client = apiClient(session.access_token);
+        const result = await client.post<CreateInquiryApiResponse>("/inquiries", {
+          supplier_id: p.supplierId,
+          product_id: p.productId,
+          description: draft.negotiation.description,
+          quantity_estimate: `${quantity} ${p.unidade}`,
+          desired_deadline: desiredDeadline,
+          lgpd_consent: true,
+        });
+
+        // Cria (ou recupera) conversa vinculada a esta cotação e abre o chat
+        const convResult = await createOrGetConversation({
+          supplierId: p.supplierId!,
+          inquiryId: result.inquiry.id,
+          productId: p.productId ?? null,
+          productName: p.nome,
+          contextType: "inquiry",
+          firstMessage: draft.negotiation.description,
+        });
+
+        setSubmitState("sent");
+        if ("id" in convResult) {
+          router.push(`/painel/chat?conv=${convResult.id}`);
+        } else {
+          // Fallback para a cotação se a conversa falhou
+          router.push(`/painel/inquiries/${result.inquiry.id}`);
+        }
+        onClose();
+        return;
+      }
+
+      setSubmitState("saved");
+      const params = new URLSearchParams({
+        negociar: "true",
+        produto: p.nome,
+        fornecedor: p.fornecedor,
+        quantidade: `${quantity} ${p.unidade}`,
+        preco: targetPrice,
+        prazo: desiredDeadline,
+      });
+      router.push(`/painel/chat?${params}`);
+      onClose();
+    } catch (err) {
+      setSubmitState("idle");
+      setSubmitError(err instanceof Error ? err.message : "Não foi possível preparar a negociação.");
+    }
+  }
+
+  async function handleDirectContact() {
+    if (!hasRealInquiryIds(p)) return;
+    setDirectContactLoading(true);
+    try {
+      const convResult = await createOrGetConversation({
+        supplierId: p.supplierId!,
+        productId: p.productId ?? null,
+        productName: p.nome,
+        contextType: "direct_purchase",
+      });
+      if ("id" in convResult) {
+        router.push(`/painel/chat?conv=${convResult.id}`);
+        onClose();
+      } else {
+        setSubmitError(convResult.error);
+      }
+    } catch {
+      setSubmitError("Não foi possível abrir o chat.");
+    } finally {
+      setDirectContactLoading(false);
+    }
   }
 
   return (
@@ -414,23 +605,40 @@ function ProdutoModal({ p, onClose, onCompare, inCompare }: {
           {/* CTAs B2B */}
           <div className="space-y-2 pt-1">
             <button
-              onClick={() => goChat()}
+              onClick={() => setShowNegotiationForm(true)}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] text-white text-sm font-semibold h-11 transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
               Solicitar cotação
             </button>
+            {hasRealInquiryIds(p) && (
+              <button
+                onClick={handleDirectContact}
+                disabled={directContactLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-(--brand-green-300) bg-white hover:bg-(--brand-green-50) text-(--brand-green-700) text-sm font-semibold h-10 transition-colors disabled:opacity-50"
+              >
+                {directContactLoading
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <MessageSquare className="w-4 h-4" />
+                }
+                Contato direto (Chat)
+              </button>
+            )}
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => goChat(true)} className="flex flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-medium py-3 transition-colors">
+              <button onClick={() => setShowNegotiationForm(true)} className="flex flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-medium py-3 transition-colors">
                 <DollarSign className="w-4 h-4 text-slate-500" />
-                Negociar
+                Proposta
               </button>
               <button onClick={() => onCompare(p)} className={`flex flex-col items-center justify-center gap-1 rounded-xl border text-xs font-medium py-3 transition-colors ${inCompare ? "border-[color:var(--brand-green-400)] bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]" : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700"}`}>
                 <Scale className="w-4 h-4 text-slate-500" />
-                {inCompare ? "Adicionado" : "Comparar"}
+                {inCompare ? "Na pesquisa" : "Adicionar à pesquisa"}
               </button>
               <button
-                onClick={() => { router.push(`/painel/explorar?empresa=${encodeURIComponent(p.fornecedor)}`); onClose(); }}
+                onClick={() => {
+                  onSupplierSearch(p.fornecedor);
+                  router.push(`/painel/explorar?empresa=${encodeURIComponent(p.fornecedor)}`);
+                  onClose();
+                }}
                 className="flex flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-medium py-3 transition-colors"
               >
                 <Store className="w-4 h-4 text-slate-500" />
@@ -438,6 +646,134 @@ function ProdutoModal({ p, onClose, onCompare, inCompare }: {
               </button>
             </div>
           </div>
+
+          {showNegotiationForm && (
+            <form onSubmit={handleDirectNegotiationSubmit} className="space-y-4 rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-4">
+              <div>
+                <p className="text-sm font-bold text-[color:var(--brand-green-900)]">Proposta direta</p>
+                <p className="mt-1 text-xs text-[color:var(--brand-green-700)]">
+                  Estruture os parâmetros da compra antes de abrir a conversa com o fornecedor.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Quantidade
+                  <input
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    placeholder={`Ex: ${p.pedidoMinimo}`}
+                    required
+                  />
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Preço alvo por {p.unidade}
+                  <input
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    placeholder={String(p.precoMin)}
+                  />
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Prazo desejado
+                  <input
+                    value={desiredDeadline}
+                    onChange={(e) => setDesiredDeadline(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    placeholder="Ex: 7 dias úteis"
+                  />
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Tipo de material
+                  <input
+                    value={materialType}
+                    onChange={(e) => setMaterialType(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    placeholder={p.categoria}
+                  />
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Origem
+                  <select
+                    value={originPreference}
+                    onChange={(e) => setOriginPreference(e.target.value as OriginPreference)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  >
+                    <option value="national">Mercado nacional</option>
+                    <option value="imported">Importação</option>
+                    <option value="any">Tanto faz</option>
+                  </select>
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                  Quem paga frete
+                  <select
+                    value={freightPayer}
+                    onChange={(e) => setFreightPayer(e.target.value as FreightPayer)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  >
+                    <option value="negotiable">Negociável</option>
+                    <option value="buyer">Comprador paga</option>
+                    <option value="supplier">Fornecedor paga</option>
+                    <option value="split">Dividir frete</option>
+                  </select>
+                </label>
+                <label className="space-y-1.5 text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Tipo de frete
+                  <select
+                    value={freightType}
+                    onChange={(e) => setFreightType(e.target.value as FreightType)}
+                    className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  >
+                    <option value="carrier">Transportadora</option>
+                    <option value="own_freight">Frete próprio</option>
+                    <option value="pickup">Retirada</option>
+                    <option value="negotiable">Negociável</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="block space-y-1.5 text-xs font-semibold text-slate-700">
+                Observações
+                <textarea
+                  value={negotiationNotes}
+                  onChange={(e) => setNegotiationNotes(e.target.value)}
+                  className="min-h-20 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  placeholder="Ex: preciso confirmar estoque disponível, condição de pagamento e frete para entrega em SP."
+                />
+              </label>
+
+              {!hasRealInquiryIds(p) && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  Este item ainda vem da busca mockada. A negociação será salva como rascunho e enviada para o chat; a criação real de inquiry entra quando o Explorar trouxer `supplierId` e `productId` do banco.
+                </div>
+              )}
+
+              {submitError && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {submitError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setShowNegotiationForm(false)}
+                  className="h-10 flex-1 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Voltar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitState === "submitting"}
+                  className="h-10 flex-1 rounded-lg bg-[color:var(--brand-green-600)] text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-50"
+                >
+                  {submitState === "submitting" ? "Preparando..." : hasRealInquiryIds(p) ? "Enviar proposta" : "Abrir no chat"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
@@ -451,18 +787,18 @@ function CompareBar({ items, onRemove, onClear, onGo }: {
 }) {
   if (items.length === 0) return null;
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-slate-900 text-white rounded-2xl px-4 py-3 shadow-2xl border border-slate-700">
-      <Scale className="w-4 h-4 text-[color:var(--brand-green-400)] shrink-0" />
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-[color:var(--brand-green-800)] text-white rounded-2xl px-4 py-3 shadow-2xl border border-[color:var(--brand-green-700)]">
+      <Scale className="w-4 h-4 text-[color:var(--brand-green-300)] shrink-0" />
       <div className="flex items-center gap-2">
         {items.map(p => (
-          <div key={p.id} className="flex items-center gap-1.5 bg-slate-800 rounded-lg px-2.5 py-1">
+          <div key={p.id} className="flex items-center gap-1.5 bg-[color:var(--brand-green-700)] rounded-lg px-2.5 py-1">
             <span className="text-xs font-medium max-w-[100px] truncate">{p.nome}</span>
             <button onClick={() => onRemove(p.id)} className="text-slate-400 hover:text-white"><X className="w-3 h-3" /></button>
           </div>
         ))}
-        {items.length < 3 && <span className="text-xs text-slate-400">{3 - items.length} vaga{3 - items.length !== 1 ? "s" : ""}</span>}
+        {items.length < 3 && <span className="text-xs text-[color:var(--brand-green-300)]">{3 - items.length} vaga{3 - items.length !== 1 ? "s" : ""}</span>}
       </div>
-      <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+      <div className="flex items-center gap-2 ml-2 pl-2 border-l border-[color:var(--brand-green-600)]">
         <button onClick={onGo} disabled={items.length < 2} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           Comparar
         </button>
@@ -557,7 +893,7 @@ function IntegrationSuggestionCard({ query, categorySlug }: { query: string, cat
         <div className="space-y-1">
           <p className="font-bold text-[color:var(--brand-green-900)]">Sugestão enviada!</p>
           <p className="text-sm text-[color:var(--brand-green-700)]">
-            Obrigado! Nossa equipe de integração já foi notificada para buscar fornecedores de <strong>"{query}"</strong>.
+            Obrigado! Nossa equipe de integração já foi notificada para buscar fornecedores de <strong>{query}</strong>.
           </p>
         </div>
       </div>
@@ -576,7 +912,7 @@ function IntegrationSuggestionCard({ query, categorySlug }: { query: string, cat
         </div>
         <h3 className="text-xl font-bold text-white">Quer colocar na lista de integração?</h3>
         <p className="text-slate-300 text-sm leading-relaxed">
-          Não encontrou o que procurava? Ao sugerir <strong>"{query}"</strong>, estimulamos nossos mecanismos de busca para cadastrar fornecedores especializados exatamente no que você precisa.
+          Não encontrou o que procurava? Ao sugerir <strong>{query}</strong>, estimulamos nossos mecanismos de busca para cadastrar fornecedores especializados exatamente no que você precisa.
         </p>
       </div>
 
@@ -617,11 +953,6 @@ export default function ExplorerSearch() {
     setFilters(f => ({ ...f, ...patch }));
     setPage(1);
   }, []);
-
-  useEffect(() => {
-    const empresa = searchParams.get("empresa");
-    if (empresa) updateFilters({ query: empresa });
-  }, [searchParams, updateFilters]);
 
   const results = useMemo(() => {
     let list = PRODUTOS_MOCK;
@@ -696,7 +1027,7 @@ export default function ExplorerSearch() {
         {/* Sidebar desktop */}
         <div className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-4 bg-white border border-border rounded-2xl p-4 shadow-sm">
-            <FilterSidebar filters={filters} onChange={updateFilters} results={results} />
+            <FilterSidebar filters={filters} onChange={updateFilters} />
           </div>
         </div>
 
@@ -842,7 +1173,7 @@ export default function ExplorerSearch() {
               <span className="font-semibold text-slate-900">Filtros</span>
               <button onClick={() => setMobileFilters(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
-            <FilterSidebar filters={filters} onChange={updateFilters} results={results} />
+            <FilterSidebar filters={filters} onChange={updateFilters} />
             <button onClick={() => setMobileFilters(false)} className="mt-5 w-full h-11 rounded-xl bg-[color:var(--brand-green-600)] text-white font-semibold text-sm">
               Ver {results.length} resultados
             </button>
@@ -856,6 +1187,7 @@ export default function ExplorerSearch() {
           p={selected}
           onClose={() => setSelected(null)}
           onCompare={handleCompare}
+          onSupplierSearch={(supplier) => updateFilters({ query: supplier })}
           inCompare={!!compareList.find(x => x.id === selected.id)}
         />
       )}

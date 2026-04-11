@@ -103,8 +103,9 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
       const next: PublicBlock[] = [];
       for (const item of value) {
         if (!item || typeof item !== "object") continue;
-        const key = (item as any).key as string | undefined;
-        const enabled = (item as any).enabled;
+        const record = item as { key?: unknown; enabled?: unknown };
+        const key = record.key;
+        const enabled = record.enabled;
         if (key === "hero" || key === "about" || key === "gallery" || key === "products" || key === "contact") {
           next.push({ key, enabled: enabled !== false });
         }
@@ -190,13 +191,13 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
 
       {/* Success / error */}
       {state.success && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)]">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           Perfil salvo com sucesso!
         </div>
       )}
       {state.error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
@@ -526,7 +527,7 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
                     className={[
                       "flex items-center gap-2 text-sm font-medium rounded-lg px-3 py-2 w-full text-left transition-colors",
                       selectedCats.includes(root.id)
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
                         : "hover:bg-muted text-foreground",
                     ].join(" ")}
                   >
@@ -534,7 +535,7 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
                       className={[
                         "w-4 h-4 rounded border flex items-center justify-center shrink-0",
                         selectedCats.includes(root.id)
-                          ? "bg-emerald-500 border-emerald-500 text-white"
+                          ? "bg-[color:var(--brand-green-600)] border-[color:var(--brand-green-600)] text-white"
                           : "border-border",
                       ].join(" ")}
                     >
@@ -556,8 +557,8 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
                           className={[
                             "text-xs rounded-full px-3 py-1 border transition-colors",
                             selectedCats.includes(sub.id)
-                              ? "bg-emerald-500 text-white border-emerald-500"
-                              : "border-border text-muted-foreground hover:border-emerald-300",
+                              ? "bg-[color:var(--brand-green-600)] text-white border-[color:var(--brand-green-600)]"
+                              : "border-border text-muted-foreground hover:border-[color:var(--brand-green-300)]",
                           ].join(" ")}
                         >
                           {sub.name}
@@ -598,7 +599,7 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
               type="button"
               onClick={() => photosInputRef.current?.click()}
               disabled={photoUploading}
-              className="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-muted hover:border-emerald-300 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground text-xs"
+              className="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-muted hover:border-[color:var(--brand-green-300)] transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground text-xs"
             >
               {photoUploading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -622,7 +623,7 @@ export default function PerfilForm({ supplier, rootCategories, subCategories }: 
       </Card>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending} className="min-w-32">
+        <Button type="submit" disabled={pending} className="btn-primary h-11 px-10 rounded-xl font-bold min-w-32">
           {pending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {pending ? "Salvando..." : "Salvar Perfil"}
         </Button>

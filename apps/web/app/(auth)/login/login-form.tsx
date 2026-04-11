@@ -101,7 +101,7 @@ export default function LoginForm({ feedback }: LoginFormProps) {
         </div>
         <div>
           <p className="text-lg font-semibold tracking-tight text-slate-950">GiroB2B</p>
-          <p className="text-sm text-slate-500">Acesso da plataforma</p>
+          <p className="text-sm text-muted-foreground">Acesso da plataforma</p>
         </div>
       </div>
 
@@ -114,7 +114,7 @@ export default function LoginForm({ feedback }: LoginFormProps) {
             <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-[3.35rem]">
               Bem-vindo de volta
             </h1>
-            <p className="max-w-md text-sm leading-relaxed text-slate-500 sm:text-base">
+            <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
               Entre com seu email e senha para acessar o painel da sua empresa.
             </p>
           </div>
@@ -263,7 +263,7 @@ export default function LoginForm({ feedback }: LoginFormProps) {
             className="flex min-h-14 flex-col justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-[color:var(--brand-green-200)] hover:bg-[color:var(--brand-green-50)]"
           >
             <span className="text-sm font-semibold text-slate-950">Criar conta gratuita</span>
-            <span className="mt-1 text-xs leading-relaxed text-slate-500">
+            <span className="mt-1 text-xs leading-relaxed text-muted-foreground">
               Comprador, fornecedor ou ambos — você escolhe após o cadastro.
             </span>
           </Link>

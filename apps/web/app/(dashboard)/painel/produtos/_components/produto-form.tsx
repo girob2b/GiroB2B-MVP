@@ -99,13 +99,13 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
       ))}
 
       {state.success && defaultValues?.id && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)]">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           Produto salvo com sucesso!
         </div>
       )}
       {state.error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       )}
@@ -159,7 +159,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
             className="hidden"
             onChange={handleImagesChange}
           />
-          <div className="flex items-center gap-2 bg-blue-50 text-blue-700 p-3 rounded-xl border border-blue-100 text-xs font-medium">
+          <div className="flex items-center gap-2 bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] p-3 rounded-xl border border-[color:var(--brand-green-200)] text-xs font-medium">
             <Package className="w-4 h-4 shrink-0" />
             A primeira foto será a capa do seu produto no catálogo.
           </div>

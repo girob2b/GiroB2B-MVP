@@ -48,7 +48,7 @@ export default async function MeuPerfilPage() {
     <div className="max-w-3xl mx-auto space-y-10">
       <div className="space-y-3">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Meu Perfil Público</h1>
-        <p className="text-base text-slate-500 leading-relaxed max-w-xl">
+        <p className="text-base text-muted-foreground leading-relaxed max-w-xl">
           Seu perfil público é a vitrine da sua empresa na plataforma. É uma página web
           completa que você pode compartilhar como se fosse um mini-site — apresentável,
           mobile e com catálogo integrado.
@@ -109,7 +109,7 @@ export default async function MeuPerfilPage() {
             </div>
             <div>
               <p className="font-semibold text-sm text-slate-800">{title}</p>
-              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{desc}</p>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
             </div>
           </div>
         ))}
@@ -126,7 +126,7 @@ export default async function MeuPerfilPage() {
                 Configure os blocos do seu perfil
               </p>
               <p className="text-sm text-[color:var(--brand-green-800)] mt-1">
-                Dentro de "Editar perfil" você consegue organizar os blocos (arrastar/ocultar) do seu perfil público.
+                Dentro do editor de perfil, você consegue organizar os blocos (arrastar/ocultar) do seu perfil público.
               </p>
             </div>
             <Button

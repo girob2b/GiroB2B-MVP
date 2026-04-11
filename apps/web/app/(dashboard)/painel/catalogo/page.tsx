@@ -36,7 +36,7 @@ export default function CatalogoPage() {
           Em desenvolvimento
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Catálogo</h1>
-        <p className="text-base text-slate-500 leading-relaxed max-w-xl">
+        <p className="text-base text-muted-foreground leading-relaxed max-w-xl">
           Configure como seus produtos e serviços são apresentados para compradores B2B.
           Seu catálogo vira uma vitrine pública e indexada — compradores encontram você
           na busca da plataforma e no Google.
@@ -55,7 +55,7 @@ export default function CatalogoPage() {
             </div>
             <div>
               <p className="font-semibold text-sm text-slate-800">{title}</p>
-              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{desc}</p>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
             </div>
           </div>
         ))}

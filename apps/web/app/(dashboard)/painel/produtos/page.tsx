@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, Plus, Pencil } from "lucide-react";
 import DeleteProductButton from "./_components/delete-product-button";
+import ImportButton from "./_components/import-button";
 
 export const metadata = { title: "Produtos" };
 
@@ -71,13 +72,16 @@ export default async function ProdutosPage() {
             {products.length} produto{products.length !== 1 ? "s" : ""} cadastrado{products.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button 
-          render={<Link href="/painel/produtos/novo" />}
-          className="btn-primary rounded-xl h-10 px-5"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex items-center gap-2">
+          <ImportButton />
+          <Button
+            render={<Link href="/painel/produtos/novo" />}
+            className="btn-primary rounded-xl h-10 px-5"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       {products.length === 0 ? (

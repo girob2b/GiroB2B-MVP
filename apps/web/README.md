@@ -1,17 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GiroB2B Web
+
+Frontend principal do GiroB2B em Next.js App Router.
+
+Antes de continuar trabalhos iniciados em 11/04/2026, leia:
+
+- `../../docs/AI_HANDOFF_2026-04-11.md`
+
+Esse handoff registra:
+
+- novas rotas `/painel/inquiries` e `/painel/inquiries/[id]`;
+- mudancas nos tipos compartilhados de buyers/suppliers/inquiries;
+- ajustes de lint/build feitos para Next.js 16;
+- comandos Docker validados;
+- pendencias conhecidas para a proxima IA.
 
 ## Getting Started
 
-First, run the development server:
+Para o modo local usado pelo Vitor, prefira Docker na raiz do repositorio:
+
+```bash
+docker compose --profile girob2b up -d --build
+docker compose --profile girob2b ps
+```
+
+Tambem e possivel rodar o dev server do workspace web diretamente:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

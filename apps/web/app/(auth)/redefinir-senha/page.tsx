@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import RedefinirSenhaForm from "./redefinir-senha-form";
 
 export const metadata: Metadata = {
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function RedefinirSenhaPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-5 py-12 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_45%),linear-gradient(180deg,_#ffffff_0%,_#f8fffc_100%)]">
-      <RedefinirSenhaForm />
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando recuperação de senha...</div>}>
+        <RedefinirSenhaForm />
+      </Suspense>
     </div>
   );
 }

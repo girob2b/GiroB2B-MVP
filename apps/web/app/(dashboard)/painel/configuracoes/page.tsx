@@ -4,6 +4,25 @@ import ConfigForm from "./_components/config-form";
 
 export const metadata = { title: "Configurações — GiroB2B" };
 
+interface SupplierSettingsRow {
+  id: string;
+  cnpj: string;
+  company_name: string;
+  trade_name: string;
+  phone: string | null;
+  whatsapp: string | null;
+  address: string | null;
+  cep: string | null;
+  city: string | null;
+  state: string | null;
+  inscricao_municipal: string | null;
+  inscricao_estadual: string | null;
+  situacao_fiscal: string | null;
+  plan: string;
+  profile_completeness: number;
+  is_verified: boolean;
+}
+
 export default async function ConfiguracoesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +48,7 @@ export default async function ConfiguracoesPage() {
     }
   }
 
-  let supplier: any = null;
+  let supplier: SupplierSettingsRow | null = null;
   if (role === "supplier" || role === "both") {
     const { data, error } = await supabase
       .from("suppliers")
@@ -42,7 +61,7 @@ export default async function ConfiguracoesPage() {
       .maybeSingle();
     
     if (!error && data) {
-      supplier = data;
+      supplier = data as unknown as SupplierSettingsRow;
     }
   }
 
