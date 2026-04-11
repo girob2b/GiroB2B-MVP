@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lean Canvas — GiroB2B</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0F14;
+    --card: #161921;
+    --card-border: #242833;
+    --accent: #3B82F6;
+    --accent-soft: rgba(59, 130, 246, 0.12);
+    --green: #10B981;
+    --green-soft: rgba(16, 185, 129, 0.12);
+    --orange: #F59E0B;
+    --orange-soft: rgba(245, 158, 11, 0.12);
+    --red: #EF4444;
+    --red-soft: rgba(239, 68, 68, 0.12);
+    --purple: #8B5CF6;
+    --purple-soft: rgba(139, 92, 246, 0.12);
+    --cyan: #06B6D4;
+    --cyan-soft: rgba(6, 182, 212, 0.12);
+    --text: #E2E8F0;
+    --text-dim: #94A3B8;
+    --text-muted: #64748B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .header .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .canvas {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 8px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .cell {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .cell-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .cell-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .cell-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .cell ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .cell li {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .cell li:last-child { border-bottom: none; }
+
+  .cell li strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    margin-right: 4px;
+  }
+
+  /* Problem */
+  .problem { grid-column: 1; grid-row: 1 / 3; }
+  .problem::before { background: var(--red); }
+  .problem .cell-number { background: var(--red-soft); color: var(--red); }
+  .problem .cell-title { color: var(--red); }
+
+  /* Solution */
+  .solution { grid-column: 2; grid-row: 1 / 3; }
+  .solution::before { background: var(--green); }
+  .solution .cell-number { background: var(--green-soft); color: var(--green); }
+  .solution .cell-title { color: var(--green); }
+
+  /* UVP */
+  .uvp { grid-column: 3; grid-row: 1; }
+  .uvp::before { background: var(--accent); }
+  .uvp .cell-number { background: var(--accent-soft); color: var(--accent); }
+  .uvp .cell-title { color: var(--accent); }
+
+  /* Unfair Advantage */
+  .unfair { grid-column: 4; grid-row: 1 / 3; }
+  .unfair::before { background: var(--purple); }
+  .unfair .cell-number { background: var(--purple-soft); color: var(--purple); }
+  .unfair .cell-title { color: var(--purple); }
+
+  /* Customer Segments */
+  .segments { grid-column: 5; grid-row: 1 / 3; }
+  .segments::before { background: var(--orange); }
+  .segments .cell-number { background: var(--orange-soft); color: var(--orange); }
+  .segments .cell-title { color: var(--orange); }
+
+  /* Key Metrics */
+  .metrics { grid-column: 3; grid-row: 2; }
+  .metrics::before { background: var(--cyan); }
+  .metrics .cell-number { background: var(--cyan-soft); color: var(--cyan); }
+  .metrics .cell-title { color: var(--cyan); }
+
+  /* Channels */
+  .channels { grid-column: 1 / 3; grid-row: 3; }
+  .channels::before { background: var(--green); }
+  .channels .cell-number { background: var(--green-soft); color: var(--green); }
+  .channels .cell-title { color: var(--green); }
+
+  /* Cost Structure */
+  .costs { grid-column: 3; grid-row: 3; }
+  .costs::before { background: var(--red); }
+  .costs .cell-number { background: var(--red-soft); color: var(--red); }
+  .costs .cell-title { color: var(--red); }
+
+  /* Revenue */
+  .revenue { grid-column: 4 / 6; grid-row: 3; }
+  .revenue::before { background: var(--green); }
+  .revenue .cell-number { background: var(--green-soft); color: var(--green); }
+  .revenue .cell-title { color: var(--green); }
+
+  .highlight-box {
+    background: var(--accent-soft);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+  }
+
+  .highlight-box p {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .revenue-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  .revenue-table th, .revenue-table td {
+    font-size: 11.5px;
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .revenue-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .revenue-table td { color: var(--text-dim); }
+  .revenue-table td strong { color: var(--green); }
+
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  @media print {
+    body { padding: 16px; background: #fff; color: #1a1a1a; }
+    .cell { border: 1px solid #ddd; background: #fafafa; }
+    .cell li { color: #444; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>Lean Canvas</span> — GiroB2B</h1>
+  <p class="subtitle">Marketplace B2B horizontal brasileiro &middot; Modelo de leads por assinatura &middot; v1.0 &middot; Abril 2026</p>
+</div>
+
+<div class="canvas">
+
+  <!-- PROBLEM -->
+  <div class="cell problem">
+    <div class="cell-header">
+      <span class="cell-number">1</span>
+      <span class="cell-title">Problema</span>
+    </div>
+    <ul>
+      <li><strong>Busca B2B fragmentada</strong> — empresas encontram fornecedores por WhatsApp, Google genérico, indicações e feiras. Sem canal centralizado.</li>
+      <li><strong>Fornecedores invisíveis</strong> — 66% das PMEs em fase inicial de digitalização (SEBRAE, 2024). Milhões sem presença online efetiva.</li>
+      <li><strong>Leads caros e imprevisíveis</strong> — feiras custam R$5K-20K/evento; Google Ads B2B custa R$2-15/clique. Sem fluxo previsível de compradores.</li>
+    </ul>
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+      <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Alternativas existentes</span>
+      <ul style="margin-top: 6px;">
+        <li>Grupos de WhatsApp (desorganizado)</li>
+        <li>Google orgânico (sem garantia)</li>
+        <li>Feiras presenciais (caro, sazonal)</li>
+        <li>Diretórios (dados desatualizados)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SOLUTION -->
+  <div class="cell solution">
+    <div class="cell-header">
+      <span class="cell-number">2</span>
+      <span class="cell-title">Solução</span>
+    </div>
+    <ul>
+      <li><strong>SEO programático</strong> — cada produto listado gera uma página indexável no Google. Fornecedor ganha visibilidade digital instantânea, sem custo.</li>
+      <li><strong>Sistema de leads qualificados</strong> — compradores enviam RFQs; fornecedores pagantes acessam dados de contato. Fluxo previsível a custo fixo mensal.</li>
+      <li><strong>Perfis verificados + busca estruturada</strong> — cadastro com validação de CNPJ, filtros por setor e cidade, selo de verificação premium.</li>
+    </ul>
+  </div>
+
+  <!-- UVP -->
+  <div class="cell uvp">
+    <div class="cell-header">
+      <span class="cell-number">3</span>
+      <span class="cell-title">Proposta de Valor</span>
+    </div>
+    <div class="highlight-box">
+      <p>"Liste seus produtos grátis e receba compradores que já estão procurando o que você vende."</p>
+    </div>
+    <div class="highlight-box" style="margin-top: 8px; background: var(--green-soft); border-color: rgba(16, 185, 129, 0.25);">
+      <p>"Encontre e compare fornecedores verificados de qualquer setor, em qualquer cidade. 100% gratuito."</p>
+    </div>
+    <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+      <strong style="color: var(--accent);">High-level concept:</strong><br>
+      "O IndiaMART do Brasil"
+    </div>
+  </div>
+
+  <!-- UNFAIR ADVANTAGE -->
+  <div class="cell unfair">
+    <div class="cell-header">
+      <span class="cell-number">4</span>
+      <span class="cell-title">Vantagem Injusta</span>
+    </div>
+    <ul>
+      <li><strong>Efeito de rede bilateral</strong> — mais fornecedores atraem mais compradores, que atraem mais fornecedores. Auto-reforço após massa crítica.</li>
+      <li><strong>SEO acumulativo</strong> — cada produto = 1 página indexada. 100K produtos = dominância nas buscas B2B no Google Brasil.</li>
+      <li><strong>Dados proprietários de demanda</strong> — o que compradores brasileiros buscam, em que volumes, de quais regiões. Não existe consolidado em lugar nenhum.</li>
+      <li><strong>First-mover</strong> — nenhum player brasileiro opera com o modelo IndiaMART (leads + assinatura + horizontal + freemium).</li>
+    </ul>
+  </div>
+
+  <!-- CUSTOMER SEGMENTS -->
+  <div class="cell segments">
+    <div class="cell-header">
+      <span class="cell-number">5</span>
+      <span class="cell-title">Segmentos</span>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <span class="tag" style="background: var(--orange-soft); color: var(--orange);">PAGA</span>
+      <span style="font-size: 12px; font-weight: 600;">Fornecedores</span>
+    </div>
+    <ul>
+      <li>Micro e pequenas empresas B2B</li>
+      <li><strong>Verticais:</strong> embalagens, alimentos (insumos), construção, têxtil, autopeças</li>
+      <li><strong>Early adopter:</strong> fornecedor que já tentou vender online mas não tem verba para marketing</li>
+    </ul>
+    <div style="margin-top: 14px; margin-bottom: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+      <span class="tag" style="background: var(--green-soft); color: var(--green);">GRÁTIS</span>
+      <span style="font-size: 12px; font-weight: 600;">Compradores</span>
+    </div>
+    <ul>
+      <li>Empresas de qualquer porte</li>
+      <li>Dept. de compras, lojistas, revendedores</li>
+      <li>100% gratuito, sempre</li>
+    </ul>
+    <div style="margin-top: 12px; padding: 8px 10px; background: var(--orange-soft); border-radius: 6px; font-size: 11px; color: var(--orange);">
+      <strong>TAM:</strong> 24,2M empresas ativas no Brasil (Gov. Federal, 2025)
+    </div>
+  </div>
+
+  <!-- KEY METRICS -->
+  <div class="cell metrics">
+    <div class="cell-header">
+      <span class="cell-number">6</span>
+      <span class="cell-title">Métricas-Chave</span>
+    </div>
+    <ul>
+      <li><strong>Fornecedores cadastrados/mês</strong> — meta MVP: 150-300</li>
+      <li><strong>Inquiries/mês</strong> — liquidez do marketplace</li>
+      <li><strong>Conversão free→pago</strong> — meta: 2-3% (benchmark IndiaMART: 2,6%)</li>
+      <li><strong>Buyer:Supplier ratio</strong> — meta: 10:1+ (IndiaMART: 11:1)</li>
+      <li><strong>MRR</strong> — meta 12 meses: R$16K-60K</li>
+    </ul>
+  </div>
+
+  <!-- CHANNELS -->
+  <div class="cell channels">
+    <div class="cell-header">
+      <span class="cell-number">7</span>
+      <span class="cell-title">Canais</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div>
+        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Supply (Fornecedores)</span>
+        <ul style="margin-top: 6px;">
+          <li><strong>Visitação presencial</strong> — polos comerciais SP (Márcio/CCO)</li>
+          <li><strong>SEO programático</strong> — páginas de produto indexadas</li>
+          <li><strong>Parcerias institucionais</strong> — SEBRAE, SENAI, FIESP</li>
+          <li><strong>Indicação entre fornecedores</strong></li>
+        </ul>
+      </div>
+      <div>
+        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Demand (Compradores)</span>
+        <ul style="margin-top: 6px;">
+          <li><strong>SEO programático</strong> — motor principal, custo zero</li>
+          <li><strong>Blog B2B</strong> — long-tail keywords</li>
+          <li><strong>Google Ads</strong> — fase de escala (R$2K-5K/mês)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- COST STRUCTURE -->
+  <div class="cell costs">
+    <div class="cell-header">
+      <span class="cell-number">8</span>
+      <span class="cell-title">Estrutura de Custos</span>
+    </div>
+    <ul>
+      <li><strong>MVP (meses 1-6):</strong> R$0-200/mês (créditos cloud cobrem infraestrutura)</li>
+      <li><strong>Escala (meses 7-18):</strong> R$7,6K-18,5K/mês (infra + marketing + equipe)</li>
+      <li><strong>Break-even:</strong> ~67 fornecedores pagantes</li>
+    </ul>
+    <div style="margin-top: 10px; padding: 8px 10px; background: var(--red-soft); border-radius: 6px; font-size: 11px; color: var(--red);">
+      <strong>Créditos cloud:</strong> US$2.300 garantidos + US$5K em análise
+    </div>
+  </div>
+
+  <!-- REVENUE STREAMS -->
+  <div class="cell revenue">
+    <div class="cell-header">
+      <span class="cell-number">9</span>
+      <span class="cell-title">Fontes de Receita</span>
+    </div>
+    <table class="revenue-table">
+      <thead>
+        <tr>
+          <th>Plano</th>
+          <th>Mensal</th>
+          <th>Anual</th>
+          <th>Leads/sem</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Giro Starter</td>
+          <td><strong>R$79</strong></td>
+          <td>R$790</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>Giro Pro</td>
+          <td><strong>R$199</strong></td>
+          <td>R$1.990</td>
+          <td>15</td>
+        </tr>
+        <tr>
+          <td>Giro Premium</td>
+          <td><strong>R$399</strong></td>
+          <td>R$3.990</td>
+          <td>30+</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 10px; font-size: 11.5px; color: var(--text-dim);">
+      <strong style="color: var(--text);">ARPU estimado:</strong> R$1.440-1.800/ano &middot;
+      <strong style="color: var(--text);">Modelo:</strong> 100% assinaturas, sem comissão
+    </div>
+    <div style="margin-top: 8px; font-size: 11.5px; color: var(--text-dim);">
+      <strong style="color: var(--text);">Benchmark:</strong> IndiaMART FY25: receita ~R$775M-950M (conforme câmbio), margem EBITDA 40%, lucro +65% YoY
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  GiroB2B Plataforma de Negócios Digitais &middot; CNPJ 65.542.877/0001-50 &middot; girob2b.com.br &middot; Abril 2026
+</div>
+
+</body>
+</html>
