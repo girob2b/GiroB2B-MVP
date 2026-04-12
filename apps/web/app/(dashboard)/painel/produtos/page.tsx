@@ -4,9 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, Plus, Pencil } from "lucide-react";
+import { Package, Plus, Pencil, Repeat } from "lucide-react";
 import DeleteProductButton from "./_components/delete-product-button";
 import ImportButton from "./_components/import-button";
+import { ResoldBadge } from "@/components/ui/resold-badge";
 
 export const metadata = { title: "Produtos" };
 
@@ -21,6 +22,7 @@ interface ProductRow {
   price_max_cents: number | null;
   inquiry_count: number;
   views_count: number;
+  is_resold: boolean;
   created_at: string;
 }
 
@@ -45,7 +47,7 @@ export default async function ProdutosPage() {
 
   const { data: productsData } = await supabase
     .from("products")
-    .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, created_at")
+    .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, is_resold, created_at")
     .eq("supplier_id", supplierId)
     .neq("status", "deleted")
     .order("created_at", { ascending: false });
@@ -53,13 +55,17 @@ export default async function ProdutosPage() {
   const products = (productsData as ProductRow[]) ?? [];
 
   const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-    active: { 
-      label: "Ativo", 
-      className: "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" 
+    active: {
+      label: "Ativo",
+      className: "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]"
     },
-    paused: { 
-      label: "Pausado", 
-      className: "bg-slate-50 text-slate-600 border-slate-200" 
+    paused: {
+      label: "Pausado",
+      className: "bg-slate-50 text-slate-600 border-slate-200"
+    },
+    draft: {
+      label: "Rascunho",
+      className: "bg-amber-50 text-amber-700 border-amber-200"
     },
   };
 
@@ -74,6 +80,14 @@ export default async function ProdutosPage() {
         </div>
         <div className="flex items-center gap-2">
           <ImportButton />
+          <Button
+            variant="outline"
+            render={<Link href="/painel/produtos/importar" />}
+            className="rounded-xl h-10 px-5 gap-2 border-slate-200 hover:border-amber-400 hover:text-amber-700"
+          >
+            <Repeat className="w-4 h-4" />
+            Importar de outro fornecedor
+          </Button>
           <Button
             render={<Link href="/painel/produtos/novo" />}
             className="btn-primary rounded-xl h-10 px-5"
@@ -131,9 +145,12 @@ export default async function ProdutosPage() {
                     <div className="flex-1 p-5 min-w-0 flex flex-col justify-center">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 text-lg group-hover:text-[color:var(--brand-green-700)] transition-colors truncate">
-                            {product.name}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-slate-900 text-lg group-hover:text-[color:var(--brand-green-700)] transition-colors truncate">
+                              {product.name}
+                            </p>
+                            {product.is_resold && <ResoldBadge />}
+                          </div>
                           {product.description && (
                             <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
                               {product.description}

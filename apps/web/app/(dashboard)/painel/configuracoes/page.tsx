@@ -21,6 +21,7 @@ interface SupplierSettingsRow {
   plan: string;
   profile_completeness: number;
   is_verified: boolean;
+  allow_relisting: boolean;
 }
 
 export default async function ConfiguracoesPage() {
@@ -55,7 +56,7 @@ export default async function ConfiguracoesPage() {
       .select(
         "id, cnpj, company_name, trade_name, phone, whatsapp, address, cep, city, state, " +
         "inscricao_municipal, inscricao_estadual, situacao_fiscal, " +
-        "plan, profile_completeness, is_verified"
+        "plan, profile_completeness, is_verified, allow_relisting"
       )
       .eq("user_id", user.id)
       .maybeSingle();

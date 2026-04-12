@@ -34,7 +34,7 @@ services:
     container_name: girob2b-app
     working_dir: /repo/apps/web
     ports:
-      - "3000:3000"
+      - "4000:3000"
     env_file:
       - ./apps/web/.env.local
     volumes:
@@ -43,8 +43,8 @@ services:
       - girob2b_web_app_nm:/repo/apps/web/node_modules
       - girob2b_web_next:/repo/apps/web/.next
     environment:
-      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
-      NEXT_PUBLIC_BACKEND_URL: "http://localhost:3001"
+      NEXT_PUBLIC_APP_URL: "http://localhost:4000"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:4001"
       BACKEND_URL: "http://girob2b-backend:3001"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
@@ -62,7 +62,7 @@ services:
     container_name: girob2b-backend
     working_dir: /repo/apps/api
     ports:
-      - "3001:3001"
+      - "4001:3001"
     env_file:
       - ./apps/api/.env
     volumes:

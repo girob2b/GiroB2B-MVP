@@ -46,6 +46,7 @@ export const UpdateSettingsSchema = z.object({
     "simples_nacional","mei","lucro_presumido","lucro_real",
     "lucro_arbitrado","imune","isento","outros",
   ]).nullable().optional(),
+  allow_relisting:     z.boolean().optional(),
 });
 
 export type UpgradeSupplierInput = z.infer<typeof UpgradeSupplierSchema>;

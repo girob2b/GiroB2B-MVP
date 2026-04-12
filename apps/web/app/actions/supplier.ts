@@ -81,6 +81,7 @@ export async function updateCompanySettings(
     inscricao_municipal:  get("inscricao_municipal"),
     inscricao_estadual:   get("inscricao_estadual"),
     situacao_fiscal:      get("situacao_fiscal"),
+    allow_relisting:      formData.get("allow_relisting") === "true",
   };
 
   try {

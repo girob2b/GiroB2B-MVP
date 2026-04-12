@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /c/Users/gusta_kc4a5he/Desktop/GiroB2B-MVP/apps/web/middleware*)"
+    ]
+  }
+}

@@ -63,6 +63,15 @@ export interface UpdateSettingsRequest {
   inscricao_municipal?: string | null;
   inscricao_estadual?: string | null;
   situacao_fiscal?: string | null;
+  allow_relisting?: boolean;
+}
+
+export interface ImportProductRequest {
+  original_product_id: string;
+}
+
+export interface ImportProductResponse {
+  id: string;
 }
 
 export interface SupplierResponse {

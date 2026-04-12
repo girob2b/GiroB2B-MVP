@@ -9,8 +9,19 @@ import {
   validationErrorSchema,
 } from "../lib/api-docs.js";
 import { CreateProductSchema, UpdateProductSchema } from "../schemas/products.schema.js";
-import { createProduct, updateProduct, deleteProduct } from "../services/products.service.js";
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  importProduct,
+  ImportProductError,
+} from "../services/products.service.js";
 import { getSupplierIdForUser } from "../services/supplier.service.js";
+import { z } from "zod";
+
+const ImportProductBodySchema = z.object({
+  original_product_id: z.string().uuid(),
+});
 
 export default async function productRoutes(app: FastifyInstance) {
   // GET /products — lista produtos do fornecedor autenticado
@@ -161,6 +172,57 @@ export default async function productRoutes(app: FastifyInstance) {
     } catch (err) {
       const msg = (err as Error).message;
       return reply.status(msg === "Produto não encontrado." ? 404 : 500).send({ error: msg });
+    }
+  });
+
+  // POST /products/import — importa produto de outro fornecedor (revenda)
+  app.post("/import", {
+    preHandler: app.authenticate,
+    schema: {
+      tags: ["Products"],
+      summary: "Importa imagem + nome de outro produto pro catálogo do revendedor",
+      security: bearerAuth,
+      headers: authHeaderSchema,
+      body: {
+        type: "object",
+        properties: {
+          original_product_id: { type: "string", format: "uuid" },
+        },
+        required: ["original_product_id"],
+      },
+      response: {
+        201: {
+          type: "object",
+          properties: { id: { type: "string", format: "uuid" } },
+          required: ["id"],
+        },
+        400: errorSchema,
+        401: errorSchema,
+        403: errorSchema,
+        404: errorSchema,
+        409: errorSchema,
+        429: errorSchema,
+        500: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const token      = request.headers.authorization!.slice(7);
+    const supplierId = await getSupplierIdForUser(request.userId, token);
+    if (!supplierId) return reply.status(404).send({ error: "Fornecedor não encontrado." });
+
+    const parsed = ImportProductBodySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: "ID do produto original inválido." });
+    }
+
+    try {
+      const result = await importProduct(supplierId, parsed.data.original_product_id, token);
+      return reply.status(201).send(result);
+    } catch (err) {
+      if (err instanceof ImportProductError) {
+        return reply.status(err.statusCode).send({ error: err.message });
+      }
+      return reply.status(500).send({ error: (err as Error).message });
     }
   });
 }

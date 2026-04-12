@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { updateCompanySettings } from "@/app/actions/supplier";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Repeat } from "lucide-react";
 
 const SITUACAO_FISCAL = [
   { value: "simples_nacional", label: "Simples Nacional" },
@@ -38,6 +38,7 @@ interface Supplier {
   plan: string;
   profile_completeness: number;
   is_verified: boolean;
+  allow_relisting: boolean;
 }
 
 function Field({
@@ -216,6 +217,34 @@ export default function ConfigForm({ supplier, userRole }: { supplier: Supplier,
               </Field>
             </div>
           </div>
+        </div>
+
+        {/* Revenda de produtos (opt-in) */}
+        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Repeat className="w-4 h-4 text-amber-600" />
+            <h2 className="text-base font-semibold text-slate-900">Revenda de produtos</h2>
+          </div>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              name="allow_relisting"
+              value="true"
+              defaultChecked={supplier.allow_relisting}
+              className="mt-1 w-4 h-4 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            />
+            <span className="flex-1">
+              <span className="block text-sm font-medium text-slate-800 group-hover:text-slate-900">
+                Permitir que outros fornecedores relistem meus produtos
+              </span>
+              <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
+                Ao ativar, outros fornecedores da plataforma podem copiar a imagem e o nome dos seus produtos para o catálogo deles.
+                Você continua recebendo as suas próprias cotações normalmente — as cópias pertencem a eles. Pode desativar a qualquer momento;
+                cópias já feitas permanecem. Ao ativar, você confirma que possui os direitos de uso das imagens publicadas.
+              </span>
+            </span>
+          </label>
         </div>
 
         {/* Salvar */}

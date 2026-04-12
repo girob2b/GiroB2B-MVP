@@ -10,7 +10,7 @@ export const CreateProductSchema = z.object({
   price_max_cents:  z.number().int().nonnegative().nullable().optional(),
   tags:             z.array(z.string()).nullable().optional(),
   images:           z.array(z.string()).nullable().optional(),
-  status:           z.enum(["active", "paused"]).default("active"),
+  status:           z.enum(["active", "paused", "draft"]).default("active"),
 });
 
 export const UpdateProductSchema = CreateProductSchema.partial();

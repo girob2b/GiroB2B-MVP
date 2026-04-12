@@ -13,7 +13,7 @@ export type Json =
 export type SupplierPlan = "free" | "starter" | "pro" | "premium";
 export type UserRole = "user" | "buyer" | "supplier" | "admin";
 export type UserSegment = "buyer" | "supplier" | "both";
-export type ProductStatus = "active" | "paused" | "deleted";
+export type ProductStatus = "active" | "paused" | "deleted" | "draft";
 export type InquiryStatus = "new" | "viewed" | "responded" | "archived" | "reported";
 export type InquiryType = "directed" | "generic";
 export type PublicProfileSectionKey = "hero" | "about" | "gallery" | "products" | "contact";
@@ -91,6 +91,7 @@ export interface Database {
           public_profile_layout: PublicProfileLayoutItem[] | null;
           suspended: boolean;
           suspension_reason: string | null;
+          allow_relisting: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -128,6 +129,7 @@ export interface Database {
           public_profile_layout?: PublicProfileLayoutItem[] | null;
           suspended?: boolean;
           suspension_reason?: string | null;
+          allow_relisting?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["suppliers"]["Insert"]>;
       };
@@ -150,6 +152,8 @@ export interface Database {
           deleted_at: string | null;
           views_count: number;
           inquiry_count: number;
+          original_product_id: string | null;
+          is_resold: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -168,6 +172,8 @@ export interface Database {
           price_max_cents?: number | null;
           tags?: string[] | null;
           status?: ProductStatus;
+          original_product_id?: string | null;
+          is_resold?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
       };

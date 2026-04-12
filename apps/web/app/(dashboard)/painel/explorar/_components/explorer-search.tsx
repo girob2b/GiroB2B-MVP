@@ -483,7 +483,11 @@ function ProdutoModal({ p, onClose, onCompare, onSupplierSearch, inCompare }: {
       if (hasRealInquiryIds(p)) {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("Sessão expirada. Faça login novamente.");
+        if (!session) {
+          const redirect = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/explorar";
+          router.push(`/cadastro?redirect=${encodeURIComponent(redirect)}`);
+          return;
+        }
 
         const client = apiClient(session.access_token);
         const result = await client.post<CreateInquiryApiResponse>("/inquiries", {
@@ -535,6 +539,13 @@ function ProdutoModal({ p, onClose, onCompare, onSupplierSearch, inCompare }: {
 
   async function handleDirectContact() {
     if (!hasRealInquiryIds(p)) return;
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const redirect = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/explorar";
+      router.push(`/cadastro?redirect=${encodeURIComponent(redirect)}`);
+      return;
+    }
     setDirectContactLoading(true);
     try {
       const convResult = await createOrGetConversation({
@@ -858,6 +869,7 @@ function Pagination({ page, total, pageSize, onChange }: {
 }
 
 function IntegrationSuggestionCard({ query, categorySlug }: { query: string, categorySlug?: string }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -869,7 +881,8 @@ function IntegrationSuggestionCard({ query, categorySlug }: { query: string, cat
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError("Sessão expirada. Faça login novamente.");
+        const redirect = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/explorar";
+        router.push(`/cadastro?redirect=${encodeURIComponent(redirect)}`);
         return;
       }
 
@@ -939,9 +952,11 @@ export default function ExplorerSearch() {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
+  const initialCategoria = searchParams.get("categoria");
   const [filters, setFilters]         = useState<Filters>({
     ...DEFAULT_FILTERS,
-    query: searchParams.get("empresa") ?? "",
+    query: searchParams.get("empresa") ?? searchParams.get("q") ?? "",
+    categorias: initialCategoria ? [initialCategoria] : [],
   });
   const [page,        setPage]        = useState(1);
   const [view,        setView]        = useState<"list" | "grid">("list");
