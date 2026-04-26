@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Confirme seu email" };
 
 export default function ConfirmarEmailCompradorPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-5">
+    <div className="min-h-screen flex items-center justify-center bg-surface px-5">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="mx-auto w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center">
           <MailCheck className="w-10 h-10 text-blue-600" />

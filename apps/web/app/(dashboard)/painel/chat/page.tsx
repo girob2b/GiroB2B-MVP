@@ -42,15 +42,14 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
 
   const userId = authData.user.id;
 
-  const [profileRes, buyerRes, supplierRes] = await Promise.all([
-    supabase.from("user_profiles").select("role").eq("id", userId).single(),
+  const [buyerRes, supplierRes] = await Promise.all([
     supabase.from("buyers").select("id").eq("user_id", userId).maybeSingle(),
     supabase.from("suppliers").select("id").eq("user_id", userId).maybeSingle(),
   ]);
 
-  const role = profileRes.data?.role ?? "buyer";
-  const buyerId = buyerRes.data?.id ?? null;
+  const buyerId    = buyerRes.data?.id    ?? null;
   const supplierId = supplierRes.data?.id ?? null;
+  const role       = supplierRes.data ? (buyerRes.data ? "both" : "supplier") : "buyer";
 
   // Carrega conversas iniciais do servidor
   let initialConversations: ConversationSummary[] = [];

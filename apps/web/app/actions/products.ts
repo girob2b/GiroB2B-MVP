@@ -24,6 +24,8 @@ function parseProductFormData(formData: FormData) {
   const tags_raw = formData.get("tags") as string | null;
   const images = formData.getAll("images").filter(Boolean) as string[];
   const status = (formData.get("status") as string) || "active";
+  const visibility_raw = (formData.get("visibility") as string) || "global";
+  const visibility = ["global", "chat_only"].includes(visibility_raw) ? visibility_raw : "global";
 
   return {
     name,
@@ -36,6 +38,7 @@ function parseProductFormData(formData: FormData) {
     tags: tags_raw ? tags_raw.split(",").map((t) => t.trim()).filter(Boolean) : null,
     images: images.length > 0 ? images : null,
     status,
+    visibility,
   };
 }
 

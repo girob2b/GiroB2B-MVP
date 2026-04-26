@@ -5,19 +5,20 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Globe, MapPin, MessageSquare, Phone } from "lucide-react";
+import { ExternalLink, Globe, MapPin, MessageSquare, Phone, FileText, ImageIcon, Download } from "lucide-react";
 
 export const metadata = { title: "Perfil do Fornecedor" };
 
-type PublicBlockKey = "hero" | "about" | "gallery" | "products" | "contact";
+type PublicBlockKey = "hero" | "about" | "gallery" | "products" | "catalogo" | "contact";
 type PublicBlock = { key: PublicBlockKey; enabled: boolean };
 
 const DEFAULT_LAYOUT: PublicBlock[] = [
-  { key: "hero", enabled: true },
-  { key: "about", enabled: true },
-  { key: "gallery", enabled: true },
+  { key: "hero",     enabled: true },
+  { key: "about",    enabled: true },
+  { key: "gallery",  enabled: true },
   { key: "products", enabled: true },
-  { key: "contact", enabled: true },
+  { key: "catalogo", enabled: true },
+  { key: "contact",  enabled: true },
 ];
 
 interface SupplierPublicRow {
@@ -54,8 +55,17 @@ interface ProductRow {
   price_max_cents: number | null;
 }
 
+interface CatalogFileRow {
+  id: string;
+  title: string | null;
+  file_url: string;
+  file_name: string;
+  file_size: number | null;
+  file_type: string;
+}
+
 function isPublicBlockKey(key: unknown): key is PublicBlockKey {
-  return key === "hero" || key === "about" || key === "gallery" || key === "products" || key === "contact";
+  return key === "hero" || key === "about" || key === "gallery" || key === "products" || key === "catalogo" || key === "contact";
 }
 
 function isMissingColumnError(error: unknown) {
@@ -67,20 +77,32 @@ function isMissingColumnError(error: unknown) {
   );
 }
 
-function normalizeLayout(raw: unknown): PublicBlock[] {
-  if (!Array.isArray(raw)) return DEFAULT_LAYOUT;
+// Blocks que sempre ficam visíveis na página pública — garantem que o perfil
+// não fica em branco se o supplier desabilitou tudo, e protegem informação
+// mínima (identidade + contato) que faz o SEO existir.
+const ALWAYS_ENABLED: ReadonlySet<PublicBlockKey> = new Set(["hero", "contact"]);
 
-  const next: PublicBlock[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const record = item as { key?: unknown; enabled?: unknown };
-    const key = record.key;
-    const enabled = record.enabled;
-    if (isPublicBlockKey(key)) {
-      next.push({ key, enabled: enabled !== false });
+function normalizeLayout(raw: unknown): PublicBlock[] {
+  // Coleta o que veio do banco como mapa key → enabled (preserva a escolha do user
+  // mas, abaixo, mescla com o DEFAULT_LAYOUT pra adicionar blocks novos
+  // que não existiam quando o supplier salvou o layout — ex: 'catalogo' chegou depois).
+  const fromDb = new Map<PublicBlockKey, boolean>();
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (!item || typeof item !== "object") continue;
+      const record = item as { key?: unknown; enabled?: unknown };
+      if (isPublicBlockKey(record.key)) {
+        fromDb.set(record.key, record.enabled !== false);
+      }
     }
   }
-  return next.length ? next : DEFAULT_LAYOUT;
+
+  return DEFAULT_LAYOUT.map(({ key, enabled: defaultEnabled }) => ({
+    key,
+    enabled: ALWAYS_ENABLED.has(key)
+      ? true
+      : (fromDb.has(key) ? fromDb.get(key)! : defaultEnabled),
+  }));
 }
 
 function formatPhoneForWhatsApp(phone: string) {
@@ -119,15 +141,24 @@ export default async function FornecedorPublicoPage({
 
   if (!supplier) notFound();
 
-  const { data: productsData } = await supabase
-    .from("products")
-    .select("id, name, slug, description, images, price_min_cents, price_max_cents")
-    .eq("supplier_id", supplier.id)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(12);
+  const [productsRes, catalogRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, slug, description, images, price_min_cents, price_max_cents")
+      .eq("supplier_id", supplier.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("supplier_catalogs")
+      .select("id, title, file_url, file_name, file_size, file_type")
+      .eq("supplier_id", supplier.id)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false }),
+  ]);
 
-  const products = (productsData as ProductRow[] | null) ?? [];
+  const products     = (productsRes.data as ProductRow[] | null) ?? [];
+  const catalogFiles = (catalogRes.data  as CatalogFileRow[] | null) ?? [];
   const layout = normalizeLayout(supplier.public_profile_layout).filter((b) => b.enabled);
   const categories = supplier.categories ?? [];
   const photos = supplier.photos ?? [];
@@ -296,7 +327,11 @@ export default async function FornecedorPublicoPage({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.map((p) => (
-              <div key={p.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-shadow">
+              <Link
+                key={p.id}
+                href={`/produto/${p.slug}`}
+                className="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-shadow block"
+              >
                 <div className="relative h-40 bg-slate-50">
                   {p.images?.[0] ? (
                     <Image src={p.images[0]} alt={p.name} fill className="object-cover" unoptimized />
@@ -308,7 +343,7 @@ export default async function FornecedorPublicoPage({
                   <div className="font-bold text-slate-900 line-clamp-1">{p.name}</div>
                   {p.description && <div className="text-sm text-slate-500 line-clamp-2">{p.description}</div>}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -358,11 +393,76 @@ export default async function FornecedorPublicoPage({
     </Card>
   );
 
+  function formatFileSize(bytes: number | null): string {
+    if (!bytes) return "";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  const catalogoBlock = (
+    <Card id="catalogo" className="border-slate-200 rounded-3xl overflow-hidden">
+      <CardHeader className="border-b border-slate-100 bg-slate-50/30">
+        <CardTitle className="text-lg font-bold">Catálogo</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {catalogFiles.length === 0 ? (
+          <div className="space-y-3">
+            <p className="text-slate-500 text-sm">Este fornecedor ainda não publicou um catálogo.</p>
+            {supplier.whatsapp && (
+              <Button
+                render={
+                  <Link
+                    href={`https://wa.me/${supplier.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Vi seu perfil na GiroB2B e gostaria de receber seu catálogo de produtos.")}`}
+                    target="_blank"
+                  />
+                }
+                variant="outline"
+                className="rounded-xl"
+                size="sm"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Solicitar catálogo via WhatsApp
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {catalogFiles.map((f) => (
+              <a
+                key={f.id}
+                href={f.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)] transition-colors group"
+              >
+                {f.file_type === "pdf"
+                  ? <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                  : <ImageIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-800 truncate">
+                    {f.title ?? f.file_name}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {f.file_type === "pdf" ? "PDF" : "Imagem"}
+                    {f.file_size ? ` · ${formatFileSize(f.file_size)}` : ""}
+                  </p>
+                </div>
+                <Download className="w-4 h-4 text-slate-400 group-hover:text-[color:var(--brand-green-600)] shrink-0 transition-colors" />
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   const blockMap = {
     hero: header,
     about,
     gallery,
     products: productsBlock,
+    catalogo: catalogoBlock,
     contact,
   } as const;
 

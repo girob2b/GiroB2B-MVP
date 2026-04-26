@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { updateCompanySettings } from "@/app/actions/supplier";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Loader2, Repeat } from "lucide-react";
+import { CheckCircle2, Loader2, Repeat } from "lucide-react";
 
 const SITUACAO_FISCAL = [
   { value: "simples_nacional", label: "Simples Nacional" },
@@ -75,6 +76,11 @@ function Field({
 export default function ConfigForm({ supplier, userRole }: { supplier: Supplier, userRole?: string }) {
   const [state, action, pending] = useActionState(updateCompanySettings, {});
 
+  useEffect(() => {
+    if (state.success) toast.success("Informações salvas com sucesso.");
+    if (state.error) toast.error(state.error);
+  }, [state]);
+
   const ROLE_LABELS: Record<string, string> = {
     buyer: "Comprador",
     supplier: "Vendedor",
@@ -142,113 +148,111 @@ export default function ConfigForm({ supplier, userRole }: { supplier: Supplier,
       {/* ── Formulário ── */}
       <form action={action} className="space-y-6">
 
-        {/* Feedback */}
-        {state.success && (
-          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-700)]">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            Informações salvas com sucesso.
-          </div>
-        )}
-        {state.error && (
-          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {state.error}
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Coluna esquerda */}
+          <div className="space-y-6">
 
-        {/* Identificação */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-900">Identificação</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="CNPJ" name="cnpj" defaultValue={supplier.cnpj} readOnly />
-            <Field label="Razão social" name="company_name" defaultValue={supplier.company_name} readOnly />
-            <Field label="Nome fantasia" name="trade_name" defaultValue={supplier.trade_name} readOnly
-              placeholder="Nome comercial" />
-            <Field label="Telefone" name="phone" defaultValue={supplier.phone} placeholder="(11) 99999-9999" />
-            <Field label="WhatsApp" name="whatsapp" defaultValue={supplier.whatsapp} placeholder="(11) 99999-9999" />
-          </div>
-          <p className="text-xs text-slate-400">CNPJ, razão social e nome fantasia não podem ser alterados aqui. Entre em contato com o suporte.</p>
-        </div>
-
-        {/* Endereço */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-900">Endereço</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <Field label="Logradouro" name="address" defaultValue={supplier.address} placeholder="Rua, número, complemento" />
+            {/* Identificação */}
+            <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+              <h2 className="text-base font-semibold text-slate-900">Identificação</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="CNPJ" name="cnpj" defaultValue={supplier.cnpj} readOnly />
+                <Field label="Razão social" name="company_name" defaultValue={supplier.company_name} readOnly />
+                <Field label="Nome fantasia" name="trade_name" defaultValue={supplier.trade_name} readOnly
+                  placeholder="Nome comercial" />
+                <Field label="Telefone" name="phone" defaultValue={supplier.phone} placeholder="(11) 99999-9999" />
+                <Field label="WhatsApp" name="whatsapp" defaultValue={supplier.whatsapp} placeholder="(11) 99999-9999" />
+              </div>
+              <p className="text-xs text-slate-400">CNPJ, razão social e nome fantasia não podem ser alterados aqui. Entre em contato com o suporte.</p>
             </div>
-            <Field label="CEP" name="cep" defaultValue={supplier.cep} placeholder="00000-000" />
-            <Field label="Cidade" name="city" defaultValue={supplier.city} placeholder="São Paulo" />
-            <Field label="Estado" name="state" defaultValue={supplier.state}>
-              <select
-                id="state"
-                name="state"
-                defaultValue={supplier.state ?? ""}
-                className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
-              >
-                <option value="">Selecione o estado</option>
-                {ESTADOS.map(uf => (
-                  <option key={uf} value={uf}>{uf}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-        </div>
 
-        {/* Dados fiscais */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-900">Dados fiscais</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Inscrição Municipal" name="inscricao_municipal" defaultValue={supplier.inscricao_municipal} placeholder="000000-0" />
-            <Field label="Inscrição Estadual" name="inscricao_estadual" defaultValue={supplier.inscricao_estadual} placeholder="000.000.000.000" />
-            <div className="sm:col-span-2">
-              <Field label="Regime tributário / Situação fiscal" name="situacao_fiscal" defaultValue={supplier.situacao_fiscal ?? ""}>
-                <select
-                  id="situacao_fiscal"
-                  name="situacao_fiscal"
-                  defaultValue={supplier.situacao_fiscal ?? ""}
-                  className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
-                >
-                  <option value="">Selecione o regime tributário</option>
-                  {SITUACAO_FISCAL.map(sf => (
-                    <option key={sf.value} value={sf.value}>{sf.label}</option>
-                  ))}
-                </select>
-              </Field>
+            {/* Dados fiscais */}
+            <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+              <h2 className="text-base font-semibold text-slate-900">Dados fiscais</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Inscrição Municipal" name="inscricao_municipal" defaultValue={supplier.inscricao_municipal} placeholder="000000-0" />
+                <Field label="Inscrição Estadual" name="inscricao_estadual" defaultValue={supplier.inscricao_estadual} placeholder="000.000.000.000" />
+                <div className="sm:col-span-2">
+                  <Field label="Regime tributário / Situação fiscal" name="situacao_fiscal" defaultValue={supplier.situacao_fiscal ?? ""}>
+                    <select
+                      id="situacao_fiscal"
+                      name="situacao_fiscal"
+                      defaultValue={supplier.situacao_fiscal ?? ""}
+                      className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
+                    >
+                      <option value="">Selecione o regime tributário</option>
+                      {SITUACAO_FISCAL.map(sf => (
+                        <option key={sf.value} value={sf.value}>{sf.label}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Revenda de produtos (opt-in) */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <Repeat className="w-4 h-4 text-amber-600" />
-            <h2 className="text-base font-semibold text-slate-900">Revenda de produtos</h2>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              name="allow_relisting"
-              value="true"
-              defaultChecked={supplier.allow_relisting}
-              className="mt-1 w-4 h-4 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
-            />
-            <span className="flex-1">
-              <span className="block text-sm font-medium text-slate-800 group-hover:text-slate-900">
-                Permitir que outros fornecedores relistem meus produtos
-              </span>
-              <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
-                Ao ativar, outros fornecedores da plataforma podem copiar a imagem e o nome dos seus produtos para o catálogo deles.
-                Você continua recebendo as suas próprias cotações normalmente — as cópias pertencem a eles. Pode desativar a qualquer momento;
-                cópias já feitas permanecem. Ao ativar, você confirma que possui os direitos de uso das imagens publicadas.
-              </span>
-            </span>
-          </label>
+          {/* Coluna direita */}
+          <div className="space-y-6">
+
+            {/* Endereço */}
+            <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+              <h2 className="text-base font-semibold text-slate-900">Endereço</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Field label="Logradouro" name="address" defaultValue={supplier.address} placeholder="Rua, número, complemento" />
+                </div>
+                <Field label="CEP" name="cep" defaultValue={supplier.cep} placeholder="00000-000" />
+                <Field label="Cidade" name="city" defaultValue={supplier.city} placeholder="São Paulo" />
+                <Field label="Estado" name="state" defaultValue={supplier.state}>
+                  <select
+                    id="state"
+                    name="state"
+                    defaultValue={supplier.state ?? ""}
+                    className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
+                  >
+                    <option value="">Selecione o estado</option>
+                    {ESTADOS.map(uf => (
+                      <option key={uf} value={uf}>{uf}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            </div>
+
+            {/* Revenda de produtos (opt-in) */}
+            <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-amber-600" />
+                <h2 className="text-base font-semibold text-slate-900">Revenda de produtos</h2>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  name="allow_relisting"
+                  value="true"
+                  defaultChecked={supplier.allow_relisting}
+                  className="mt-1 w-4 h-4 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                />
+                <span className="flex-1">
+                  <span className="block text-sm font-medium text-slate-800 group-hover:text-slate-900">
+                    Permitir que outros fornecedores relistem meus produtos
+                  </span>
+                  <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
+                    Ao ativar, outros fornecedores da plataforma podem copiar a imagem e o nome dos seus produtos para o catálogo deles.
+                    Você continua recebendo as suas próprias cotações normalmente — as cópias pertencem a eles. Pode desativar a qualquer momento;
+                    cópias já feitas permanecem. Ao ativar, você confirma que possui os direitos de uso das imagens publicadas.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+          </div>
         </div>
 
         {/* Salvar */}
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-2">
           <Button
             type="submit"
             disabled={pending}

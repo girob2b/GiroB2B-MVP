@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -35,30 +36,26 @@ export default function BuyerRegisterForm() {
   const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""]);
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const codeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setErrorMessage(null);
-    setHelperMessage(null);
+    setFormError(null);
 
     if (!email.trim()) {
-      setErrorMessage("Informe um email válido para continuar.");
+      setFormError("Informe um email válido para continuar.");
       setSubmitting(false);
       return;
     }
-
     if (password.length < 8) {
-      setErrorMessage("A senha precisa ter pelo menos 8 caracteres.");
+      setFormError("A senha precisa ter pelo menos 8 caracteres.");
       setSubmitting(false);
       return;
     }
-
     if (password !== confirmPassword) {
-      setErrorMessage("As senhas não coincidem.");
+      setFormError("As senhas não coincidem. Confira a confirmação.");
       setSubmitting(false);
       return;
     }
@@ -67,17 +64,15 @@ export default function BuyerRegisterForm() {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        emailRedirectTo: getSignupRedirectUrl(),
-      },
+      options: { emailRedirectTo: getSignupRedirectUrl() },
     });
 
     if (error) {
-      if (error.message.includes("already registered")) {
-        setErrorMessage("Este email já está cadastrado. Faça login para continuar.");
-      } else {
-        setErrorMessage("Não foi possível criar sua conta agora. Tente novamente em instantes.");
-      }
+      toast.error(
+        error.message.includes("already registered")
+          ? "Este email já está cadastrado. Faça login para continuar."
+          : "Não foi possível criar sua conta agora. Tente novamente em instantes."
+      );
       setSubmitting(false);
       return;
     }
@@ -85,68 +80,58 @@ export default function BuyerRegisterForm() {
     if (data.session) {
       await supabase.auth.signOut({ scope: "local" });
       setStep("success");
-      setHelperMessage("Conta criada com sucesso. Agora você já pode entrar.");
+      toast.success("Conta criada! Agora você já pode entrar.");
       setSubmitting(false);
       return;
     }
 
     setStep("verify");
-    setHelperMessage("Enviamos um código para o seu email. Digite os 6 números para concluir.");
+    toast.success("Código enviado! Verifique seu email.");
     setSubmitting(false);
   }
 
   async function handleVerifyCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setErrorMessage(null);
 
     const token = verificationCode.join("");
     if (token.length !== 6) {
-      setErrorMessage("Digite os 6 numeros do codigo de verificacao.");
+      toast.error("Digite os 6 dígitos do código de verificação.");
       setSubmitting(false);
       return;
     }
 
     const supabase = createClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token,
-      type: "email",
-    });
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: "email" });
 
     if (error) {
-      setErrorMessage("Codigo invalido ou expirado. Solicite um novo envio e tente novamente.");
+      toast.error("Código inválido ou expirado. Solicite um novo envio.");
       setSubmitting(false);
       return;
     }
 
     await supabase.auth.signOut({ scope: "local" });
     setStep("success");
-    setHelperMessage("Email verificado com sucesso. Agora faca login para continuar.");
+    toast.success("Email verificado! Faça login para continuar.");
     setSubmitting(false);
   }
 
   async function handleResendCode() {
     setResending(true);
-    setErrorMessage(null);
-    setHelperMessage(null);
-
     const supabase = createClient();
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
-      options: {
-        emailRedirectTo: getSignupRedirectUrl(),
-      },
+      options: { emailRedirectTo: getSignupRedirectUrl() },
     });
 
     if (error) {
-      setErrorMessage("Nao foi possivel reenviar o codigo agora. Tente novamente em instantes.");
+      toast.error("Não foi possível reenviar o código. Tente novamente.");
       setResending(false);
       return;
     }
 
-    setHelperMessage("Enviamos um novo codigo para o seu email.");
+    toast.success("Novo código enviado para o seu email.");
     setResending(false);
   }
 
@@ -183,45 +168,19 @@ export default function BuyerRegisterForm() {
     codeInputRefs.current[nextFocusIndex]?.focus();
   }
 
-  function renderAlert() {
-    if (errorMessage) {
-      return (
-        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">
-          <p className="text-sm font-medium text-destructive">{errorMessage}</p>
-        </div>
-      );
-    }
-
-    if (helperMessage) {
-      return (
-        <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3">
-          <p className="text-sm font-medium text-[color:var(--brand-green-700)]">{helperMessage}</p>
-        </div>
-      );
-    }
-
-    return null;
-  }
-
   if (step === "success") {
     return (
       <Card className="w-full max-w-lg border border-[color:var(--brand-green-100)] shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--brand-green-100)]">
-            <CheckCircle2 className="h-8 w-8 text-[color:var(--brand-green-600)]" />
+        <CardHeader className="space-y-2 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-green-100)]">
+            <CheckCircle2 className="h-6 w-6 text-[color:var(--brand-green-600)]" />
           </div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--brand-green-700)]">
-            Cadastro concluido
-          </p>
-          <CardTitle className="text-3xl font-bold leading-tight">
-            Tudo certo por aqui
-          </CardTitle>
-          <CardDescription className="text-base leading-relaxed">
-            Seu acesso inicial foi preparado. O proximo passo e entrar na plataforma com seu email e senha.
+          <CardTitle className="text-xl font-semibold">Cadastro concluído</CardTitle>
+          <CardDescription className="text-sm leading-relaxed">
+            Entre com seu email e senha para continuar.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          {renderAlert()}
           <Button
             render={<Link href="/login?status=cadastro_concluido" />}
             size="lg"
@@ -236,26 +195,18 @@ export default function BuyerRegisterForm() {
 
   return (
     <Card className="w-full max-w-lg border border-[color:var(--brand-green-100)] shadow-xl">
-      <CardHeader className="space-y-2 pb-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] text-xl font-bold text-white">
-          G
-        </div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--brand-green-700)]">
-          {step === "form" ? "Criar conta" : "Confirmar email"}
-        </p>
-        <CardTitle className="text-2xl font-bold leading-tight">
-          {step === "form" ? "Comece com seu acesso" : "Digite o codigo enviado"}
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-xl font-semibold">
+          {step === "form" ? "Criar conta" : "Confirme seu email"}
         </CardTitle>
-        <CardDescription className="text-sm leading-relaxed">
+        <CardDescription className="text-sm">
           {step === "form"
-            ? "Nesta etapa inicial vamos cuidar do seu cadastro basico. Depois seguimos para as proximas experiencias da plataforma."
-            : "Enviamos um codigo de verificacao para o email cadastrado. Se o seu provedor mostrar um botao em vez do codigo, voce tambem pode confirmar pelo link recebido."}
+            ? "Preencha os dados abaixo para começar."
+            : "Digite o código de 6 dígitos enviado para o seu email."}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-5">
-        {renderAlert()}
-
         {step === "form" ? (
           <form onSubmit={handleRegister} className="space-y-5">
             <section className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -267,12 +218,11 @@ export default function BuyerRegisterForm() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="voce@empresa.com"
+                  placeholder="você@empresa.com"
                   autoComplete="email"
                   className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-700)] focus-visible:ring-[color:var(--brand-green-100)]"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  required
                 />
               </div>
 
@@ -285,13 +235,11 @@ export default function BuyerRegisterForm() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Minimo de 8 caracteres"
+                    placeholder="Mínimo de 8 caracteres"
                     autoComplete="new-password"
                     className="h-11 border-slate-200 pr-12 focus-visible:border-[color:var(--brand-green-700)] focus-visible:ring-[color:var(--brand-green-100)]"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    required
-                    minLength={8}
                   />
                   <button
                     type="button"
@@ -315,8 +263,6 @@ export default function BuyerRegisterForm() {
                     className="h-11 border-slate-200 pr-12 focus-visible:border-[color:var(--brand-green-700)] focus-visible:ring-[color:var(--brand-green-100)]"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    required
-                    minLength={8}
                   />
                   <button
                     type="button"
@@ -334,15 +280,17 @@ export default function BuyerRegisterForm() {
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand-green-700)]" />
                 <p>
-                  Ao continuar, enviaremos um codigo de confirmacao para validar seu email antes do primeiro login.
+                  Ao continuar, enviaremos um código de confirmação para validar seu email antes do primeiro login.
                 </p>
               </div>
             </div>
 
+            {formError && <div className="alert-error text-xs">{formError}</div>}
+
             <Button
               type="submit"
               size="lg"
-              className="h-12 w-full bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] text-base font-semibold text-white hover:opacity-95"
+              className="btn-primary h-12 w-full text-base"
               disabled={submitting}
             >
               {submitting ? (
@@ -351,7 +299,7 @@ export default function BuyerRegisterForm() {
                   Criando conta...
                 </span>
               ) : (
-                "Enviar codigo de verificacao"
+                "Enviar código de verificação"
               )}
             </Button>
           </form>
@@ -391,13 +339,13 @@ export default function BuyerRegisterForm() {
             <Button
               type="submit"
               size="lg"
-              className="h-12 w-full bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] text-base font-semibold text-white hover:opacity-95"
+              className="btn-primary h-12 w-full text-base"
               disabled={submitting}
             >
               {submitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Validando codigo...
+                  Validando código...
                 </span>
               ) : (
                 "Concluir cadastro"
@@ -413,7 +361,7 @@ export default function BuyerRegisterForm() {
                 onClick={handleResendCode}
               >
                 <RefreshCw className={resending ? "animate-spin" : undefined} />
-                {resending ? "Reenviando..." : "Reenviar codigo"}
+                {resending ? "Reenviando..." : "Reenviar código"}
               </Button>
               <Button
                 type="button"
@@ -422,8 +370,6 @@ export default function BuyerRegisterForm() {
                 onClick={() => {
                   setStep("form");
                   setVerificationCode(["", "", "", "", "", ""]);
-                  setHelperMessage(null);
-                  setErrorMessage(null);
                 }}
               >
                 <ArrowLeft />
@@ -435,7 +381,7 @@ export default function BuyerRegisterForm() {
 
         <div className="space-y-3 text-center text-sm text-muted-foreground">
           <p>
-            Ja tem conta?{" "}
+            Já tem conta?{" "}
             <Link
               href="/login"
               className="font-semibold text-[color:var(--brand-green-700)] hover:underline underline-offset-4"

@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import RecuperarSenhaForm from "./recuperar-senha-form";
+import { GiroLogo } from "@/components/ui/giro-logo";
 
 export const metadata: Metadata = { title: "Recuperar Senha" };
 
 export default function RecuperarSenhaPage() {
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-      <div className="flex items-center justify-center px-5 py-12 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_45%),linear-gradient(180deg,_#ffffff_0%,_#f8fffc_100%)]">
+      <div className="flex items-center justify-center px-5 py-12 bg-[radial-gradient(circle_at_top,rgba(10,92,92,0.10),transparent_45%),linear-gradient(180deg,#ffffff_0%,var(--brand-surface)_100%)]">
         <RecuperarSenhaForm />
       </div>
 
       <div className="hidden md:flex items-center justify-center bg-[linear-gradient(155deg,var(--brand-green-600)_0%,var(--brand-green-700)_48%,var(--brand-green-800)_100%)] text-white px-12">
         <div className="max-w-md space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl font-bold">
-            G
-          </div>
+          <GiroLogo variant="light" iconOnly size={64} />
           <p className="text-sm font-semibold tracking-widest uppercase opacity-80">
             Suporte de acesso
           </p>

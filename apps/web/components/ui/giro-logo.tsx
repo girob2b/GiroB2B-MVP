@@ -5,12 +5,30 @@ interface GiroLogoProps {
   className?: string;
   /** Se true, mostra só o ícone sem o texto "GiroB2B" */
   iconOnly?: boolean;
+  /** Variante de contraste: "dark" = anel dourado sobre teal; "light" = anel dourado sobre off-white; "mono" = grafite. */
+  variant?: "dark" | "light" | "mono";
 }
 
-export function GiroLogo({ size = 32, className, iconOnly = false }: GiroLogoProps) {
+/**
+ * Anel partido (B3 — BRIEF_MARCA 2026-04-17).
+ * - Fundo arredondado em teal profundo (dark) / off-white (light).
+ * - Anel espesso em dourado queimado, com 3 cortes (sugere "giro em movimento").
+ */
+export function GiroLogo({
+  size = 32,
+  className,
+  iconOnly = false,
+  variant = "dark",
+}: GiroLogoProps) {
+  const palette =
+    variant === "light"
+      ? { bg: "#F4F1EA", ring: "#C08A2E", text: "#0A5C5C" }
+      : variant === "mono"
+      ? { bg: "transparent", ring: "#1A1F1F", text: "#1A1F1F" }
+      : { bg: "#0A5C5C", ring: "#C08A2E", text: "#0A5C5C" };
+
   return (
     <span className={cn("inline-flex items-center gap-2 select-none", className)}>
-      {/* Ícone SVG */}
       <svg
         width={size}
         height={size}
@@ -19,43 +37,32 @@ export function GiroLogo({ size = 32, className, iconOnly = false }: GiroLogoPro
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <defs>
-          <linearGradient id="giro-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#16a34a" />
-            <stop offset="1" stopColor="#15803d" />
-          </linearGradient>
-        </defs>
+        {variant !== "mono" && <rect width="40" height="40" rx="10" fill={palette.bg} />}
 
-        {/* Fundo arredondado */}
-        <rect width="40" height="40" rx="10" fill="url(#giro-grad)" />
-
-        {/* Letra G estilizada */}
-        <path
-          d="M22.5 12C17.806 12 14 15.806 14 20.5C14 25.194 17.806 29 22.5 29C25.416 29 28 27.614 29.618 25.424L29.656 25.37V20.5H22.5V22.5H27.5V24.756C26.308 26.148 24.506 27 22.5 27C18.91 27 16 24.09 16 20.5C16 16.91 18.91 14 22.5 14C24.242 14 25.822 14.69 27 15.81L28.42 14.39C26.866 12.9 24.788 12 22.5 12Z"
-          fill="white"
-        />
-
-        {/* Seta circular pequena (topo direito — representa "giro") */}
-        <path
-          d="M30 9 C32.5 9 34.5 11 34.5 13.5"
-          stroke="white"
-          strokeWidth="1.8"
-          strokeLinecap="round"
+        {/* Anel partido — 3 arcos com gaps simétricos sugerindo rotação. */}
+        {/* Cada arco = 90° útil + 30° de gap. Stroke espesso, terminais arredondados. */}
+        <g
           fill="none"
-          opacity="0.75"
-        />
-        <polygon
-          points="34.5,11 34.5,15.5 30.5,13.5"
-          fill="white"
-          opacity="0.75"
-        />
+          stroke={palette.ring}
+          strokeWidth="3.6"
+          strokeLinecap="round"
+          transform="rotate(-18 20 20)"
+        >
+          {/* Arco 1 */}
+          <path d="M 32 20 A 12 12 0 0 0 26 9.6" />
+          {/* Arco 2 */}
+          <path d="M 20 32 A 12 12 0 0 0 30.4 26" />
+          {/* Arco 3 */}
+          <path d="M 8 20 A 12 12 0 0 0 14 30.4" />
+          {/* Arco 4 (fechamento curto) */}
+          <path d="M 13.6 9.6 A 12 12 0 0 0 8 20" strokeOpacity="0" />
+        </g>
       </svg>
 
-      {/* Nome */}
       {!iconOnly && (
         <span
-          style={{ fontSize: size * 0.56, lineHeight: 1 }}
-          className="font-bold tracking-tight text-foreground"
+          style={{ fontSize: size * 0.56, lineHeight: 1, letterSpacing: "-0.03em", color: palette.text }}
+          className="font-bold"
         >
           GiroB2B
         </span>

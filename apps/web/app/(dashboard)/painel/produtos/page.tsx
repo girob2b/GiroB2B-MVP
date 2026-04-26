@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Package, Plus, Pencil, Repeat } from "lucide-react";
 import DeleteProductButton from "./_components/delete-product-button";
 import ImportButton from "./_components/import-button";
-import { ResoldBadge } from "@/components/ui/resold-badge";
 
 export const metadata = { title: "Produtos" };
 
@@ -22,7 +21,6 @@ interface ProductRow {
   price_max_cents: number | null;
   inquiry_count: number;
   views_count: number;
-  is_resold: boolean;
   created_at: string;
 }
 
@@ -47,7 +45,7 @@ export default async function ProdutosPage() {
 
   const { data: productsData } = await supabase
     .from("products")
-    .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, is_resold, created_at")
+    .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, created_at")
     .eq("supplier_id", supplierId)
     .neq("status", "deleted")
     .order("created_at", { ascending: false });
@@ -149,7 +147,6 @@ export default async function ProdutosPage() {
                             <p className="font-bold text-slate-900 text-lg group-hover:text-[color:var(--brand-green-700)] transition-colors truncate">
                               {product.name}
                             </p>
-                            {product.is_resold && <ResoldBadge />}
                           </div>
                           {product.description && (
                             <p className="text-sm text-muted-foreground line-clamp-1 mt-1">

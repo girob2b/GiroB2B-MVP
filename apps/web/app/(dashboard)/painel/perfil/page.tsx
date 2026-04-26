@@ -78,12 +78,18 @@ export default async function PerfilPage() {
   const supplier = supplierRes.data as SupplierRow | null;
   if (!supplier) redirect("/painel");
 
+  const buyerRes = await supabase
+    .from("buyers")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
   const allCategories = (categoriesRes.data as CategoryRow[]) ?? [];
   const rootCategories = allCategories.filter((c) => !c.parent_id);
   const subCategories = allCategories.filter((c) => !!c.parent_id);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -94,6 +100,7 @@ export default async function PerfilPage() {
         supplier={supplier}
         rootCategories={rootCategories}
         subCategories={subCategories}
+        hasBuyer={!!buyerRes.data}
       />
     </div>
   );

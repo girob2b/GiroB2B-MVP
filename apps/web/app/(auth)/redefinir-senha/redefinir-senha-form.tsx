@@ -7,13 +7,14 @@ import {
   ArrowLeft, CheckCircle2, Eye, EyeOff,
   KeyRound, Loader2, ShieldAlert, ShieldCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Status = "checking" | "ready" | "submitting" | "done" | "invalid" | "error";
+type Status = "checking" | "ready" | "submitting" | "done" | "invalid";
 
 /**
  * Cobre três cenários de sessão de recuperação:
@@ -35,7 +36,6 @@ export default function RedefinirSenhaForm() {
   const [confirmPassword,     setConfirmPassword]     = useState("");
   const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errorMessage,        setErrorMessage]        = useState("");
 
   // Garante que só marcamos "ready" uma vez (evita race conditions)
   const readyRef = useRef(false);
@@ -93,23 +93,47 @@ export default function RedefinirSenhaForm() {
     e.preventDefault();
 
     if (password.length < 8) {
-      setErrorMessage("A senha precisa ter pelo menos 8 caracteres.");
+      toast.error("A senha precisa ter pelo menos 8 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
-      setErrorMessage("As senhas não coincidem.");
+      toast.error("As senhas não coincidem.");
       return;
     }
 
     setStatus("submitting");
-    setErrorMessage("");
 
     const supabase = createClient();
+
+    // Antes de tentar atualizar, confirma que ainda temos uma sessão de
+    // recuperação válida. Se o cookie foi perdido entre o exchange e o
+    // submit (ex.: strict-mode, reload manual, abrir em outro tab),
+    // deixamos o usuário solicitar um novo link.
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      toast.error("Sua sessão de recuperação expirou. Solicite um novo link para continuar.");
+      setStatus("ready");
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setErrorMessage("Não foi possível atualizar sua senha. Tente solicitar um novo link.");
-      setStatus("error");
+      console.error("[redefinir-senha] updateUser failed", error);
+
+      const code = (error as { code?: string }).code ?? "";
+      const msg = error.message ?? "";
+
+      if (code === "same_password" || msg.toLowerCase().includes("should be different")) {
+        toast.error("A nova senha precisa ser diferente da senha atual.");
+      } else if (code === "weak_password" || msg.toLowerCase().includes("password should")) {
+        toast.error("Senha muito fraca. Use ao menos 8 caracteres com letras e números.");
+      } else if (msg.toLowerCase().includes("session") || msg.toLowerCase().includes("jwt")) {
+        toast.error("Sua sessão de recuperação expirou. Solicite um novo link para continuar.");
+      } else {
+        toast.error(msg || "Não foi possível atualizar sua senha. Tente solicitar um novo link.");
+      }
+      setStatus("ready");
       return;
     }
 
@@ -283,12 +307,6 @@ export default function RedefinirSenhaForm() {
           <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             Use letras, números e símbolos. Evite senhas já usadas em outros serviços.
           </div>
-
-          {errorMessage && (
-            <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">
-              <p className="text-sm font-medium text-destructive">{errorMessage}</p>
-            </div>
-          )}
 
           <Button
             type="submit"

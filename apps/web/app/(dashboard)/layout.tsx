@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import DashboardShell from "@/components/layout/dashboard-shell";
 
@@ -44,7 +45,7 @@ export default async function DashboardLayout({
   if (role === "supplier" || role === "both") {
     const { data } = await supabase
       .from("suppliers")
-      .select("id, trade_name, logo_url, plan, profile_completeness, slug")
+      .select("id, trade_name, company_name, logo_url, plan, profile_completeness, slug, city, state")
       .eq("user_id", userId)
       .single();
     supplier = data;
@@ -61,11 +62,26 @@ export default async function DashboardLayout({
     buyer = data;
   }
 
+  // full_name do user_profiles (fallback para user_metadata)
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const fullName =
+    (profile?.full_name ?? "").trim() ||
+    ((authData.user.user_metadata?.full_name as string | undefined) ?? "").trim();
+
+  const cookieStore = await cookies();
+  const initialCollapsed = cookieStore.get("girob2b_sidebar")?.value === "1";
+
   return (
     <DashboardShell
-      user={{ id: userId, email: userEmail, role }}
+      user={{ id: userId, email: userEmail, role, fullName }}
       supplier={supplier}
       buyer={buyer}
+      initialCollapsed={initialCollapsed}
     >
       {children}
     </DashboardShell>

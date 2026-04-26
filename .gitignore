@@ -5,6 +5,11 @@ node_modules/
 apps/web/.next/
 apps/web/.vercel/
 apps/api/dist/
+.next/
+.playwright-mcp/
+
+# ─── Supabase CLI (config local — pode conter pooler-url/project-ref) ────────
+apps/api/supabase/.temp/
 
 # ─── Variáveis de ambiente (NUNCA commitar) ───────────────────────────────────
 .env
@@ -33,3 +38,31 @@ Thumbs.db
 
 # ─── Temp / scripts de migração ──────────────────────────────────────────────
 run_migrations.js
+
+# ─── Claude/Vex (nunca versionar config operacional) ─────────────────────────
+CLAUDE.md
+AVISOS.md
+AVISOS_arquivados.md
+ARCHITECTURE.md
+.claude/
+.claude-plugin/
+
+# ─── Logs de sessão Vex na raiz (organização local) ──────────────────────────
+# Atenção: barra inicial isola a regra à raiz. Sem isso ignoraria docs/_sessions/.
+/_sessions/
+
+# ─── Screenshots de teste/debug ───────────────────────────────────────────────
+# Devem ficar SEMPRE em docs/_sessions/<data>-<tema>-screenshots/ para terem
+# contexto. PNGs soltos na raiz ou em apps/* são bloqueados pra evitar lixo.
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+apps/web/*.png
+apps/web/*.jpg
+apps/web/*.jpeg
+apps/web/.playwright-mcp/
+
+# ─── Playwright artefacts ─────────────────────────────────────────────────────
+playwright-report/
+test-results/

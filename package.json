@@ -6,10 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web & npm run dev --workspace=apps/api",
+    "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgGreen.bold,bgBlue.bold\" -n \"API,WEB\" \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
     "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/api",
     "lint": "npm run lint --workspace=apps/web && npm run lint --workspace=apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.1"
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function RecuperarSenhaForm() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "sent">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
-    setErrorMsg("");
 
     try {
       const supabase = createClient();
@@ -31,8 +30,8 @@ export default function RecuperarSenhaForm() {
       if (error) throw error;
       setStatus("sent");
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao enviar email.");
-      setStatus("error");
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar email.");
+      setStatus("idle");
     }
   };
 
@@ -85,12 +84,6 @@ export default function RecuperarSenhaForm() {
           <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             O link expira por segurança. Depois de abrir o email, você vai definir a nova senha dentro da plataforma.
           </div>
-
-          {status === "error" && (
-            <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3">
-              <p className="text-sm font-medium text-destructive">{errorMsg}</p>
-            </div>
-          )}
 
           <Button
             type="submit"

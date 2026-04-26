@@ -74,6 +74,66 @@ services:
       NODE_ENV: "development"
     restart: unless-stopped
 
+  # ── SCRAPER: microsserviço de descoberta web (apps/scraper) ──────────────────
+  girob2b-scraper:
+    profiles: [girob2b, full, scraper]
+    build:
+      context: .
+      dockerfile: apps/scraper/Dockerfile
+      target: dev
+    container_name: girob2b-scraper
+    working_dir: /repo/apps/scraper
+    ports:
+      - "4002:3002"
+    env_file:
+      - ./apps/scraper/.env
+    volumes:
+      - .:/repo
+      - girob2b_scraper_nm:/repo/node_modules
+      - girob2b_scraper_app_nm:/repo/apps/scraper/node_modules
+    environment:
+      PORT: "3002"
+      NODE_ENV: "development"
+    depends_on:
+      - girob2b-redis
+      - girob2b-searxng
+    restart: unless-stopped
+
+  # ── SCRAPER: Redis (BullMQ + cache) ─────────────────────────────────────────
+  girob2b-redis:
+    profiles: [girob2b, full, scraper]
+    image: redis:7-alpine
+    container_name: girob2b-redis
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - girob2b_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ── SCRAPER: SearXNG (meta-search engine self-hosted) ───────────────────────
+  girob2b-searxng:
+    profiles: [girob2b, full, scraper]
+    image: searxng/searxng:latest
+    container_name: girob2b-searxng
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./apps/scraper/searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8888/"
+      BIND_ADDRESS: "0.0.0.0:8080"
+      UWSGI_WORKERS: "2"
+      UWSGI_THREADS: "4"
+    cap_drop: ["ALL"]
+    cap_add: ["CHOWN", "SETGID", "SETUID"]
+    restart: unless-stopped
+
   # ── LANDING PAGE (React + Vite) ───────────────────────────────────────────────
   landing-page:
     profiles: [landing, full]
@@ -151,6 +211,9 @@ volumes:
   girob2b_web_next:
   girob2b_api_nm:
   girob2b_api_app_nm:
+  girob2b_scraper_nm:
+  girob2b_scraper_app_nm:
+  girob2b_redis_data:
   landing_nm:
   bmarket-mysql-data:
   legacy_frontend_nm:

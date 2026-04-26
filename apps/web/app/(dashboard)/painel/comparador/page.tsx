@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { Scale, MapPin, Clock, DollarSign, Star, ArrowLeftRight } from "lucide-react";
+import { FEATURES } from "@/lib/features";
 
 export const metadata = { title: "Comparador — GiroB2B" };
 
@@ -11,6 +13,10 @@ const CRITERIA = [
 ];
 
 export default function ComparadorPage() {
+  if (!FEATURES.comparador) {
+    redirect("/painel");
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-10">
       {/* Header */}

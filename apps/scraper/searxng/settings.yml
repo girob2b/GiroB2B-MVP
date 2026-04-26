@@ -1,0 +1,58 @@
+# SearXNG — configuração mínima para o girob2b-scraper
+# Docs: https://docs.searxng.org/admin/settings/settings.html
+
+use_default_settings: true
+
+general:
+  instance_name: "GiroB2B Internal Search"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+
+search:
+  safe_search: 1
+  autocomplete: ""
+  default_lang: "pt-BR"
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "28d9f5650f1afd8f0bcbdf2b9f5e744cc7f7bd8d50cf472684df6899d01a1551"
+  limiter: false
+  image_proxy: false
+  default_http_headers:
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Robots-Tag: noindex, nofollow
+    Referrer-Policy: no-referrer
+
+ui:
+  default_theme: simple
+  theme_args:
+    simple_style: dark
+
+enabled_plugins:
+  - "Basic Calculator"
+  - "Hash plugin"
+  - "Self Information"
+  - "Tracker URL remover"
+
+# Engines principais — todos gratuitos, sem API key
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    use_mobile_ui: false
+
+  - name: bing
+    engine: bing
+    shortcut: bi
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+
+  - name: brave
+    engine: brave
+    shortcut: br

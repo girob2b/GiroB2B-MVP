@@ -11,6 +11,7 @@ export const CreateProductSchema = z.object({
   tags:             z.array(z.string()).nullable().optional(),
   images:           z.array(z.string()).nullable().optional(),
   status:           z.enum(["active", "paused", "draft"]).default("active"),
+  visibility:       z.enum(["global", "chat_only"]).default("global"),
 });
 
 export const UpdateProductSchema = CreateProductSchema.partial();

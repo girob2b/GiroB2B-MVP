@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RedefinirSenhaPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 py-12 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_45%),linear-gradient(180deg,_#ffffff_0%,_#f8fffc_100%)]">
+    <div className="min-h-screen flex items-center justify-center px-5 py-12 bg-[radial-gradient(circle_at_top,rgba(10,92,92,0.10),transparent_45%),linear-gradient(180deg,#ffffff_0%,var(--brand-surface)_100%)]">
       <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando recuperação de senha...</div>}>
         <RedefinirSenhaForm />
       </Suspense>

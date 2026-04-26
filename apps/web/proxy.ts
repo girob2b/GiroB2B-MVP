@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /** Rotas que exigem autenticação */
 const PROTECTED_ROUTES = ["/painel", "/comprador", "/admin", "/onboarding"];
 /** Rotas que redirecionam para o painel se já estiver logado E com onboarding completo */
-const AUTH_ROUTES = ["/login", "/registro", "/cadastro"];
+const AUTH_ROUTES = ["/login", "/cadastro"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

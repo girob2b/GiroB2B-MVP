@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>GiroB2B — Typography Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=DM+Sans:wght@700&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0A5C5C;
+    --gold: #C08A2E;
+    --cream: #F4F1EA;
+    --graphite: #1A1F1F;
+    --muted: rgba(244, 241, 234, 0.55);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--teal);
+    color: var(--cream);
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 48px 64px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 48px;
+  }
+  .card {
+    border-bottom: 1px solid rgba(244, 241, 234, 0.08);
+    padding: 56px 0;
+  }
+  .card:last-child { border-bottom: none; }
+  .meta {
+    display: flex;
+    gap: 32px;
+    align-items: baseline;
+    margin-bottom: 28px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+  .meta .label {
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .meta .name { color: var(--cream); font-weight: 700; letter-spacing: 0.02em; }
+  .meta .tag { color: var(--gold); font-weight: 700; }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 20px;
+  }
+  .ring {
+    flex-shrink: 0;
+    width: 140px;
+    height: 140px;
+  }
+  .wordmark-text {
+    font-weight: 700;
+    font-size: 88px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .t-inter { font-family: 'Inter', sans-serif; }
+  .t-dm { font-family: 'DM Sans', sans-serif; letter-spacing: -0.03em; }
+  .t-plau-proxy { font-family: 'Bricolage Grotesque', sans-serif; letter-spacing: -0.025em; }
+  .t-satoshi { font-family: 'Satoshi', 'Inter', sans-serif; letter-spacing: -0.02em; }
+  .glyphs {
+    font-size: 24px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 12px;
+  }
+  .note {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .comparison {
+    margin-top: 64px;
+    padding-top: 48px;
+    border-top: 2px solid rgba(244, 241, 234, 0.15);
+  }
+  .comparison h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .comparison-grid {
+    display: grid;
+    gap: 28px;
+  }
+  .comparison-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .comparison-row .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .comparison-row .big {
+    font-weight: 700;
+    font-size: 64px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .footer {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(244, 241, 234, 0.08);
+    line-height: 1.7;
+  }
+  .footer a { color: var(--gold); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>GIROB2B · TYPOGRAPHY PREVIEW · 4 OPCOES</h1>
+
+<!-- T1 Inter -->
+<div class="card">
+  <div class="meta">
+    <span><span class="label">T1</span> <span class="name">Inter</span></span>
+    <span class="tag">GRATUITA — GOOGLE FONTS</span>
+  </div>
+  <div class="wordmark">
+    <svg class="ring" viewBox="0 0 120 120" fill="none" stroke="#C08A2E" stroke-width="12">
+      <path d="M 60 10 A 50 50 0 1 1 25 98" stroke-linecap="round"/>
+      <path d="M 65 10 A 50 50 0 0 1 95 50" stroke-linecap="round"/>
+    </svg>
+    <span class="wordmark-text t-inter">GiroB2B</span>
+  </div>
+  <div class="glyphs t-inter">Aa Bb Cc 0123456789</div>
+  <p class="note">Default tradicional tech B2B. Neutral, balanced, funcional. Zero risco — e a Helvetica do seculo XXI. Perfeita pra quem quer que a logo nao "grite" tipografia.</p>
+</div>
+
+<!-- T2 DM Sans -->
+<div class="card">
+  <div class="meta">
+    <span><span class="label">T2</span> <span class="name">DM Sans</span></span>
+    <span class="tag">GRATUITA — GOOGLE FONTS</span>
+  </div>
+  <div class="wordmark">
+    <svg class="ring" viewBox="0 0 120 120" fill="none" stroke="#C08A2E" stroke-width="12">
+      <path d="M 60 10 A 50 50 0 1 1 25 98" stroke-linecap="round"/>
+      <path d="M 65 10 A 50 50 0 0 1 95 50" stroke-linecap="round"/>
+    </svg>
+    <span class="wordmark-text t-dm">GiroB2B</span>
+  </div>
+  <div class="glyphs t-dm">Aa Bb Cc 0123456789</div>
+  <p class="note">Geometrica com terminais arredondados, low-contrast. Mais quente e amigavel que Inter. Sinaliza "moderno suave" sem ser tech-futurista.</p>
+</div>
+
+<!-- T3 Plau Display (proxy Bricolage Grotesque) -->
+<div class="card">
+  <div class="meta">
+    <span><span class="label">T3</span> <span class="name">Plau Display</span></span>
+    <span class="tag">PAGA — FOUNDRY PLAU (SP)</span>
+  </div>
+  <div class="wordmark">
+    <svg class="ring" viewBox="0 0 120 120" fill="none" stroke="#C08A2E" stroke-width="12">
+      <path d="M 60 10 A 50 50 0 1 1 25 98" stroke-linecap="round"/>
+      <path d="M 65 10 A 50 50 0 0 1 95 50" stroke-linecap="round"/>
+    </svg>
+    <span class="wordmark-text t-plau-proxy">GiroB2B</span>
+  </div>
+  <div class="glyphs t-plau-proxy">Aa Bb Cc 0123456789</div>
+  <p class="note"><strong>Plau Display e uma tipografia brasileira proprietaria (foundry Plau, SP) — nao esta em CDN gratuito.</strong> O preview acima usa <em>Bricolage Grotesque</em> (Google Fonts) como aproximacao de carater: sans-serif moderna com detalhes humanistas, terminais com leve personalidade, tom brasileiro-contemporaneo. Se essa linha te agradar, a gente licencia a Plau Display real (R$200-600/ano uso empresa) ou segue com Bricolage Grotesque como alternativa gratuita.</p>
+</div>
+
+<!-- T4 Satoshi -->
+<div class="card">
+  <div class="meta">
+    <span><span class="label">T4</span> <span class="name">Satoshi</span></span>
+    <span class="tag">GRATUITA — FONTSHARE (INDIAN TYPE FOUNDRY)</span>
+  </div>
+  <div class="wordmark">
+    <svg class="ring" viewBox="0 0 120 120" fill="none" stroke="#C08A2E" stroke-width="12">
+      <path d="M 60 10 A 50 50 0 1 1 25 98" stroke-linecap="round"/>
+      <path d="M 65 10 A 50 50 0 0 1 95 50" stroke-linecap="round"/>
+    </svg>
+    <span class="wordmark-text t-satoshi">GiroB2B</span>
+  </div>
+  <div class="glyphs t-satoshi">Aa Bb Cc 0123456789</div>
+  <p class="note">Geometrica com terminais precisos. Premium contemporaneo — escolha de startups tech refinadas (Stripe-ish). Free via Fontshare mas commercially usable. Levemente mais "quente" que Inter.</p>
+</div>
+
+<!-- Side-by-side comparison -->
+<div class="comparison">
+  <h2>COMPARATIVO DIRETO</h2>
+  <div class="comparison-grid">
+    <div class="comparison-row">
+      <span class="label">Inter</span>
+      <span class="big t-inter">GiroB2B</span>
+    </div>
+    <div class="comparison-row">
+      <span class="label">DM Sans</span>
+      <span class="big t-dm">GiroB2B</span>
+    </div>
+    <div class="comparison-row">
+      <span class="label">Plau (proxy)</span>
+      <span class="big t-plau-proxy">GiroB2B</span>
+    </div>
+    <div class="comparison-row">
+      <span class="label">Satoshi</span>
+      <span class="big t-satoshi">GiroB2B</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Preview renderizado com fontes reais via Google Fonts + Fontshare CDN. O anel ao lado de cada wordmark e uma ilustracao vetorial simplificada do anel partido — nao tem a volumetria 3D do PNG original, serve so como ancora visual.</p>
+  <p style="margin-top: 8px;">
+    Sources:
+    <a href="https://fonts.google.com/specimen/Inter" target="_blank">Inter</a> ·
+    <a href="https://fonts.google.com/specimen/DM+Sans" target="_blank">DM Sans</a> ·
+    <a href="https://fonts.google.com/specimen/Bricolage+Grotesque" target="_blank">Bricolage Grotesque (proxy Plau)</a> ·
+    <a href="https://www.fontshare.com/fonts/satoshi" target="_blank">Satoshi</a>
+  </p>
+</div>
+
+</body>
+</html>

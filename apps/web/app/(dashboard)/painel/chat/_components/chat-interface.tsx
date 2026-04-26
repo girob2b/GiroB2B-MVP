@@ -6,8 +6,8 @@ import {
 } from "react";
 import {
   Search, ChevronLeft, Phone, Video, MoreVertical,
-  Paperclip, Smile, Send, CheckCheck, Check,
-  ShoppingCart, X, MessageSquare, Loader2, ExternalLink,
+  Paperclip, Send, CheckCheck, Check,
+  ShoppingCart, X, MessageSquare, Loader2, ExternalLink, FileSignature, PenSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,10 @@ import {
   markConversationRead,
 } from "@/app/actions/chat";
 import type { ConversationSummary, ChatMessage } from "@/app/actions/chat";
+import { getProposalsByIds } from "@/app/actions/proposals";
+import type { ProposalData } from "@/app/actions/proposals";
+import ProposalForm from "./proposal-form";
+import ProposalCard from "./proposal-card";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -166,7 +170,7 @@ function SelectConversationPanel() {
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function ChatInterface({
-  role, userId,
+  role, userId, buyerId, supplierId,
   initialConversations,
   initialConvId,
   negotiationContext,
@@ -183,6 +187,9 @@ export function ChatInterface({
   const [sendError,      setSendError]      = useState<string | null>(null);
   const [searchQuery,    setSearchQuery]    = useState("");
   const [showNegCtx,     setShowNegCtx]     = useState(!!negotiationContext);
+  const [showProposalForm, setShowProposalForm] = useState(false);
+  const [reviseProposal,   setReviseProposal]   = useState<ProposalData | null>(null);
+  const [proposalMap,      setProposalMap]      = useState<Record<string, ProposalData>>({});
 
   const messagesEndRef  = useRef<HTMLDivElement>(null);
   const inputRef        = useRef<HTMLTextAreaElement>(null);
@@ -256,6 +263,37 @@ export function ChatInterface({
     sendMessageAction(activeId, text).then(applyAutoSent);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, msgsLoading, messages.length]);
+
+  // ── Load proposals for proposal_ref messages ─────────────────────────────
+  useEffect(() => {
+    const ids = messages
+      .filter(m => m.message_type === "proposal_ref" && m.metadata?.proposal_id)
+      .map(m => m.metadata!.proposal_id as string);
+    const unique = [...new Set(ids)];
+    if (!unique.length) return;
+    getProposalsByIds(unique).then(map => {
+      setProposalMap(prev => ({ ...prev, ...map }));
+    });
+  }, [messages]);
+
+  // ── Subscribe to proposals Realtime (status changes) ─────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel("proposals-updates")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "proposals" },
+        payload => {
+          const updated = payload.new as ProposalData;
+          setProposalMap(prev => {
+            if (!prev[updated.id]) return prev;
+            return { ...prev, [updated.id]: updated };
+          });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   // ── Load messages when conversation changes ──────────────────────────────
   useEffect(() => {
@@ -422,52 +460,57 @@ export function ChatInterface({
       )
     : conversations;
 
-  const totalUnread = conversations.reduce((acc, c) => acc + c.unread, 0);
   const messageGroups = groupMessagesByDate(messages);
 
-  const headerLabel =
-    role === "supplier" ? "Chat de Vendas" :
-    role === "buyer"    ? "Chat de Compras" :
-    "Chat";
+  const isBuyerRole = role === "buyer" || role === "both";
+
+  // latest "sent" proposal_ref message per proposal_id (for action buttons)
+  // Event pills (accepted/refused/shipped/completed) don't count — only the
+  // original sent card should carry action buttons based on live status.
+  const latestProposalMsgId: Record<string, string> = {};
+  for (const msg of messages) {
+    if (
+      msg.message_type === "proposal_ref" &&
+      msg.metadata?.proposal_id &&
+      (msg.metadata?.action as string) === "sent"
+    ) {
+      latestProposalMsgId[msg.metadata.proposal_id as string] = msg.id;
+    }
+  }
+
+  // Proposal IDs that have been revised (have a child proposal with parent_id)
+  const revisedProposalIds = new Set<string>();
+  for (const p of Object.values(proposalMap)) {
+    if (p.parent_id) revisedProposalIds.add(p.parent_id);
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     // Cancela o padding do shell e ocupa toda a viewport disponível
-    <div className="-mx-4 -my-4 md:-mx-8 md:-my-8 flex h-[calc(100dvh-64px)] md:h-dvh overflow-hidden bg-white">
+    <div className="-mx-4 -my-4 md:-mx-8 md:-my-8 flex md:flex-row-reverse h-[calc(100dvh-64px)] md:h-dvh overflow-hidden bg-white">
+      {showProposalForm && activeConv && (
+        <ProposalForm
+          conversationId={activeConv.id}
+          supplierId={activeConv.supplier_id}
+          prefilledProduct={activeConv.product_name}
+          previousProposal={reviseProposal}
+          onClose={() => { setShowProposalForm(false); setReviseProposal(null); }}
+          onSent={() => { setShowProposalForm(false); setReviseProposal(null); }}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           LEFT — lista de conversas
       ═══════════════════════════════════════════════════════════ */}
       <div
         className={cn(
-          "w-full md:w-80 lg:w-96 flex flex-col border-r border-slate-200 bg-white shrink-0",
+          "w-full md:w-64 lg:w-72 xl:w-80 flex flex-col md:border-l border-slate-200 bg-white shrink-0",
           mobileView === "chat" ? "hidden md:flex" : "flex",
         )}
       >
-        {/* Header */}
-        <div className="h-16 flex items-center gap-3 px-4 bg-(--brand-green-700) text-white shrink-0">
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm select-none">
-            {role === "supplier" ? "V" : "C"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold leading-tight">{headerLabel}</p>
-            {totalUnread > 0 && (
-              <p className="text-xs text-white/70">
-                {totalUnread} não lida{totalUnread > 1 ? "s" : ""}
-              </p>
-            )}
-          </div>
-          <button
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Mais opções"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="px-3 py-2 border-b border-slate-100 shrink-0 bg-(--brand-green-50)">
-          <div className="flex items-center gap-2 bg-white rounded-full px-3 py-1.5 shadow-sm border border-slate-100">
+        {/* Search + nova conversa (sem header de "Chat") */}
+        <div className="px-3 py-3 shrink-0 flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-white rounded-full px-3 py-1.5 shadow-sm border border-slate-200">
             <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
@@ -477,6 +520,14 @@ export function ChatInterface({
               className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none min-w-0"
             />
           </div>
+          <Link
+            href="/painel/explorar"
+            title="Nova conversa — encontre um fornecedor"
+            aria-label="Nova conversa"
+            className="shrink-0 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-brand-700 hover:bg-brand-50 transition-colors"
+          >
+            <PenSquare className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* Conversation list */}
@@ -526,6 +577,7 @@ export function ChatInterface({
                     {conv.other_party_name}
                   </p>
                   <span
+                    suppressHydrationWarning
                     className={cn(
                       "text-xs shrink-0",
                       conv.unread > 0 ? "text-(--brand-green-600) font-semibold" : "text-slate-400",
@@ -562,7 +614,7 @@ export function ChatInterface({
       ═══════════════════════════════════════════════════════════ */}
       <div
         className={cn(
-          "flex-1 flex flex-col min-w-0",
+          "flex-1 flex flex-col min-w-0 bg-white",
           mobileView === "list" ? "hidden md:flex" : "flex",
         )}
       >
@@ -685,7 +737,7 @@ export function ChatInterface({
 
             {/* Messages area */}
             <div
-              className="flex-1 overflow-y-auto px-4 py-4"
+              className="flex-1 overflow-y-auto px-4 xl:px-8 2xl:px-12 py-4"
               style={{
                 backgroundImage: "radial-gradient(circle, #cbd5e1 1px, transparent 1px)",
                 backgroundSize:  "20px 20px",
@@ -716,74 +768,119 @@ export function ChatInterface({
                   </div>
 
                   {/* Messages */}
-                  {group.messages.map(msg => (
-                    <div
-                      key={msg.id}
-                      className={cn("flex", msg.is_mine ? "justify-end" : "justify-start")}
-                    >
+                  {group.messages.map(msg => {
+                    if (msg.message_type === "proposal_ref") {
+                      const pid = msg.metadata?.proposal_id as string | undefined;
+                      return (
+                        <div key={msg.id} className="py-1">
+                          <ProposalCard
+                            message={msg}
+                            role={role}
+                            proposal={pid ? (proposalMap[pid] ?? null) : null}
+                            isLatest={!!pid && latestProposalMsgId[pid] === msg.id}
+                            buyerId={buyerId}
+                            supplierId={supplierId}
+                            hasRevision={!!pid && revisedProposalIds.has(pid)}
+                            onRevise={p => { setReviseProposal(p); setShowProposalForm(true); }}
+                          />
+                          <p className={cn(
+                            "text-[10px] mt-1 px-1",
+                            msg.is_mine ? "text-right text-slate-400" : "text-left text-slate-400",
+                          )}>
+                            {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
                       <div
-                        className={cn(
-                          "max-w-[78%] md:max-w-[60%] rounded-2xl px-3.5 py-2 shadow-sm",
-                          msg.is_mine
-                            ? "bg-(--brand-green-600) text-white rounded-tr-sm"
-                            : "bg-white text-slate-800 rounded-tl-sm border border-slate-100/80",
-                        )}
+                        key={msg.id}
+                        className={cn("flex", msg.is_mine ? "justify-end" : "justify-start")}
                       >
-                        <p className="text-sm leading-relaxed wrap-break-word">{msg.content}</p>
                         <div
                           className={cn(
-                            "flex items-center justify-end gap-1 mt-1",
-                            msg.is_mine ? "text-white/60" : "text-slate-400",
+                            "max-w-[78%] md:max-w-[60%] 2xl:max-w-[50%] rounded-2xl px-3.5 py-2 shadow-sm",
+                            msg.is_mine
+                              ? "bg-(--brand-green-600) text-white rounded-tr-sm"
+                              : "bg-white text-slate-800 rounded-tl-sm border border-slate-100/80",
                           )}
                         >
-                          <span className="text-[10px]">
-                            {new Date(msg.created_at).toLocaleTimeString("pt-BR", {
-                              hour: "2-digit", minute: "2-digit",
-                            })}
-                          </span>
-                          {msg.is_mine && <MsgStatus isRead={!!msg.read_at} />}
+                          <p className="text-sm leading-relaxed wrap-break-word">{msg.content}</p>
+                          <div
+                            className={cn(
+                              "flex items-center justify-end gap-1 mt-1",
+                              msg.is_mine ? "text-white/60" : "text-slate-400",
+                            )}
+                          >
+                            <span className="text-[10px]">
+                              {new Date(msg.created_at).toLocaleTimeString("pt-BR", {
+                                hour: "2-digit", minute: "2-digit",
+                              })}
+                            </span>
+                            {msg.is_mine && <MsgStatus isRead={!!msg.read_at} />}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ))}
 
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input bar */}
-            <div className="flex items-end gap-2 px-3 md:px-4 py-3 bg-(--brand-green-50) border-t border-slate-200 shrink-0">
-              <button className="p-2.5 text-slate-500 hover:text-(--brand-green-700) transition-colors shrink-0" aria-label="Emoji">
-                <Smile className="w-5 h-5" />
-              </button>
-              <button className="p-2.5 text-slate-500 hover:text-(--brand-green-700) transition-colors shrink-0" aria-label="Anexo">
+            {/* Input bar — todos h-10 base; textarea cresce até 128px e botões grudam embaixo */}
+            <div className="flex items-end gap-2 px-3 md:px-4 xl:px-8 2xl:px-12 py-3 bg-white border-t border-slate-200 shrink-0">
+              <button
+                type="button"
+                className="h-10 w-10 shrink-0 flex items-center justify-center rounded-lg text-slate-500 hover:text-brand-700 hover:bg-slate-100 transition-colors"
+                aria-label="Anexo"
+              >
                 <Paperclip className="w-5 h-5" />
               </button>
+              {isBuyerRole && (
+                <button
+                  type="button"
+                  onClick={() => { setReviseProposal(null); setShowProposalForm(true); }}
+                  className="h-10 shrink-0 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-brand-700 border border-slate-200 hover:border-brand-300 hover:bg-slate-50 transition-colors"
+                  title="Enviar proposta formal"
+                >
+                  <FileSignature className="w-4 h-4" />
+                  <span>Proposta</span>
+                </button>
+              )}
 
-              <div className="flex-1 bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-slate-200 min-w-0">
+              <div className="relative flex-1 min-w-0">
                 <textarea
                   ref={inputRef}
                   value={inputValue}
-                  onChange={e => setInputValue(e.target.value)}
+                  onChange={e => {
+                    setInputValue(e.target.value);
+                    // Auto-resize: ajusta altura conforme conteúdo, dentro do limite max-h-32 (128px)
+                    const el = e.currentTarget;
+                    el.style.height = "40px";
+                    const next = Math.min(el.scrollHeight, 128);
+                    el.style.height = `${next}px`;
+                  }}
                   onKeyDown={handleKeyDown}
                   placeholder="Escreva uma mensagem..."
                   rows={1}
-                  className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none min-w-0 max-h-32 leading-6"
+                  className="block w-full h-10 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none overflow-hidden focus:border-brand-500 transition-colors leading-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                   disabled={sending}
                 />
                 {sendError && (
-                  <p className="text-xs text-red-500 mt-1">{sendError}</p>
+                  <p className="absolute -bottom-5 left-1 text-xs text-red-500">{sendError}</p>
                 )}
               </div>
 
               <button
+                type="button"
                 onClick={handleSend}
                 disabled={!inputValue.trim() || sending}
                 className={cn(
-                  "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all",
+                  "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 transition-colors",
                   inputValue.trim() && !sending
-                    ? "bg-(--brand-green-600) hover:bg-(--brand-green-700) text-white shadow-md"
+                    ? "bg-brand-700 hover:bg-brand-800 text-white"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed",
                 )}
                 aria-label="Enviar mensagem"

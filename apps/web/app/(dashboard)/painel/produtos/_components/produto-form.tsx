@@ -1,15 +1,15 @@
 "use client";
 
-import { useActionState, useState, useRef } from "react";
+import { useActionState, useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Loader2, Upload, X, Package } from "lucide-react";
+import { Loader2, Upload, X, Package, Globe, MessageSquare as ChatIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 interface CategoryRow {
   id: string;
@@ -29,6 +29,7 @@ export interface ProductData {
   tags: string[] | null;
   images: string[] | null;
   status: string;
+  visibility?: string;
 }
 
 interface ProductState {
@@ -54,16 +55,18 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
   const [state, formAction, pending] = useActionState(action, {});
   const router = useRouter();
 
+  const [visibility, setVisibility] = useState(defaultValues?.visibility ?? "global");
   const [images, setImages] = useState<string[]>(defaultValues?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Redireciona ao criar com sucesso
   useEffect(() => {
-    if (state.success && !defaultValues?.id) {
-      router.push("/painel/produtos");
+    if (state.success) {
+      toast.success(defaultValues?.id ? "Produto salvo com sucesso!" : "Produto criado!");
+      if (!defaultValues?.id) router.push("/painel/produtos");
     }
-  }, [state.success, defaultValues?.id, router]);
+    if (state.error) toast.error(state.error);
+  }, [state, defaultValues?.id, router]);
 
   const rootCats = categories.filter((c) => !c.parent_id);
   const subCats = categories.filter((c) => !!c.parent_id);
@@ -97,18 +100,6 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
       {images.map((url) => (
         <input key={url} type="hidden" name="images" value={url} />
       ))}
-
-      {state.success && defaultValues?.id && (
-        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)]">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Produto salvo com sucesso!
-        </div>
-      )}
-      {state.error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {state.error}
-        </div>
-      )}
 
       {/* Fotos */}
       <Card className="border-slate-200">
@@ -304,6 +295,65 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
               </select>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Visibilidade */}
+      <input type="hidden" name="visibility" value={visibility} />
+      <Card className="border-slate-200">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/30">
+          <CardTitle className="text-base font-bold">Visibilidade</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([
+              {
+                value: "global",
+                label: "Visível globalmente",
+                desc: "Aparece nas buscas públicas e atrai compradores que ainda não te conhecem.",
+                icon: Globe,
+              },
+              {
+                value: "chat_only",
+                label: "Apenas via chat",
+                desc: "Produto oculto nas buscas — compartilhado apenas em negociações diretas.",
+                icon: ChatIcon,
+              },
+            ] as const).map(({ value, label, desc, icon: Icon }) => (
+              <label
+                key={value}
+                className={[
+                  "flex gap-3 items-start rounded-xl border-2 p-4 cursor-pointer transition-colors",
+                  visibility === value
+                    ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)]"
+                    : "border-border hover:border-slate-300 bg-white",
+                ].join(" ")}
+              >
+                <input
+                  type="radio"
+                  name="_visibility_ui"
+                  value={value}
+                  checked={visibility === value}
+                  onChange={() => setVisibility(value)}
+                  className="sr-only"
+                />
+                <div className={[
+                  "mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                  visibility === value
+                    ? "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)]"
+                    : "bg-slate-100 text-slate-500",
+                ].join(" ")}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className={["text-sm font-semibold", visibility === value ? "text-[color:var(--brand-green-900)]" : "text-slate-800"].join(" ")}>
+                    {label}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-snug">{desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

@@ -68,7 +68,7 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
 
 function GiroLogo() {
   return (
-    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-2xl font-bold text-white shadow-[0_12px_28px_rgba(18,199,104,0.22)]">
+    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-2xl font-bold text-white">
       G
     </div>
   );
@@ -274,7 +274,7 @@ export default function OnboardingForm() {
         </div>
         <Button
           type="button" size="lg"
-          className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,199,104,0.18)] hover:opacity-95 disabled:opacity-40"
+          className="btn-primary h-12 w-full text-base disabled:opacity-40"
           disabled={!segment}
           onClick={advance}
         >
@@ -364,7 +364,7 @@ export default function OnboardingForm() {
 
           <Button
             type="button" size="lg"
-            className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,199,104,0.18)] hover:opacity-95 disabled:opacity-40"
+            className="btn-primary h-12 w-full text-base disabled:opacity-40"
             disabled={!canAdvance()}
             onClick={advance}
           >
@@ -406,7 +406,7 @@ export default function OnboardingForm() {
         </div>
         <Button
           type="button" size="lg"
-          className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,199,104,0.18)] hover:opacity-95 disabled:opacity-40"
+          className="btn-primary h-12 w-full text-base disabled:opacity-40"
           disabled={!purchaseFrequency}
           onClick={advance}
         >
@@ -486,7 +486,7 @@ export default function OnboardingForm() {
 
         <Button
           type="button" size="lg"
-          className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,199,104,0.18)] hover:opacity-95 disabled:opacity-40"
+          className="btn-primary h-12 w-full text-base disabled:opacity-40"
           disabled={!canAdvance()}
           onClick={advance}
         >
@@ -603,7 +603,7 @@ export default function OnboardingForm() {
 
           <Button
             type="submit" size="lg"
-            className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,199,104,0.18)] hover:opacity-95"
+            className="btn-primary h-12 w-full text-base"
             disabled={pending}
           >
             {pending
