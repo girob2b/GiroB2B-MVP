@@ -41,7 +41,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     q: "Como me cadastro como fornecedor?",
     a: (
       <>
-        Após criar conta de comprador, no painel você pode <strong>"virar fornecedor"</strong>:
+        Após criar conta de comprador, no painel você pode <strong>&ldquo;virar fornecedor&rdquo;</strong>:
         informa CNPJ (validamos via BrasilAPI), preenche dados da empresa e cadastra produtos.
       </>
     ),
@@ -50,7 +50,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     q: "Como envio uma cotação?",
     a: (
       <>
-        Em qualquer página de produto ou de fornecedor, clique em <strong>"Pedir cotação"</strong>.
+        Em qualquer página de produto ou de fornecedor, clique em <strong>&ldquo;Pedir cotação&rdquo;</strong>.
         Descreva o que precisa, quantidade e prazo. O fornecedor recebe por email e responde
         diretamente pra você.
       </>
@@ -70,7 +70,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     a: (
       <>
         Validamos o <strong>CNPJ</strong> de todos os fornecedores via BrasilAPI no momento
-        do cadastro. Verificações adicionais (selo "Verificado Premium") chegarão em fases
+        do cadastro. Verificações adicionais (selo &ldquo;Verificado Premium&rdquo;) chegarão em fases
         posteriores.
       </>
     ),
@@ -91,7 +91,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     q: "Como excluo minha conta?",
     a: (
       <>
-        Em <strong>Configurações</strong>, escolha "Excluir conta". Sua conta entra em
+        Em <strong>Configurações</strong>, escolha &ldquo;Excluir conta&rdquo;. Sua conta entra em
         soft-delete por 30 dias (recuperável). Após esse prazo, eliminação irreversível.
       </>
     ),

@@ -220,7 +220,7 @@ export default async function productRoutes(app: FastifyInstance) {
       return reply.status(201).send(result);
     } catch (err) {
       if (err instanceof ImportProductError) {
-        return reply.status(err.statusCode).send({ error: err.message });
+        return reply.status(err.statusCode as 400 | 401 | 403 | 404 | 409 | 429 | 500).send({ error: err.message });
       }
       return reply.status(500).send({ error: (err as Error).message });
     }

@@ -67,7 +67,7 @@ export default function TermosPage() {
 
       <h2>6. Limitação de responsabilidade</h2>
       <p>
-        O GiroB2B oferece a plataforma <strong>"como está"</strong>. Não garantimos:
+        O GiroB2B oferece a plataforma <strong>&ldquo;como está&rdquo;</strong>. Não garantimos:
       </p>
       <ul>
         <li>Que cada cotação resultará em negócio fechado.</li>

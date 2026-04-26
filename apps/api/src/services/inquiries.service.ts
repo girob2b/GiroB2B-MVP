@@ -7,8 +7,6 @@ const INQUIRY_DAILY_LIMIT = 10;
 const INQUIRY_DEDUP_HOURS = 48;
 type SupplierPlan = "free" | "starter" | "pro" | "premium";
 
-type SupplierPlan = "free" | "starter" | "pro" | "premium";
-
 type UserProfileRow = {
   full_name: string | null;
   phone: string | null;

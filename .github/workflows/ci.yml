@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela jobs duplicados no mesmo branch (último push vence)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Web (Next.js) — type-check + lint ─────────────────────────────────────
+  web:
+    name: Web (type-check + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install (workspace)
+        run: npm ci --workspaces --include-workspace-root || npm install
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Type-check
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: apps/web
+        run: npm run lint
+
+  # ─── API (Fastify) — type-check + lint ─────────────────────────────────────
+  api:
+    name: API (type-check + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install (workspace)
+        run: npm ci --workspaces --include-workspace-root || npm install
+
+      - name: Type-check (build)
+        working-directory: apps/api
+        run: npm run build
+
+      - name: Lint
+        working-directory: apps/api
+        run: npm run lint
