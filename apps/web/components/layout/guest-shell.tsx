@@ -2,13 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, Menu, X, Lock } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Search, Menu, X, Lock, FileText, KanbanSquare, MessageSquare, Package,
+} from "lucide-react";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
 
-const publicNav = [
-  { href: "/explorar", label: "Explorar", icon: Search },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof Search;
+  /** Se true, clicar não navega — redireciona pra /login com toast informando. */
+  locked?: boolean;
+};
+
+const publicNav: NavItem[] = [
+  { href: "/explorar",          label: "Explorar",          icon: Search },
+  { href: "/painel/inquiries",  label: "Cotações",          icon: FileText,      locked: true },
+  { href: "/painel/pipeline",   label: "Pipeline",          icon: KanbanSquare,  locked: true },
+  { href: "/painel/chat",       label: "Chat",              icon: MessageSquare, locked: true },
+  { href: "/painel/produtos",   label: "Material de venda", icon: Package,       locked: true },
 ];
 
 function Sidebar({
@@ -20,109 +35,93 @@ function Sidebar({
   onClose: () => void;
   pathname: string;
 }) {
+  const router = useRouter();
+
+  function handleLockedClick(e: React.MouseEvent, label: string) {
+    e.preventDefault();
+    toast.info(`Crie uma conta ou faça login pra acessar "${label}".`);
+    onClose();
+    router.push("/login");
+  }
+
   return (
     <aside
       className={cn(
-        "flex flex-col bg-white border-r border-border",
-        mobile
-          ? "w-72 h-full"
-          : "hidden md:flex w-64 h-screen sticky top-0 overflow-hidden"
+        "flex flex-col bg-brand-600",
+        mobile ? "w-72 h-full" : "hidden md:flex w-64 h-screen sticky top-0",
       )}
     >
-      {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-border shrink-0">
-        <Link
-          href="/"
-          aria-label="GiroB2B"
-          className="flex items-center gap-2 flex-1 min-w-0"
-        >
-          <GiroLogo size={32} iconOnly />
-          <span className="font-bold text-lg tracking-tight text-slate-900 truncate">
-            GiroB2B
-          </span>
-        </Link>
-        {mobile && (
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground p-1"
-            aria-label="Fechar menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        {/* Logo */}
+        <div className="h-20 flex items-center px-4 border-b border-brand-700 shrink-0">
+          <Link href="/" aria-label="GiroB2B" className="flex items-center min-w-0 flex-1">
+            <GiroLogo size={40} iconOnly />
+            <span className="ml-2.5 font-bold text-lg tracking-tight text-white truncate">GiroB2B</span>
+          </Link>
+          {mobile && (
+            <button onClick={onClose} className="text-white/70 hover:text-white p-1" aria-label="Fechar menu">
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-2 py-4 overflow-y-auto" aria-label="Menu principal">
+          <div className="space-y-0.5">
+            {publicNav.map(({ href, label, icon: Icon, locked }) => {
+              const active = !locked && (pathname === href || pathname.startsWith(href));
+              return (
+                <Link
+                  key={href}
+                  href={locked ? "/login" : href}
+                  onClick={(e) => {
+                    if (locked) handleLockedClick(e, label);
+                    else onClose();
+                  }}
+                  aria-disabled={locked}
+                  title={locked ? `Entre na sua conta pra acessar ${label}` : undefined}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors px-3 py-2.5",
+                    locked
+                      ? "text-white/40 hover:bg-white/5 hover:text-white/60 cursor-pointer"
+                      : active
+                        ? "bg-white/15 text-white"
+                        : "text-white/70 hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">{label}</span>
+                  {locked && <Lock className="w-3 h-3 shrink-0 text-white/40" />}
+                  {active && !locked && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-4 overflow-y-auto" aria-label="Navegação">
-        <div className="space-y-0.5">
-          {publicNav.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "w-4 h-4 shrink-0",
-                    active && "text-[color:var(--brand-green-600)]"
-                  )}
-                />
-                {label}
-                {active && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[color:var(--brand-green-500)]" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* CTA único pra logar — substitui os 3 items cadeados que confundiam */}
-        <div className="mt-4 mx-2 rounded-xl border border-brand-100 bg-brand-50 p-3">
-          <p className="text-xs font-semibold text-brand-900 mb-1.5 flex items-center gap-1.5">
-            <Lock className="w-3 h-3 shrink-0" />
-            Disponível após entrar
-          </p>
-          <p className="text-[11px] leading-relaxed text-brand-800/80 mb-2.5">
-            Painel, produtos e suas cotações.
-          </p>
-          <Link
-            href="/login"
-            onClick={onClose}
-            className="block text-center text-xs font-semibold text-brand-700 hover:text-brand-900 underline-offset-2 hover:underline"
-          >
-            Entrar →
-          </Link>
-        </div>
-      </nav>
-
-      {/* Footer — CTAs de autenticação + links legais */}
-      <div className="px-3 py-4 border-t border-border space-y-2">
+      {/* Footer — CTAs de autenticação + links legais (mesmo estilo escuro) */}
+      <div className="px-3 py-4 border-t border-brand-700 space-y-2">
         <Link
           href="/cadastro"
-          className="flex w-full items-center justify-center px-4 py-2.5 text-sm font-semibold bg-[color:var(--brand-green-600)] text-white rounded-lg hover:bg-[color:var(--brand-green-700)] transition-colors"
+          onClick={onClose}
+          className="flex w-full items-center justify-center px-4 py-2.5 text-sm font-semibold bg-white text-brand-700 rounded-lg hover:bg-white/90 transition-colors"
         >
           Criar conta gratuita
         </Link>
         <Link
           href="/login"
-          className="flex w-full items-center justify-center px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+          onClick={onClose}
+          className="flex w-full items-center justify-center px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
         >
           Já tenho conta
         </Link>
-        <div className="flex items-center justify-center gap-3 pt-2 text-[11px] text-muted-foreground/70">
-          <Link href="/termos" className="hover:text-muted-foreground hover:underline">Termos</Link>
+        <div className="flex items-center justify-center gap-3 pt-2 text-[11px] text-white/40">
+          <Link href="/termos" className="hover:text-white/70 hover:underline">Termos</Link>
           <span>·</span>
-          <Link href="/privacidade" className="hover:text-muted-foreground hover:underline">Privacidade</Link>
+          <Link href="/privacidade" className="hover:text-white/70 hover:underline">Privacidade</Link>
           <span>·</span>
-          <Link href="/faq" className="hover:text-muted-foreground hover:underline">FAQ</Link>
+          <Link href="/faq" className="hover:text-white/70 hover:underline">FAQ</Link>
         </div>
       </div>
     </aside>
@@ -135,10 +134,8 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex min-h-screen bg-surface">
-      {/* Sidebar desktop */}
       <Sidebar pathname={pathname} onClose={() => setMobileOpen(false)} />
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <button
@@ -153,7 +150,6 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
         </div>
       )}
 
-      {/* Conteúdo principal */}
       <div className="flex-1 min-w-0">
         {/* Topbar mobile */}
         <header className="h-16 flex items-center px-4 bg-white border-b border-border md:hidden sticky top-0 z-30 shrink-0">

@@ -436,8 +436,8 @@ export default async function FornecedorPublicoPage({
                 className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)] transition-colors group"
               >
                 {f.file_type === "pdf"
-                  ? <FileText className="w-5 h-5 text-red-500 shrink-0" />
-                  : <ImageIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                  ? <FileText className="w-5 h-5 text-foreground shrink-0" />
+                  : <ImageIcon className="w-5 h-5 text-foreground shrink-0" />
                 }
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-800 truncate">

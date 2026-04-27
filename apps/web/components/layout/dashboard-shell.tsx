@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, MessageSquare, FileText, KanbanSquare, User, LogOut,
-  Globe, BookOpen, Menu, X, Search, Scale,
+  Menu, X, Search, Scale, Eye,
   PanelLeftClose, ChevronUp,
   IdCard, Loader2,
 } from "lucide-react";
@@ -58,12 +58,14 @@ interface SidebarProps {
 function buildBuyerNav(): NavSection[] {
   return [
     { items: [
-      { href: "/painel",            label: "Início",          icon: LayoutDashboard },
+      { href: "/painel", label: "Início", icon: LayoutDashboard },
+    ]},
+    { label: "Comprador", items: [
       { href: "/painel/explorar",   label: "Explorar",        icon: Search },
       { href: "/painel/inquiries",  label: "Minhas Cotações", icon: FileText },
-      ...(FEATURES.pipeline   ? [{ href: "/painel/pipeline",   label: "Pipeline",         icon: KanbanSquare }] : []),
-      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador",       icon: Scale }] : []),
-      ...(FEATURES.chat       ? [{ href: "/painel/chat",       label: "Chat de Compras",  icon: MessageSquare }] : []),
+      ...(FEATURES.pipeline   ? [{ href: "/painel/pipeline",   label: "Pipeline",        icon: KanbanSquare }] : []),
+      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador",      icon: Scale }] : []),
+      ...(FEATURES.chat       ? [{ href: "/painel/chat",       label: "Chat de Compras", icon: MessageSquare }] : []),
     ]},
   ];
 }
@@ -71,12 +73,12 @@ function buildBuyerNav(): NavSection[] {
 function buildSupplierNav(): NavSection[] {
   return [
     { items: [
-      { href: "/painel",            label: "Início",         icon: LayoutDashboard },
-      { href: "/painel/produtos",   label: "Meus Produtos",  icon: Package },
-      { href: "/painel/inquiries",  label: "Cotações",        icon: FileText },
-      ...(FEATURES.pipeline        ? [{ href: "/painel/pipeline",  label: "Pipeline",        icon: KanbanSquare }] : []),
-      ...(FEATURES.catalogoInterno ? [{ href: "/painel/catalogo",  label: "Catálogo",        icon: BookOpen }] : []),
-      ...(FEATURES.chat            ? [{ href: "/painel/chat",      label: "Chat de Vendas",  icon: MessageSquare }] : []),
+      { href: "/painel",                label: "Início",            icon: LayoutDashboard },
+      { href: "/painel/produtos",       label: "Material de venda", icon: Package },
+      { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
+      { href: "/painel/inquiries",      label: "Cotações",           icon: FileText },
+      ...(FEATURES.pipeline ? [{ href: "/painel/pipeline", label: "Pipeline",       icon: KanbanSquare }] : []),
+      ...(FEATURES.chat     ? [{ href: "/painel/chat",     label: "Chat de Vendas", icon: MessageSquare }] : []),
     ]},
   ];
 }
@@ -94,8 +96,8 @@ function buildBothNav(): NavSection[] {
       ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador", icon: Scale }] : []),
     ]},
     { label: "Fornecedor", items: [
-      { href: "/painel/produtos", label: "Meus Produtos", icon: Package },
-      ...(FEATURES.catalogoInterno ? [{ href: "/painel/catalogo", label: "Catálogo", icon: Globe }] : []),
+      { href: "/painel/produtos",       label: "Material de venda", icon: Package },
+      { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
     ]},
   ];
 }
@@ -284,19 +286,16 @@ function Sidebar({
                   </div>
                 </div>
 
-                {user.role !== "buyer" && (
-                  <>
-                    <Link
-                      href="/painel/perfil"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-muted transition-colors"
-                    >
-                      <IdCard className="w-4 h-4 text-slate-400 shrink-0" />
-                      Meu perfil
-                    </Link>
-                    <div className="my-1 border-t border-border" />
-                  </>
-                )}
+                {/* "Meu perfil" — rota única que se adapta ao role (buyer/supplier/both) */}
+                <Link
+                  href="/painel/perfil"
+                  onClick={() => setAccountOpen(false)}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-slate-700 hover:bg-muted transition-colors"
+                >
+                  <IdCard className="w-4 h-4 text-slate-400 shrink-0" />
+                  Meu perfil
+                </Link>
+                <div className="my-1 border-t border-border" />
                 <form action={logout}>
                   <button
                     type="submit"

@@ -140,17 +140,16 @@ export async function createSupplierUpgrade(
 
   const profileCompleteness = calcCompleteness(
     {
-      trade_name: normalizedTradeName,
       description: null,
       logo_url: null,
       phone: normalizedPhone,
       city: normalizedCity,
       state: normalizedState,
       categories: categoryIds.length > 0 ? categoryIds : null,
-      photos: null,
-      website: null,
-      instagram: null,
+      operating_hours: null,
+      founded_year: null,
     },
+    0,
     0
   );
 
@@ -216,30 +215,37 @@ export async function updateSupplierProfile(
 ) {
   const supabase = createClient(token);
 
-  const { count: productCount } = await supabase
+  const { data: products } = await supabase
     .from("products")
-    .select("*", { count: "exact", head: true })
+    .select("images")
     .eq("supplier_id", supplierId)
     .eq("status", "active");
+
+  const productList = (products ?? []) as { images: string[] | null }[];
+  const productCount = productList.length;
+  const productsWithPhotosCount = productList.filter(
+    p => Array.isArray(p.images) && p.images.length > 0
+  ).length;
 
   const { public_profile_layout, ...rest } = input as UpdateProfileInput & {
     public_profile_layout?: unknown;
   };
 
+  void tradeName; // mantido na assinatura (cadastro inicial), mas não entra no cálculo da RN-02.01
+
   const completeness = calcCompleteness(
     {
-      trade_name:  tradeName,
-      description: rest.description ?? null,
-      logo_url:    rest.logo_url ?? null,
-      phone:       rest.phone ?? null,
+      description:     rest.description ?? null,
+      logo_url:        rest.logo_url ?? null,
+      phone:           rest.phone ?? null,
       city,
       state,
-      categories:  rest.categories?.length ? rest.categories : null,
-      photos:      rest.photos?.length ? rest.photos : null,
-      website:     rest.website ?? null,
-      instagram:   rest.instagram ?? null,
+      categories:      rest.categories?.length ? rest.categories : null,
+      operating_hours: rest.operating_hours ?? null,
+      founded_year:    rest.founded_year ?? null,
     },
-    productCount ?? 0
+    productCount,
+    productsWithPhotosCount
   );
 
   const { error } = await supabase

@@ -5,7 +5,7 @@ import {
   Building2, CheckCircle2, Hash, Loader2, Phone,
   ShoppingCart, Store, Users, ArrowLeft,
 } from "lucide-react";
-import { completeOnboarding } from "@/app/actions/onboarding";
+import { completeOnboarding, skipOnboarding } from "@/app/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,14 +55,29 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={`h-2 rounded-full transition-all duration-300 ${
-            i + 1 < current    ? "w-6 bg-[color:var(--brand-green-600)]"
-            : i + 1 === current ? "w-8 bg-[color:var(--brand-green-600)]"
+            i + 1 < current    ? "w-6 bg-brand-600"
+            : i + 1 === current ? "w-8 bg-brand-600"
             : "w-6 bg-slate-200"
           }`}
         />
       ))}
       <span className="ml-1 text-xs text-slate-400">{current}/{total}</span>
     </div>
+  );
+}
+
+/** Botão "Pular onboarding" — fica abaixo do CTA principal em cada step.
+ *  Visível e clicável, mas estilizado como ação secundária (link + ícone). */
+function SkipButton() {
+  return (
+    <form action={skipOnboarding} className="text-center">
+      <button
+        type="submit"
+        className="text-sm font-medium text-brand-700 hover:text-brand-900 underline underline-offset-4 transition-colors"
+      >
+        Pular por enquanto — preencho depois
+      </button>
+    </form>
   );
 }
 
@@ -105,7 +120,7 @@ function Header({ step, total, title, sub, onBack }: HeaderProps) {
       <div className="space-y-1 text-center">
         <GiroLogo />
         {step === 1 && (
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--brand-green-700)] pt-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700 pt-2">
             GiroB2B · Primeiros passos
           </p>
         )}
@@ -253,13 +268,13 @@ export default function OnboardingForm() {
               onClick={() => setSegment(value)}
               className={`w-full rounded-2xl border p-5 text-left transition-all ${
                 segment === value
-                  ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)] ring-2 ring-[color:var(--brand-green-400)]/30"
-                  : "border-slate-200 bg-white hover:border-[color:var(--brand-green-300)] hover:bg-slate-50"
+                  ? "border-brand-500 bg-brand-50 ring-2 ring-brand-400/30"
+                  : "border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50"
               }`}
             >
               <div className="flex items-start gap-4">
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                  segment === value ? "bg-[color:var(--brand-green-600)] text-white" : "bg-slate-100 text-slate-500"
+                  segment === value ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"
                 }`}>
                   <Icon className="h-5 w-5" />
                 </div>
@@ -267,7 +282,7 @@ export default function OnboardingForm() {
                   <p className="font-semibold text-slate-900">{title}</p>
                   <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{description}</p>
                 </div>
-                {segment === value && <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand-green-600)]" />}
+                {segment === value && <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />}
               </div>
             </button>
           ))}
@@ -280,6 +295,7 @@ export default function OnboardingForm() {
         >
           Continuar
         </Button>
+        <SkipButton />
       </div>
     </StepWrapper>
   );
@@ -310,20 +326,20 @@ export default function OnboardingForm() {
                   onClick={() => toggleCategory(slug)}
                   className={`flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all ${
                     selected
-                      ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)] ring-2 ring-[color:var(--brand-green-400)]/25"
+                      ? "border-brand-500 bg-brand-50 ring-2 ring-brand-400/30"
                       : disabled
                         ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-40"
-                        : "border-slate-200 bg-white hover:border-[color:var(--brand-green-300)] hover:bg-slate-50"
+                        : "border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex w-full items-center gap-2">
-                    <span className={`flex-1 text-sm font-medium leading-tight ${selected ? "text-[color:var(--brand-green-800)]" : "text-slate-700"}`}>
+                    <span className={`flex-1 text-sm font-medium leading-tight ${selected ? "text-brand-800" : "text-slate-700"}`}>
                       {name}
                     </span>
-                    {selected && <CheckCircle2 className="h-4 w-4 shrink-0 text-[color:var(--brand-green-600)]" />}
+                    {selected && <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-600" />}
                   </div>
                   {slug !== "outro" && count !== null && (
-                    <span className={`mt-1 text-xs ${selected ? "text-[color:var(--brand-green-600)]" : "text-slate-400"}`}>
+                    <span className={`mt-1 text-xs ${selected ? "text-brand-600" : "text-slate-400"}`}>
                       {count} fornecedores
                     </span>
                   )}
@@ -333,19 +349,19 @@ export default function OnboardingForm() {
           </div>
 
           {selectedCategories.includes("outro") && (
-            <div className="space-y-1.5 rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3">
-              <Label htmlFor="custom_category" className="text-sm font-medium text-[color:var(--brand-green-800)]">
+            <div className="space-y-1.5 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
+              <Label htmlFor="custom_category" className="text-sm font-medium text-brand-800">
                 Qual é o seu setor?
               </Label>
               <Input
                 id="custom_category"
                 placeholder="Ex: Móveis planejados, Produtos veterinários..."
-                className="h-10 border-[color:var(--brand-green-200)] bg-white focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+                className="h-10 border-brand-200 bg-white focus-visible:border-brand-500 focus-visible:ring-brand-100"
                 value={customCategory}
                 onChange={e => setCustomCategory(e.target.value)}
                 autoFocus
               />
-              <p className="text-xs text-[color:var(--brand-green-700)]">Vamos usar isso para melhorar nossas categorias.</p>
+              <p className="text-xs text-brand-700">Vamos usar isso para melhorar nossas categorias.</p>
             </div>
           )}
 
@@ -370,6 +386,7 @@ export default function OnboardingForm() {
           >
             Continuar
           </Button>
+          <SkipButton />
         </div>
       </StepWrapper>
     );
@@ -390,8 +407,8 @@ export default function OnboardingForm() {
               onClick={() => setPurchaseFrequency(value)}
               className={`w-full rounded-2xl border p-4 text-left transition-all ${
                 purchaseFrequency === value
-                  ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)] ring-2 ring-[color:var(--brand-green-400)]/30"
-                  : "border-slate-200 bg-white hover:border-[color:var(--brand-green-300)] hover:bg-slate-50"
+                  ? "border-brand-500 bg-brand-50 ring-2 ring-brand-400/30"
+                  : "border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -399,7 +416,7 @@ export default function OnboardingForm() {
                   <p className="font-semibold text-slate-900">{label}</p>
                   <p className="text-sm text-muted-foreground">{sub}</p>
                 </div>
-                {purchaseFrequency === value && <CheckCircle2 className="h-5 w-5 shrink-0 text-[color:var(--brand-green-600)]" />}
+                {purchaseFrequency === value && <CheckCircle2 className="h-5 w-5 shrink-0 text-brand-600" />}
               </div>
             </button>
           ))}
@@ -412,6 +429,7 @@ export default function OnboardingForm() {
         >
           Continuar
         </Button>
+        <SkipButton />
       </div>
     </StepWrapper>
   );
@@ -423,18 +441,18 @@ export default function OnboardingForm() {
     <StepWrapper step={step} direction={direction}>
       <div className="w-full max-w-lg space-y-6">
         <Header {...headerProps("Dados da empresa", "Preencha os dados da sua empresa para continuar.")} />
-        <div className="space-y-4 rounded-2xl border border-border/60 bg-white/80 p-5 shadow-sm">
+        <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-sm">
           {/* CNPJ */}
           <div className="space-y-2">
             <Label htmlFor="cnpj_input" className="flex items-center gap-2 text-sm font-medium">
-              <Hash className="h-4 w-4 text-[color:var(--brand-green-700)]" />
+              <Hash className="h-4 w-4 text-brand-700" />
               CNPJ da empresa
             </Label>
             <div className="relative">
               <Input
                 id="cnpj_input"
                 placeholder="00.000.000/0001-00"
-                className={`h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)] ${
+                className={`h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100 ${
                   cnpjError ? "border-red-500" : ""
                 }`}
                 value={cnpjRaw}
@@ -455,13 +473,13 @@ export default function OnboardingForm() {
           {/* Nome Fantasia */}
           <div className="space-y-2">
             <Label htmlFor="trade_name_input" className="flex items-center gap-2 text-sm font-medium">
-              <Store className="h-4 w-4 text-[color:var(--brand-green-700)]" />
+              <Store className="h-4 w-4 text-brand-700" />
               Nome Fantasia
             </Label>
             <Input
               id="trade_name_input"
               placeholder="Como sua empresa é conhecida"
-              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100"
               value={tradeName}
               onChange={e => setTradeName(e.target.value)}
             />
@@ -470,14 +488,14 @@ export default function OnboardingForm() {
           {/* Telefone */}
           <div className="space-y-2">
             <Label htmlFor="phone_input" className="flex items-center gap-2 text-sm font-medium">
-              <Phone className="h-4 w-4 text-[color:var(--brand-green-700)]" />
+              <Phone className="h-4 w-4 text-brand-700" />
               Telefone comercial
             </Label>
             <Input
               id="phone_input"
               type="tel"
               placeholder="(11) 99999-9999"
-              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100"
               value={phone}
               onChange={e => setPhone(e.target.value)}
             />
@@ -492,6 +510,7 @@ export default function OnboardingForm() {
         >
           Continuar
         </Button>
+        <SkipButton />
       </div>
     </StepWrapper>
   );
@@ -517,9 +536,9 @@ export default function OnboardingForm() {
       <div className="w-full max-w-lg space-y-6">
         <Header {...headerProps("Tudo pronto para começar!", "Revise suas escolhas. Você pode personalizar mais no seu perfil.")} />
 
-        <div className="flex items-start gap-3 rounded-2xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3.5">
+        <div className="flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3.5">
           <span className="text-xl mt-0.5">{activeCTA.icon}</span>
-          <p className="text-sm leading-relaxed text-[color:var(--brand-green-800)]">{activeCTA.text}</p>
+          <p className="text-sm leading-relaxed text-brand-800">{activeCTA.text}</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
@@ -541,7 +560,7 @@ export default function OnboardingForm() {
               {selectedCats.map(c => (
                 <span
                   key={c.slug}
-                  className="flex items-center gap-1.5 rounded-full bg-[color:var(--brand-green-50)] px-3 py-1 text-sm font-medium text-[color:var(--brand-green-800)] border border-[color:var(--brand-green-200)]"
+                  className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-800 border border-brand-200"
                 >
                   {c.slug === "outro" && customCategory ? customCategory : c.name}
                 </span>
@@ -612,6 +631,7 @@ export default function OnboardingForm() {
             }
           </Button>
         </form>
+        <SkipButton />
       </div>
     </StepWrapper>
   );

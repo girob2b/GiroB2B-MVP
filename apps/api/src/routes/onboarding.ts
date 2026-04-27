@@ -32,6 +32,10 @@ export default async function onboardingRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const parsed = CompleteOnboardingSchema.safeParse(request.body);
       if (!parsed.success) {
+        request.log.warn({
+          body: request.body,
+          errors: parsed.error.flatten().fieldErrors,
+        }, "[onboarding/complete] validation failed");
         return reply.status(400).send({ errors: parsed.error.flatten().fieldErrors });
       }
 

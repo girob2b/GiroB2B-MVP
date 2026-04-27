@@ -7,7 +7,6 @@ export const FEATURES = {
   chat: true,               // MVP — chat de negociação
   pipeline: true,            // MVP — pipeline comercial
   comparador: false,        // Fase 2+
-  catalogoInterno: true,    // MVP — upload de catálogo PDF/imagem
   importarProdutos: false,  // Tier 3
   webSearch: false,         // Tier 2 (gated por assinatura)
   needs: false,             // Tier 2

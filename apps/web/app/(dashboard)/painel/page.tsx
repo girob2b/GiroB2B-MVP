@@ -181,7 +181,7 @@ function SupplierHome({
       {profileIncomplete && supplier.profile_completeness < 60 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-foreground mt-0.5 shrink-0" />
             <div className="flex-1 space-y-2">
               <p className="text-sm font-semibold text-amber-800">
                 Seu perfil está incompleto ({supplier.profile_completeness}%)
@@ -307,7 +307,7 @@ function SupplierHome({
           <CardContent className="py-6 px-5">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <Package className="w-5 h-5 text-amber-600" />
+                <Package className="w-5 h-5 text-foreground" />
               </div>
               <div className="space-y-2">
                 <p className="font-semibold text-amber-900">
@@ -397,7 +397,7 @@ function BuyerHome({
         <StatCard
           title="Aguardando resposta"
           value={stats.pending}
-          icon={<Clock className="w-5 h-5 text-amber-600" />}
+          icon={<Clock className="w-5 h-5 text-foreground" />}
           href="/painel/inquiries?tab=sent"
         />
       </div>
@@ -536,7 +536,7 @@ function BothHome({
           <StatCard
             title="Aguardando resposta"
             value={buyerStats.pending}
-            icon={<Clock className="w-5 h-5 text-amber-600" />}
+            icon={<Clock className="w-5 h-5 text-foreground" />}
             href="/painel/inquiries?tab=sent"
           />
         </div>
@@ -552,7 +552,7 @@ function BothHome({
         {profileIncomplete && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <AlertCircle className="w-5 h-5 text-foreground mt-0.5 shrink-0" />
               <div className="flex-1 space-y-2">
                 <p className="text-sm font-semibold text-amber-800">
                   Perfil de fornecedor incompleto ({supplier.profile_completeness}%)

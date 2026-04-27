@@ -22,7 +22,7 @@ const ESTADOS = [
   "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
 ];
 
-interface Supplier {
+export interface AccountFormSupplier {
   id: string;
   cnpj: string;
   company_name: string;
@@ -73,7 +73,7 @@ function Field({
   );
 }
 
-export default function ConfigForm({ supplier, userRole }: { supplier: Supplier, userRole?: string }) {
+export default function AccountForm({ supplier, userRole }: { supplier: AccountFormSupplier; userRole?: string }) {
   const [state, action, pending] = useActionState(updateCompanySettings, {});
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Plus,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,7 @@ interface InquiryRow {
   created_at: string;
   products?: { name: string | null } | null;
   suppliers?: { trade_name: string | null; slug: string | null } | null;
+  buyer_profile?: { is_company_verified: boolean } | null;
 }
 
 interface InquiriesPageProps {
@@ -93,6 +95,22 @@ function visibleTabs(hasSupplier: boolean, hasBuyer: boolean): QuoteTab[] {
 function normalizeTab(value: string | undefined, allowed: QuoteTab[]): QuoteTab {
   if (allowed.includes(value as QuoteTab)) return value as QuoteTab;
   return allowed[0];
+}
+
+/** Selo "Empresa Verificada" do buyer (RF-01.14). Mostra ao supplier que o
+ *  CNPJ do comprador foi validado como ativo na Receita Federal. */
+function VerifiedBuyerBadge({ inquiry }: { inquiry: InquiryRow }) {
+  if (!inquiry.buyer_profile?.is_company_verified) return null;
+  return (
+    <Badge
+      variant="outline"
+      className="gap-1 border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+      title="CNPJ validado como ativo na Receita Federal"
+    >
+      <ShieldCheck className="h-3 w-3" />
+      Empresa Verificada
+    </Badge>
+  );
 }
 
 function statusInfo(status: InquiryStatus | string) {
@@ -171,7 +189,7 @@ async function getQuoteCenterData(userId: string) {
     supplierRes.data
       ? supabase
           .from("inquiries")
-          .select(`id, supplier_id, product_id, description, quantity_estimate, desired_deadline,
+          .select(`id, supplier_id, product_id, buyer_id, description, quantity_estimate, desired_deadline,
                    status, buyer_name, buyer_email, buyer_phone,
                    buyer_company, buyer_city, buyer_state, contact_unlocked, created_at, products(name)`)
           .eq("supplier_id", supplierRes.data.id)
@@ -193,10 +211,11 @@ async function getQuoteCenterData(userId: string) {
     // Generic query is best-effort — new columns may not exist yet before migration 018
     supabase
       .from("inquiries")
-      .select(`id, supplier_id, product_id, description, quantity_estimate, target_price,
+      .select(`id, supplier_id, product_id, buyer_id, description, quantity_estimate, target_price,
                status, buyer_name, buyer_company, buyer_city,
                buyer_state, contact_unlocked, created_at, products(name)`)
       .eq("inquiry_type", "generic")
+      .not("buyer_id", "is", null)  // esconde inquiries órfãs (buyer foi deletado)
       .not("status", "in", '("archived","reported")')
       .order("created_at", { ascending: false })
       .limit(100),
@@ -205,13 +224,52 @@ async function getQuoteCenterData(userId: string) {
   if (receivedRes.error) throw new Error("Não foi possível carregar as cotações recebidas.");
   if (sentRes.error)     throw new Error("Não foi possível carregar suas cotações enviadas.");
 
+  const received = (receivedRes.data ?? []) as unknown as InquiryRow[];
+  const generic  = (genericRes.data  ?? []) as unknown as InquiryRow[];
+
+  // Selo "Empresa Verificada" do buyer (RF-01.14): batch lookup separado pra
+  // tolerar a falta da migration 030 (coluna is_company_verified). Se a coluna
+  // ainda não existir, o map fica vazio e o badge simplesmente não aparece.
+  const buyerIds = Array.from(
+    new Set(
+      [...received, ...generic]
+        .map(i => (i as InquiryRow & { buyer_id?: string | null }).buyer_id)
+        .filter((id): id is string => !!id)
+    )
+  );
+  const verifiedMap = await loadVerifiedBuyers(supabase, buyerIds);
+
+  function withVerified(inq: InquiryRow): InquiryRow {
+    const buyerId = (inq as InquiryRow & { buyer_id?: string | null }).buyer_id ?? null;
+    const verified = buyerId ? verifiedMap.get(buyerId) ?? false : false;
+    return verified ? { ...inq, buyer_profile: { is_company_verified: true } } : inq;
+  }
+
   return {
     supplier: supplierRes.data,
     buyer:    buyerRes.data,
-    received: (receivedRes.data ?? []) as unknown as InquiryRow[],
-    sent:     (sentRes.data     ?? []) as unknown as InquiryRow[],
-    generic:  (genericRes.data  ?? []) as unknown as InquiryRow[],
+    received: received.map(withVerified),
+    sent:     (sentRes.data ?? []) as unknown as InquiryRow[],
+    generic:  generic.map(withVerified),
   };
+}
+
+async function loadVerifiedBuyers(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  buyerIds: string[]
+): Promise<Map<string, boolean>> {
+  if (buyerIds.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from("buyers")
+    .select("id, is_company_verified")
+    .in("id", buyerIds);
+  // 42703 = undefined_column (migration 030 não rodou). Silencioso por design.
+  if (error) return new Map();
+  const map = new Map<string, boolean>();
+  for (const row of (data ?? []) as { id: string; is_company_verified: boolean | null }[]) {
+    if (row.is_company_verified) map.set(row.id, true);
+  }
+  return map;
 }
 
 export default async function InquiriesPage({ searchParams }: InquiriesPageProps) {
@@ -455,6 +513,7 @@ function GenericInquiryList({
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-foreground">{display.title}</p>
+                    <VerifiedBuyerBadge inquiry={inquiry} />
                     {inquiry.contact_type && (
                       <Badge variant="outline" className="text-xs border-[color:var(--brand-green-200)] text-[color:var(--brand-green-700)]">
                         {CONTACT_TYPE_LABELS[inquiry.contact_type] ?? inquiry.contact_type}
@@ -486,9 +545,9 @@ function GenericInquiryList({
                     variant="outline"
                     size="sm"
                     render={<Link href={`/painel/inquiries/${inquiry.id}`} />}
-                    className="shrink-0 border-[color:var(--brand-green-200)] text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)]"
+                    className="btn-secondary shrink-0"
                   >
-                    Tenho interesse
+                    Enviar proposta
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Button>
                 )}
@@ -535,8 +594,9 @@ function InquiryList({
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-foreground">{display.title}</p>
-                    {display.locked && <Lock className="h-3.5 w-3.5 text-amber-600" />}
+                    {display.locked && <Lock className="h-3.5 w-3.5 text-foreground" />}
                     <Badge variant="outline" className={info.className}>{info.label}</Badge>
+                    <VerifiedBuyerBadge inquiry={inquiry} />
                   </div>
                   <p className="text-sm text-muted-foreground">{display.subtitle}</p>
                   <p className="line-clamp-2 text-sm text-foreground">{inquiry.description}</p>

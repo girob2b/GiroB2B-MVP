@@ -10,7 +10,7 @@ export default function ConfirmarEmailCompradorPage() {
     <div className="min-h-screen flex items-center justify-center bg-surface px-5">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="mx-auto w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center">
-          <MailCheck className="w-10 h-10 text-blue-600" />
+          <MailCheck className="w-10 h-10 text-foreground" />
         </div>
         <h1 className="text-3xl font-bold">Verifique seu email</h1>
         <p className="text-muted-foreground text-lg leading-relaxed">

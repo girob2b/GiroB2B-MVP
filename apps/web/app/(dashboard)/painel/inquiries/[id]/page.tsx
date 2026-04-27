@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Lock, MessageSquare } from "lucide-react";
+import { ArrowLeft, Lock, MessageSquare, Send, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { startSupplierConversation } from "@/app/actions/inquiries";
 
 type InquiryStatus = "new" | "viewed" | "responded" | "archived" | "reported";
 type SupplierPlan = "free" | "starter" | "pro" | "premium";
@@ -23,9 +24,12 @@ interface InquiryRow {
   supplier_id: string | null;
   product_id: string | null;
   buyer_id: string | null;
+  inquiry_type: "directed" | "generic" | null;
   description: string;
   quantity_estimate: string | null;
   desired_deadline: string | null;
+  target_price: string | null;
+  contact_type: string | null;
   status: InquiryStatus;
   buyer_name: string | null;
   buyer_email: string | null;
@@ -37,11 +41,24 @@ interface InquiryRow {
   created_at: string;
   products?: { name: string | null; slug: string | null } | null;
   suppliers?: { trade_name: string | null; slug: string | null; plan: SupplierPlan | null } | null;
+  buyer_profile?: { is_company_verified: boolean } | null;
 }
 
 interface InquiryPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }
+
+const ERROR_MESSAGES: Record<string, string> = {
+  buyer_orphan:
+    "Este comprador não está mais ativo na plataforma. Não é possível iniciar uma negociação.",
+  no_supplier_profile:
+    "Você precisa ter um perfil de fornecedor para iniciar uma negociação.",
+  inquiry_not_found: "Cotação não encontrada.",
+  not_authorized: "Você não tem permissão para responder esta cotação.",
+  conversation_insert_failed:
+    "Não foi possível abrir o chat. Tente novamente em instantes.",
+};
 
 function statusInfo(status: InquiryStatus | string) {
   const map: Record<string, { label: string; className: string }> = {
@@ -84,9 +101,12 @@ async function getInquiry(userId: string, id: string) {
       supplier_id,
       product_id,
       buyer_id,
+      inquiry_type,
       description,
       quantity_estimate,
       desired_deadline,
+      target_price,
+      contact_type,
       status,
       buyer_name,
       buyer_email,
@@ -105,7 +125,28 @@ async function getInquiry(userId: string, id: string) {
   if (error || !data) return null;
 
   const inquiry = data as unknown as InquiryRow;
-  const isSupplierViewer = Boolean(supplierRes.data && inquiry.supplier_id === supplierRes.data.id);
+
+  // Carrega o selo "Empresa Verificada" do buyer em query separada — tolera a
+  // ausência da migration 030 (a coluna pode ainda não existir, e nesse caso
+  // o badge silenciosamente não renderiza).
+  if (inquiry.buyer_id) {
+    const verifyRes = await supabase
+      .from("buyers")
+      .select("is_company_verified")
+      .eq("id", inquiry.buyer_id)
+      .maybeSingle<{ is_company_verified: boolean }>();
+    if (verifyRes.data?.is_company_verified) {
+      inquiry.buyer_profile = { is_company_verified: true };
+    }
+  }
+
+  // Quem pode ver:
+  // - Buyer dono da inquiry (qualquer tipo)
+  // - Supplier dono (inquiry direcionada com supplier_id == seu id)
+  // - QUALQUER supplier autenticado (inquiry genérica — supplier_id null)
+  const isSupplierOwner = Boolean(supplierRes.data && inquiry.supplier_id === supplierRes.data.id);
+  const isGenericVisibleToSupplier = Boolean(supplierRes.data && inquiry.supplier_id === null);
+  const isSupplierViewer = isSupplierOwner || isGenericVisibleToSupplier;
   const isBuyerViewer = Boolean(buyerRes.data && inquiry.buyer_id === buyerRes.data.id);
 
   if (!isSupplierViewer && !isBuyerViewer) return null;
@@ -114,11 +155,13 @@ async function getInquiry(userId: string, id: string) {
     inquiry,
     mode: isSupplierViewer ? "supplier" as const : "buyer" as const,
     supplier: supplierRes.data,
+    isGeneric: inquiry.supplier_id === null,
   };
 }
 
-export default async function InquiryDetailPage({ params }: InquiryPageProps) {
+export default async function InquiryDetailPage({ params, searchParams }: InquiryPageProps) {
   const { id } = await params;
+  const { error: errorCode } = await searchParams;
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) redirect("/login");
@@ -126,11 +169,14 @@ export default async function InquiryDetailPage({ params }: InquiryPageProps) {
   const data = await getInquiry(authData.user.id, id);
   if (!data) notFound();
 
-  const { inquiry } = data;
+  const { inquiry, isGeneric } = data;
   const info = statusInfo(inquiry.status);
   const canShowContact =
     data.mode === "buyer" ||
     Boolean(data.supplier && data.supplier.plan !== "free" && inquiry.contact_unlocked);
+  const isOrphan = inquiry.buyer_id === null;
+  const canSupplierAct = data.mode === "supplier" && !isOrphan;
+  const errorMessage = errorCode ? ERROR_MESSAGES[errorCode] : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -146,6 +192,15 @@ export default async function InquiryDetailPage({ params }: InquiryPageProps) {
         <Badge variant="outline" className={info.className}>{info.label}</Badge>
       </div>
 
+      {errorMessage && <div className="alert-error text-sm">{errorMessage}</div>}
+
+      {isOrphan && data.mode === "supplier" && (
+        <div className="alert-warning text-sm">
+          ⚠ Esta cotação foi criada por um comprador que não está mais ativo na plataforma.
+          Não é possível iniciar uma negociação.
+        </div>
+      )}
+
       <Card>
         <CardContent className="space-y-6 p-5">
           <div className="flex items-start gap-3">
@@ -160,19 +215,56 @@ export default async function InquiryDetailPage({ params }: InquiryPageProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <InfoBlock label="Produto" value={inquiry.products?.name ?? "Não informado"} />
-            <InfoBlock label="Fornecedor" value={inquiry.suppliers?.trade_name ?? "Fornecedor"} />
+            {!isGeneric && (
+              <InfoBlock label="Fornecedor" value={inquiry.suppliers?.trade_name ?? "Fornecedor"} />
+            )}
             <InfoBlock label="Quantidade estimada" value={inquiry.quantity_estimate ?? "Não informada"} />
+            {inquiry.target_price && <InfoBlock label="Preço-alvo" value={inquiry.target_price} />}
+            {inquiry.contact_type && <InfoBlock label="Tipo de fornecedor desejado" value={inquiry.contact_type} />}
             <InfoBlock label="Prazo desejado" value={inquiry.desired_deadline ?? "Não informado"} />
             <InfoBlock label="Cidade do comprador" value={locationLabel(inquiry)} />
           </div>
         </CardContent>
       </Card>
 
+      {canSupplierAct && (
+        <Card>
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {isGeneric ? "Cotação aberta — envie sua proposta" : "Responda esta cotação"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Iniciar uma conversa abre o chat com o comprador. Você pode mandar mensagens
+                e formalizar uma proposta a partir de lá.
+              </p>
+            </div>
+            <form action={startSupplierConversation}>
+              <input type="hidden" name="inquiry_id" value={inquiry.id} />
+              <Button type="submit" className="btn-primary shrink-0">
+                <Send className="mr-2 h-4 w-4" />
+                Iniciar negociação
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="space-y-4 p-5">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">Contato do comprador</h2>
-            {!canShowContact && <Lock className="h-4 w-4 text-amber-600" />}
+            {!canShowContact && <Lock className="h-4 w-4 text-foreground" />}
+            {inquiry.buyer_profile?.is_company_verified && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+                title="CNPJ validado como ativo na Receita Federal"
+              >
+                <ShieldCheck className="h-3 w-3" />
+                Empresa Verificada
+              </Badge>
+            )}
           </div>
 
           {canShowContact ? (

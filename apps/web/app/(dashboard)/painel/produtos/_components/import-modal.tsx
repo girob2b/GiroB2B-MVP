@@ -240,12 +240,12 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
           {step === "preview" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className="gap-1.5 rounded-lg px-2.5 bg-green-50 border-green-200 text-green-700">
+                <Badge variant="outline" className="gap-1.5 rounded-lg px-2.5 bg-green-50 border-green-200 text-foreground">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {validRows.length} válido{validRows.length !== 1 ? "s" : ""}
                 </Badge>
                 {invalidRows.length > 0 && (
-                  <Badge variant="outline" className="gap-1.5 rounded-lg px-2.5 bg-red-50 border-red-200 text-red-700">
+                  <Badge variant="outline" className="gap-1.5 rounded-lg px-2.5 bg-red-50 border-red-200 text-foreground">
                     <XCircle className="w-3.5 h-3.5" />
                     {invalidRows.length} com erro{invalidRows.length !== 1 ? "s" : ""}
                   </Badge>
@@ -302,7 +302,7 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
                                 {row.errors.join("; ")}
                               </span>
                             ) : (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />
                             )}
                           </td>
                         </tr>
@@ -349,7 +349,7 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
                       .filter((r) => !r.ok)
                       .map((r) => (
                         <li key={r.index} className="flex items-start gap-2 px-4 py-2 text-xs">
-                          <XCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                          <XCircle className="w-3.5 h-3.5 text-foreground mt-0.5 shrink-0" />
                           <span className="font-medium text-slate-700 mr-1">{r.nome}</span>
                           <span className="text-red-600">{r.error}</span>
                         </li>

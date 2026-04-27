@@ -244,14 +244,35 @@ export async function importProduct(
 async function recalcCompleteness(supplierId: string, token: string) {
   const supabase = createClient(token);
 
-  const [sRes, countRes] = await Promise.all([
-    supabase.from("suppliers").select("trade_name,description,logo_url,phone,city,state,categories,photos,website,instagram").eq("id", supplierId).single(),
-    supabase.from("products").select("*", { count: "exact", head: true }).eq("supplier_id", supplierId).eq("status", "active"),
+  const [sRes, productsRes] = await Promise.all([
+    supabase
+      .from("suppliers")
+      .select("description,logo_url,phone,city,state,categories,operating_hours,founded_year")
+      .eq("id", supplierId)
+      .single(),
+    supabase
+      .from("products")
+      .select("images")
+      .eq("supplier_id", supplierId)
+      .eq("status", "active"),
   ]);
 
-  const s = sRes.data as { trade_name: string | null; description: string | null; logo_url: string | null; phone: string | null; city: string | null; state: string | null; categories: string[] | null; photos: string[] | null; website: string | null; instagram: string | null } | null;
+  const s = sRes.data as {
+    description: string | null;
+    logo_url: string | null;
+    phone: string | null;
+    city: string | null;
+    state: string | null;
+    categories: string[] | null;
+    operating_hours: string | null;
+    founded_year: number | null;
+  } | null;
   if (!s) return;
 
-  const completeness = calcCompleteness(s, countRes.count ?? 0);
+  const products = (productsRes.data ?? []) as { images: string[] | null }[];
+  const productCount = products.length;
+  const productsWithPhotosCount = products.filter(p => Array.isArray(p.images) && p.images.length > 0).length;
+
+  const completeness = calcCompleteness(s, productCount, productsWithPhotosCount);
   await supabase.from("suppliers").update({ profile_completeness: completeness }).eq("id", supplierId);
 }

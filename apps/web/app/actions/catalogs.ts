@@ -44,7 +44,7 @@ export async function addCatalogFile(
   });
   if (error) return { error: "Erro ao salvar no catálogo." };
 
-  revalidatePath("/painel/catalogo");
+  revalidatePath("/painel/produtos");
   return { success: true };
 }
 
@@ -76,7 +76,7 @@ export async function deleteCatalogFile(id: string): Promise<void> {
     .eq("id", id)
     .eq("supplier_id", supplier.id);
 
-  revalidatePath("/painel/catalogo");
+  revalidatePath("/painel/produtos");
 }
 
 export async function updateCatalogTitle(id: string, title: string): Promise<void> {
@@ -90,5 +90,5 @@ export async function updateCatalogTitle(id: string, title: string): Promise<voi
     .eq("id", id)
     .eq("supplier_id", supplier.id);
 
-  revalidatePath("/painel/catalogo");
+  revalidatePath("/painel/produtos");
 }

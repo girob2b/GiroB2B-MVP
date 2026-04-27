@@ -43,7 +43,8 @@ export async function completeOnboarding(
     }, { onConflict: "user_id" });
 
     if (buyerError) {
-      return { message: "Erro ao salvar dados do comprador. Tente novamente." };
+      console.error("[onboarding] buyers.upsert failed:", buyerError);
+      return { message: `Erro ao salvar dados do comprador: ${buyerError.message}` };
     }
   }
 

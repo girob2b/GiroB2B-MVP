@@ -40,8 +40,8 @@ function formatSize(bytes: number | null): string {
 
 function FileIcon({ type }: { type: string }) {
   return type === "pdf"
-    ? <FileText className="w-5 h-5 text-red-500 shrink-0" />
-    : <ImageIcon className="w-5 h-5 text-blue-500 shrink-0" />;
+    ? <FileText className="w-5 h-5 text-foreground shrink-0" />
+    : <ImageIcon className="w-5 h-5 text-foreground shrink-0" />;
 }
 
 export default function CatalogoUploader({ supplierId, files, hasProducts }: Props) {
@@ -161,7 +161,7 @@ export default function CatalogoUploader({ supplierId, files, hasProducts }: Pro
       )}>
         {hasPresence
           ? <CheckCircle2 className="w-5 h-5 text-[color:var(--brand-green-600)] shrink-0 mt-0.5" />
-          : <AlertCircle   className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          : <AlertCircle   className="w-5 h-5 text-foreground shrink-0 mt-0.5" />
         }
         <div>
           <p className={cn("text-sm font-semibold", hasPresence ? "text-[color:var(--brand-green-900)]" : "text-amber-900")}>

@@ -59,6 +59,43 @@ export async function updateProfile(
   return { success: true };
 }
 
+// ─── Atualização parcial do layout do perfil público ──────────────────────
+// Usa PATCH /supplier/me só com public_profile_layout pra não sobrescrever
+// outros campos com null (updateProfile envia o formData inteiro).
+export type PublicProfileLayoutState = { error?: string; success?: boolean };
+
+export async function updatePublicProfileLayout(
+  _prevState: PublicProfileLayoutState,
+  formData: FormData
+): Promise<PublicProfileLayoutState> {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: "Sessão expirada. Faça login novamente." };
+
+  const raw = formData.get("public_profile_layout");
+  if (typeof raw !== "string" || !raw.trim()) {
+    return { error: "Layout inválido." };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { error: "Layout inválido (JSON malformado)." };
+  }
+
+  try {
+    const client = apiClient(session.access_token);
+    await client.patch("/supplier/me", { public_profile_layout: parsed });
+  } catch (error) {
+    return { error: errorMessage(error, "Erro ao salvar layout.") };
+  }
+
+  revalidatePath("/painel/perfil-publico");
+  revalidatePath("/painel/perfil");
+  return { success: true };
+}
+
 export type SettingsState = { error?: string; success?: boolean };
 
 export async function updateCompanySettings(
@@ -91,6 +128,6 @@ export async function updateCompanySettings(
     return { error: errorMessage(error, "Erro ao salvar configurações.") };
   }
 
-  revalidatePath("/painel/configuracoes");
+  revalidatePath("/painel/perfil");
   return { success: true };
 }

@@ -105,7 +105,7 @@ function avatarClass(name: string) {
 
 function MsgStatus({ isRead }: { isRead: boolean }) {
   return isRead
-    ? <CheckCheck className="w-3 h-3 text-(--brand-green-200)" />
+    ? <CheckCheck className="w-3 h-3 text-foreground" />
     : <Check      className="w-3 h-3 text-white/50" />;
 }
 
@@ -129,7 +129,7 @@ function EmptyState({ role }: { role: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 px-8 text-center">
       <div className="w-20 h-20 rounded-full bg-(--brand-green-50) flex items-center justify-center">
-        <MessageSquare className="w-10 h-10 text-(--brand-green-300)" />
+        <MessageSquare className="w-10 h-10 text-foreground" />
       </div>
       <div className="space-y-2">
         <p className="font-semibold text-slate-700">
@@ -693,7 +693,7 @@ export function ChatInterface({
             {/* Context badge (inquiry / direct_purchase) */}
             {activeConv.context_type !== "direct" && (
               <div className="flex items-center gap-2 px-4 py-2 bg-(--brand-green-50) border-b border-(--brand-green-100) shrink-0">
-                <ShoppingCart className="w-3.5 h-3.5 text-(--brand-green-600) shrink-0" />
+                <ShoppingCart className="w-3.5 h-3.5 text-foreground shrink-0" />
                 <p className="text-xs text-(--brand-green-700) flex-1 truncate">
                   <span className="font-semibold">
                     {activeConv.context_type === "inquiry" ? "Cotação vinculada" : "Compra direta"}
@@ -714,7 +714,7 @@ export function ChatInterface({
             {/* Negotiation context banner (from query params) */}
             {showNegCtx && negotiationContext && (
               <div className="flex items-start gap-3 bg-amber-50 border-b border-amber-200 px-4 py-2.5 shrink-0">
-                <ShoppingCart className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <ShoppingCart className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-amber-800">Contexto de negociação</p>
                   <p className="text-xs text-amber-700 mt-0.5 truncate">

@@ -7,8 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Package, Plus, Pencil, Repeat } from "lucide-react";
 import DeleteProductButton from "./_components/delete-product-button";
 import ImportButton from "./_components/import-button";
+import CatalogoUploader, { type CatalogFile } from "./_components/catalogo-uploader";
 
-export const metadata = { title: "Produtos" };
+export const metadata = { title: "Material de venda" };
 
 interface ProductRow {
   id: string;
@@ -43,14 +44,24 @@ export default async function ProdutosPage() {
   const supplierId = (supplierData as { id: string } | null)?.id;
   if (!supplierId) redirect("/painel");
 
-  const { data: productsData } = await supabase
-    .from("products")
-    .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, created_at")
-    .eq("supplier_id", supplierId)
-    .neq("status", "deleted")
-    .order("created_at", { ascending: false });
+  const [productsRes, catalogsRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, slug, description, status, images, price_min_cents, price_max_cents, inquiry_count, views_count, created_at")
+      .eq("supplier_id", supplierId)
+      .neq("status", "deleted")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("supplier_catalogs")
+      .select("id, title, file_url, file_name, file_size, file_type, created_at")
+      .eq("supplier_id", supplierId)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false }),
+  ]);
 
-  const products = (productsData as ProductRow[]) ?? [];
+  const products = (productsRes.data as ProductRow[]) ?? [];
+  const catalogFiles = (catalogsRes.data ?? []) as CatalogFile[];
+  const hasProducts = products.length > 0;
 
   const STATUS_LABELS: Record<string, { label: string; className: string }> = {
     active: {
@@ -68,12 +79,12 @@ export default async function ProdutosPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Produtos</h1>
+          <h1 className="text-2xl font-bold text-foreground">Material de venda</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {products.length} produto{products.length !== 1 ? "s" : ""} cadastrado{products.length !== 1 ? "s" : ""}
+            Produtos cadastrados ficam indexados no Google. Catálogos PDF aparecem no seu perfil público pra download.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -95,6 +106,14 @@ export default async function ProdutosPage() {
           </Button>
         </div>
       </div>
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-lg font-semibold text-foreground">Produtos</h2>
+          <p className="text-xs text-muted-foreground">
+            {products.length} cadastrado{products.length !== 1 ? "s" : ""}
+          </p>
+        </div>
 
       {products.length === 0 ? (
         <Card className="border-dashed border-2 bg-slate-50/50">
@@ -200,6 +219,23 @@ export default async function ProdutosPage() {
           })}
         </div>
       )}
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Catálogos em PDF</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Suba PDFs ou imagens do seu portfólio. Aparecem no seu perfil público pra compradores baixarem.
+            </p>
+          </div>
+        </div>
+        <CatalogoUploader
+          supplierId={supplierId}
+          files={catalogFiles}
+          hasProducts={hasProducts}
+        />
+      </section>
     </div>
   );
 }

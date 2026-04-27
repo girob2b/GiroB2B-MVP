@@ -34,8 +34,18 @@ export function apiClient(accessToken?: string | null) {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText })) as { error?: string };
-      throw new Error(err.error ?? `HTTP ${res.status}`);
+      const err = await res.json().catch(() => ({})) as {
+        error?: string;
+        message?: string;
+        errors?: Record<string, string[]>;
+      };
+      // Quando o backend devolve `{ errors: { campo: ["msg"] } }` (validação Zod),
+      // serializa o JSON inteiro pra que callers possam parsear e renderizar
+      // por campo (ex: action de onboarding lê via JSON.parse).
+      if (err.errors && typeof err.errors === "object") {
+        throw new Error(JSON.stringify({ errors: err.errors, message: err.message }));
+      }
+      throw new Error(err.error ?? err.message ?? `HTTP ${res.status}`);
     }
 
     if (res.status === 204) return undefined as T;

@@ -105,15 +105,7 @@ export default function LoginForm({ feedback }: LoginFormProps) {
     <div className="flex w-full flex-col gap-6">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
-        <p className="text-sm text-muted-foreground">
-          Novo por aqui?{" "}
-          <Link
-            href="/cadastro"
-            className="font-medium text-[color:var(--brand-green-700)] hover:underline underline-offset-4"
-          >
-            Crie sua conta
-          </Link>
-        </p>
+        <p className="text-sm text-muted-foreground">Acesse sua conta GiroB2B.</p>
       </div>
 
       <form action={action} onSubmit={handleSubmit} className="space-y-5">
@@ -252,6 +244,17 @@ export default function LoginForm({ feedback }: LoginFormProps) {
           />
         </div>
       </form>
+
+      {/* CTA de cadastro — vem depois das opções de login */}
+      <p className="text-center text-sm text-muted-foreground">
+        Novo por aqui?{" "}
+        <Link
+          href="/cadastro"
+          className="font-semibold text-brand-700 hover:text-brand-800 hover:underline underline-offset-4"
+        >
+          Crie sua conta
+        </Link>
+      </p>
     </div>
   );
 }

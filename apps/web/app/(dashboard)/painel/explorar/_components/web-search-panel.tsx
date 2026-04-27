@@ -263,7 +263,7 @@ export default function WebSearchPanel({ query, filters, onClose }: WebSearchPan
 
       {state === "streaming" && list.length === 0 && (
         <div className="rounded-xl border border-dashed border-blue-200 bg-white p-6 text-center space-y-2">
-          <Loader2 className="w-6 h-6 text-blue-400 mx-auto animate-spin" />
+          <Loader2 className="w-6 h-6 text-foreground mx-auto animate-spin" />
           <p className="text-sm text-slate-600">Descobrindo empresas na web…</p>
         </div>
       )}
@@ -407,7 +407,7 @@ function WebCompanyCard({
               unoptimized
             />
           ) : (
-            <Building2 className="w-4 h-4 text-blue-400" />
+            <Building2 className="w-4 h-4 text-foreground" />
           )}
         </div>
         <div className="flex-1 min-w-0 pr-4">
@@ -421,7 +421,7 @@ function WebCompanyCard({
           <div className="flex items-center gap-1.5 min-w-0">
             {emails[0] ? <Mail className="w-3 h-3 text-slate-400 shrink-0" />
               : phones[0] ? <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-              : <MessageCircle className="w-3 h-3 text-emerald-500 shrink-0" />}
+              : <MessageCircle className="w-3 h-3 text-foreground shrink-0" />}
             <span className="truncate">{primaryContact}</span>
           </div>
         )}
@@ -600,11 +600,11 @@ function WebCompanyOverlay({
                     <Badge variant="outline" className="rounded-xl border-slate-200 text-slate-700">
                       <MapPin className="w-3 h-3" /> {locationLabel}
                     </Badge>
-                    <Badge className="rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-100">
+                    <Badge className="rounded-xl bg-blue-100 text-foreground hover:bg-blue-100">
                       <Globe className="w-3 h-3" /> Pesquisa na web
                     </Badge>
                     {company.source_quality === "high" && (
-                      <Badge className="rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                      <Badge className="rounded-xl bg-emerald-100 text-foreground hover:bg-emerald-100">
                         <BadgeCheck className="w-3 h-3" /> CNPJ validado
                       </Badge>
                     )}
@@ -704,7 +704,7 @@ function WebCompanyOverlay({
                 </div>
               ) : (
                 <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/40 p-8 text-center space-y-3">
-                  <Package className="w-10 h-10 text-blue-400 mx-auto" />
+                  <Package className="w-10 h-10 text-foreground mx-auto" />
                   <div>
                     <p className="font-bold text-slate-900">Produtos não listados publicamente</p>
                     <p className="text-sm text-slate-600 mt-1">
@@ -758,7 +758,7 @@ function WebCompanyOverlay({
                     rel="noopener noreferrer"
                     className="rounded-2xl border border-slate-200 bg-white p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors"
                   >
-                    <MessageCircle className="w-4 h-4 text-emerald-500" />
+                    <MessageCircle className="w-4 h-4 text-foreground" />
                     <span className="text-sm text-slate-700 truncate">{company.contact.whatsapp}</span>
                   </a>
                 )}
