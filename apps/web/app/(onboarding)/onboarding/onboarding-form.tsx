@@ -143,41 +143,15 @@ export default function OnboardingForm() {
   const [customCategory,     setCustomCategory]     = useState("");
   const [purchaseFrequency,  setPurchaseFrequency]  = useState<string | null>(null);
 
-  const [cnpjRaw,   setCnpjRaw]   = useState("");
-  const [tradeName, setTradeName] = useState("");
-  const [phone,      setPhone]      = useState("");
-  const [cnpjChecking, setCnpjChecking] = useState(false);
-  const [cnpjError,    setCnpjError]    = useState<string | null>(null);
+  const [cnpjRaw,     setCnpjRaw]     = useState("");
+  const [tradeName,   setTradeName]   = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [phone,       setPhone]       = useState("");
+  const [city,        setCity]        = useState("");
+  const [stateUF,     setStateUF]     = useState("");
+  const [cnpjError,   setCnpjError]   = useState<string | null>(null);
 
   const isSupplier = segment === "supplier" || segment === "both";
-
-  async function checkCNPJ(cnpj: string) {
-    const cleaned = cleanCNPJ(cnpj);
-    if (cleaned.length !== 14) return;
-
-    setCnpjChecking(true);
-    setCnpjError(null);
-
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
-      const res = await fetch(`${backendUrl}/cnpj/${cleaned}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        setCnpjError(data.error || "CNPJ inválido ou inativo.");
-      } else {
-        if (data.nome_fantasia && !tradeName) {
-          setTradeName(data.nome_fantasia);
-        } else if (data.razao_social && !tradeName) {
-          setTradeName(data.razao_social);
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao validar CNPJ:", err);
-    } finally {
-      setCnpjChecking(false);
-    }
-  }
 
   // ── localStorage restore ────────────────────────────────────────────────────
   const restoredRef = useRef(false);
@@ -194,7 +168,10 @@ export default function OnboardingForm() {
       if (d.purchaseFrequency)  setPurchaseFrequency(d.purchaseFrequency);
       if (d.cnpjRaw)            setCnpjRaw(d.cnpjRaw);
       if (d.tradeName)          setTradeName(d.tradeName);
+      if (d.companyName)        setCompanyName(d.companyName);
       if (d.phone)              setPhone(d.phone);
+      if (d.city)               setCity(d.city);
+      if (d.stateUF)            setStateUF(d.stateUF);
       if (d.step && d.step > 1) setStep(d.step);
     } catch { /* ignore */ }
   }, []);
@@ -205,16 +182,17 @@ export default function OnboardingForm() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         step, segment, selectedCategories, customCategory,
-        purchaseFrequency, cnpjRaw, tradeName, phone,
+        purchaseFrequency, cnpjRaw, tradeName, companyName, phone, city, stateUF,
       }));
     } catch { /* ignore */ }
-  }, [step, segment, selectedCategories, customCategory, purchaseFrequency, cnpjRaw, tradeName, phone]);
+  }, [step, segment, selectedCategories, customCategory, purchaseFrequency, cnpjRaw, tradeName, companyName, phone, city, stateUF]);
 
   function handleCNPJChange(value: string) {
     const formatted = formatCNPJ(value);
     setCnpjRaw(formatted);
-    if (cleanCNPJ(formatted).length === 14) {
-      checkCNPJ(formatted);
+    const cleaned = cleanCNPJ(formatted);
+    if (cleaned.length > 0 && cleaned.length !== 14) {
+      setCnpjError("O CNPJ precisa ter 14 dígitos.");
     } else {
       setCnpjError(null);
     }
@@ -236,7 +214,13 @@ export default function OnboardingForm() {
     }
     if (step === 3) {
       if (!isSupplier) return purchaseFrequency !== null;
-      return cleanCNPJ(cnpjRaw).length === 14 && tradeName.trim().length >= 2 && phone.trim().length >= 10;
+      return (
+        cleanCNPJ(cnpjRaw).length === 14 &&
+        tradeName.trim().length >= 2 &&
+        phone.trim().length >= 10 &&
+        city.trim().length >= 2 &&
+        stateUF.trim().length === 2
+      );
     }
     return true;
   }
@@ -448,26 +432,34 @@ export default function OnboardingForm() {
               <Hash className="h-4 w-4 text-brand-700" />
               CNPJ da empresa
             </Label>
-            <div className="relative">
-              <Input
-                id="cnpj_input"
-                placeholder="00.000.000/0001-00"
-                className={`h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100 ${
-                  cnpjError ? "border-red-500" : ""
-                }`}
-                value={cnpjRaw}
-                onChange={e => handleCNPJChange(e.target.value)}
-                maxLength={18}
-              />
-              {cnpjChecking && (
-                <div className="absolute right-3 top-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                </div>
-              )}
-            </div>
+            <Input
+              id="cnpj_input"
+              placeholder="00.000.000/0001-00"
+              className={`h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100 ${
+                cnpjError ? "border-red-500" : ""
+              }`}
+              value={cnpjRaw}
+              onChange={e => handleCNPJChange(e.target.value)}
+              maxLength={18}
+            />
             {cnpjError && (
               <p className="text-xs font-medium text-red-500">{cnpjError}</p>
             )}
+          </div>
+
+          {/* Razão social */}
+          <div className="space-y-2">
+            <Label htmlFor="company_name_input" className="flex items-center gap-2 text-sm font-medium">
+              <Building2 className="h-4 w-4 text-brand-700" />
+              Razão social
+            </Label>
+            <Input
+              id="company_name_input"
+              placeholder="Nome jurídico no CNPJ"
+              className="h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100"
+              value={companyName}
+              onChange={e => setCompanyName(e.target.value)}
+            />
           </div>
 
           {/* Nome Fantasia */}
@@ -499,6 +491,31 @@ export default function OnboardingForm() {
               value={phone}
               onChange={e => setPhone(e.target.value)}
             />
+          </div>
+
+          {/* Cidade + UF */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="city_input" className="text-sm font-medium">Cidade</Label>
+              <Input
+                id="city_input"
+                placeholder="Ex.: São Paulo"
+                className="h-11 border-slate-200 focus-visible:border-brand-500 focus-visible:ring-brand-100"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state_input" className="text-sm font-medium">UF</Label>
+              <Input
+                id="state_input"
+                placeholder="SP"
+                className="h-11 border-slate-200 uppercase focus-visible:border-brand-500 focus-visible:ring-brand-100"
+                value={stateUF}
+                onChange={e => setStateUF(e.target.value.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase())}
+                maxLength={2}
+              />
+            </div>
           </div>
         </div>
 
@@ -603,9 +620,12 @@ export default function OnboardingForm() {
           <input type="hidden" name="purchase_frequency" value={purchaseFrequency ?? ""} />
           {isSupplier && (
             <>
-              <input type="hidden" name="cnpj"       value={cleanCNPJ(cnpjRaw)} />
-              <input type="hidden" name="trade_name" value={tradeName} />
-              <input type="hidden" name="phone"      value={phone} />
+              <input type="hidden" name="cnpj"         value={cleanCNPJ(cnpjRaw)} />
+              <input type="hidden" name="trade_name"   value={tradeName} />
+              <input type="hidden" name="company_name" value={companyName} />
+              <input type="hidden" name="phone"        value={phone} />
+              <input type="hidden" name="city"         value={city} />
+              <input type="hidden" name="state"        value={stateUF} />
             </>
           )}
 

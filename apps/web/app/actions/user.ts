@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { validateCNPJ } from "@/lib/brasilapi";
 import { supplierSlug } from "@/lib/slug";
 
 // ─── Update buyer profile ──────────────────────────────────────────────────
@@ -69,27 +68,24 @@ export async function updateBuyerProfile(
     return { error: `Não foi possível salvar: ${error.message}` };
   }
 
-  // ── Selo "Empresa Verificada" (RF-01.14 / RN-01.06) ────────────────────────
-  // Só vira TRUE se o CNPJ estiver ATIVO na BrasilAPI. Update em separado pra que
-  // a falta da migration 030 (colunas is_company_verified/cnpj_verified_at) não
-  // quebre o save dos outros campos. CNPJ inválido/inativo → não bloqueia (RN-01.06),
-  // só não concede o selo.
+  // ── Selo "Empresa Verificada" (RF-01.14) ───────────────────────────────────
+  // No MVP, validação externa (BrasilAPI/ReceitaWS) está desligada. Selo é
+  // concedido quando o CNPJ está formatado como 14 dígitos — checagem offline
+  // mínima. Quando a integração com a Receita voltar, basta plugar a validação
+  // aqui antes de setar `is_company_verified=true`.
   if (cnpj) {
     const cnpjChanged = !existing || existing.cnpj !== cnpj;
     if (cnpjChanged) {
-      const validation = await validateCNPJ(cnpj);
-      if (validation.valid) {
-        const verifyRes = await supabase
-          .from("buyers")
-          .update({
-            is_company_verified: true,
-            cnpj_verified_at: new Date().toISOString(),
-          })
-          .eq("user_id", authData.user.id);
+      const verifyRes = await supabase
+        .from("buyers")
+        .update({
+          is_company_verified: true,
+          cnpj_verified_at: new Date().toISOString(),
+        })
+        .eq("user_id", authData.user.id);
 
-        if (verifyRes.error && verifyRes.error.code !== "42703" /* undefined_column */) {
-          console.error("[updateBuyerProfile] failed to set verified flag:", verifyRes.error);
-        }
+      if (verifyRes.error && verifyRes.error.code !== "42703" /* undefined_column */) {
+        console.error("[updateBuyerProfile] failed to set verified flag:", verifyRes.error);
       }
     }
   }
@@ -192,16 +188,8 @@ export async function chooseInitialMode(
       };
     }
 
-    // RN-01.01: só CNPJs ATIVOS na Receita podem virar fornecedor.
-    const validation = await validateCNPJ(b!.cnpj!);
-    if (!validation.valid) {
-      return {
-        error: validation.error
-          ? `CNPJ inválido: ${validation.error}`
-          : "CNPJ inválido. Confira em Dados da Empresa antes de ativar o modo vendedor.",
-      };
-    }
-
+    // No MVP, validação externa de CNPJ está desligada. Aceita CNPJ se tiver
+    // 14 dígitos (já garantido pelo `b!.cnpj!` salvo via updateBuyerProfile).
     // Slug único — colisão (mesmo nome + cidade) recebe sufixo curto baseado no CNPJ.
     const baseSlug = supplierSlug(b!.company_name!, b!.city!);
     const slugCheck = await supabase

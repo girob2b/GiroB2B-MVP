@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, MessageSquare, FileText, KanbanSquare, User, LogOut,
-  Menu, X, Search, Scale, Eye,
+  Menu, X, Search, Scale, Eye, BarChart3,
   PanelLeftClose, ChevronUp,
   IdCard, Loader2,
 } from "lucide-react";
@@ -31,6 +31,9 @@ interface DashboardShellProps {
   user: UserInfo;
   supplier?: SupplierInfo | null;
   buyer?: BuyerInfo | null;
+  /** True quando o user pode usar a plataforma sem nudge de "complete cadastro".
+   *  Define se a sidebar mostra mais que só "Explorar". */
+  cadastroCompleto?: boolean;
   initialCollapsed?: boolean;
 }
 
@@ -53,53 +56,73 @@ interface SidebarProps {
 }
 
 // ─── Nav definitions ──────────────────────────────────────────────────────────
+// Estrutura definida pelo Vitor:
+//   1. Comprador  → Explorar, Cotações
+//   2. Vendedor   → Material de venda, Perfil público
+//   3. Geral      → Pipeline, Chat, Relatórios, Dashboard
+//
+// Sidebar adapta às roles do user:
+//   - Cadastro incompleto → só Explorar (minimal nav)
+//   - buyer-only           → Comprador + Geral
+//   - supplier-only        → Vendedor  + Geral
+//   - both                 → Comprador + Vendedor + Geral
+//
 // Itens não-MVP ficam atrás de FEATURES (lib/features.ts). Ao ligar a flag, voltam.
 
-function buildBuyerNav(): NavSection[] {
+/** Sidebar mínima — exibida enquanto o cadastro não está completo. Princípio
+ *  "facilitar comprador": Explorar é a porta de entrada; o resto vem depois
+ *  via card de "Complete seu cadastro". */
+function buildMinimalNav(): NavSection[] {
   return [
     { items: [
-      { href: "/painel", label: "Início", icon: LayoutDashboard },
-    ]},
-    { label: "Comprador", items: [
-      { href: "/painel/explorar",   label: "Explorar",        icon: Search },
-      { href: "/painel/inquiries",  label: "Minhas Cotações", icon: FileText },
-      ...(FEATURES.pipeline   ? [{ href: "/painel/pipeline",   label: "Pipeline",        icon: KanbanSquare }] : []),
-      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador",      icon: Scale }] : []),
-      ...(FEATURES.chat       ? [{ href: "/painel/chat",       label: "Chat de Compras", icon: MessageSquare }] : []),
+      { href: "/painel/explorar", label: "Explorar", icon: Search },
     ]},
   ];
+}
+
+function buyerSection(): NavSection {
+  return {
+    label: "Comprador",
+    items: [
+      { href: "/painel/explorar",  label: "Explorar", icon: Search },
+      { href: "/painel/inquiries", label: "Cotações", icon: FileText },
+      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador", icon: Scale }] : []),
+    ],
+  };
+}
+
+function supplierSection(): NavSection {
+  return {
+    label: "Vendedor",
+    items: [
+      { href: "/painel/produtos",       label: "Material de venda", icon: Package },
+      { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
+    ],
+  };
+}
+
+function generalSection(): NavSection {
+  return {
+    label: "Geral",
+    items: [
+      ...(FEATURES.pipeline ? [{ href: "/painel/pipeline", label: "Pipeline", icon: KanbanSquare }] : []),
+      ...(FEATURES.chat     ? [{ href: "/painel/chat",     label: "Chat",     icon: MessageSquare }] : []),
+      { href: "/painel/relatorios", label: "Relatórios", icon: BarChart3 },
+      { href: "/painel/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
+    ],
+  };
+}
+
+function buildBuyerNav(): NavSection[] {
+  return [buyerSection(), generalSection()];
 }
 
 function buildSupplierNav(): NavSection[] {
-  return [
-    { items: [
-      { href: "/painel",                label: "Início",            icon: LayoutDashboard },
-      { href: "/painel/produtos",       label: "Material de venda", icon: Package },
-      { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
-      { href: "/painel/inquiries",      label: "Cotações",           icon: FileText },
-      ...(FEATURES.pipeline ? [{ href: "/painel/pipeline", label: "Pipeline",       icon: KanbanSquare }] : []),
-      ...(FEATURES.chat     ? [{ href: "/painel/chat",     label: "Chat de Vendas", icon: MessageSquare }] : []),
-    ]},
-  ];
+  return [supplierSection(), generalSection()];
 }
 
 function buildBothNav(): NavSection[] {
-  return [
-    { items: [
-      { href: "/painel", label: "Início", icon: LayoutDashboard },
-      ...(FEATURES.pipeline ? [{ href: "/painel/pipeline", label: "Pipeline",  icon: KanbanSquare }] : []),
-      ...(FEATURES.chat     ? [{ href: "/painel/chat",     label: "Chat",      icon: MessageSquare }] : []),
-    ]},
-    { label: "Comprador", items: [
-      { href: "/painel/explorar",   label: "Explorar",   icon: Search },
-      { href: "/painel/inquiries",  label: "Cotações",   icon: FileText },
-      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador", icon: Scale }] : []),
-    ]},
-    { label: "Fornecedor", items: [
-      { href: "/painel/produtos",       label: "Material de venda", icon: Package },
-      { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
-    ]},
-  ];
+  return [buyerSection(), supplierSection(), generalSection()];
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -332,14 +355,17 @@ function saveSidebarPref(collapsed: boolean) {
   document.cookie = `girob2b_sidebar=${collapsed ? "1" : "0"}; path=/; max-age=31536000; SameSite=Lax`;
 }
 
-export default function DashboardShell({ children, user, supplier, buyer, initialCollapsed = false }: DashboardShellProps) {
+export default function DashboardShell({ children, user, supplier, buyer, cadastroCompleto = true, initialCollapsed = false }: DashboardShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed,  setCollapsed]  = useState(initialCollapsed);
 
+  // Sidebar adaptativa: cadastro incompleto → só "Explorar".
+  // Princípio "facilitar comprador" (memory: project_buyer_friction_principle).
   const navSections =
-    user.role === "both"     ? buildBothNav() :
-    user.role === "supplier" ? buildSupplierNav() :
+    !cadastroCompleto         ? buildMinimalNav() :
+    user.role === "both"      ? buildBothNav() :
+    user.role === "supplier"  ? buildSupplierNav() :
     buildBuyerNav();
 
   const displayName =

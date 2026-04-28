@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensureMinimalProfile } from "@/lib/auth/ensure-profile";
 
 /**
  * Supabase redireciona para cá após:
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
 
   const type        = searchParams.get("type") as "recovery" | "signup" | "magiclink" | "invite" | null;
-  const defaultNext = type === "recovery" ? "/redefinir-senha" : "/painel";
+  const defaultNext = type === "recovery" ? "/redefinir-senha" : "/painel/explorar";
   const rawNext     = searchParams.get("next") ?? defaultNext;
   const next        = rawNext.startsWith("/") ? rawNext : defaultNext;
 
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (type !== "recovery") await ensureMinimalProfile(supabase);
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
@@ -34,6 +36,7 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
+      if (type !== "recovery") await ensureMinimalProfile(supabase);
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

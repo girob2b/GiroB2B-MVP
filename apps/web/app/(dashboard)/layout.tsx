@@ -51,16 +51,32 @@ export default async function DashboardLayout({
     supplier = data;
   }
 
-  // Buscar dados de buyer (quando aplicável)
+  // Buscar dados de buyer (quando aplicável). Inclui campos de "cadastro completo"
+  // pra sidebar adaptativa (ver dashboard-shell.tsx).
   let buyer = null;
+  let buyerProfileComplete = false;
   if (role === "buyer" || role === "both") {
     const { data } = await supabase
       .from("buyers")
-      .select("id, name")
+      .select("id, name, phone, cnpj, company_name, city, state, address")
       .eq("user_id", userId)
       .single();
-    buyer = data;
+    buyer = data ? { id: data.id, name: data.name } : null;
+    buyerProfileComplete = !!(
+      data?.name &&
+      data.phone &&
+      data.cnpj &&
+      data.company_name &&
+      data.city &&
+      data.state &&
+      data.address
+    );
   }
+
+  // "Cadastro completo" — pra sidebar e card de nudge:
+  //   - supplier sempre é completo (insert exige dados mínimos B2B)
+  //   - buyer-only depende dos campos B2B preenchidos via /painel/perfil
+  const cadastroCompleto = role === "supplier" || role === "both" || buyerProfileComplete;
 
   // full_name do user_profiles (fallback para user_metadata)
   const { data: profile } = await supabase
@@ -81,6 +97,7 @@ export default async function DashboardLayout({
       user={{ id: userId, email: userEmail, role, fullName }}
       supplier={supplier}
       buyer={buyer}
+      cadastroCompleto={cadastroCompleto}
       initialCollapsed={initialCollapsed}
     >
       {children}

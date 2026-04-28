@@ -3,7 +3,6 @@ import corsPlugin    from "./plugins/cors.js";
 import authPlugin    from "./plugins/auth.js";
 import swaggerPlugin from "./plugins/swagger.js";
 import authRoutes    from "./routes/auth.js";
-import cnpjRoutes    from "./routes/cnpj.js";
 import supplierRoutes from "./routes/supplier.js";
 import productRoutes  from "./routes/products.js";
 import onboardingRoutes from "./routes/onboarding.js";
@@ -19,7 +18,7 @@ await app.register(corsPlugin);
 await app.register(authPlugin);
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-await app.register(cnpjRoutes,       { prefix: "/cnpj" });
+// (rota /cnpj/:cnpj desligada no MVP — validação externa via BrasilAPI/ReceitaWS desabilitada)
 await app.register(authRoutes,       { prefix: "/auth" });
 await app.register(supplierRoutes,   { prefix: "/supplier" });
 await app.register(productRoutes,    { prefix: "/products" });

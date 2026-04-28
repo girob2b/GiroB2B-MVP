@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { login } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { GiroLoader } from "@/components/ui/giro-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +21,9 @@ export type LoginFeedback = {
 
 type LoginFormProps = {
   feedback?: LoginFeedback;
+  /** True quando o form está dentro do <AuthDialog>. Faz o link cruzado
+   *  trocar pro modal de cadastro em vez de navegar pra rota dedicada. */
+  inModal?: boolean;
 };
 
 function GoogleIcon() {
@@ -33,7 +37,7 @@ function GoogleIcon() {
   );
 }
 
-export default function LoginForm({ feedback }: LoginFormProps) {
+export default function LoginForm({ feedback, inModal = false }: LoginFormProps) {
   const [state, action, pending] = useActionState(login, undefined);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -101,8 +105,18 @@ export default function LoginForm({ feedback }: LoginFormProps) {
     window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
   }
 
+  // Overlay full-screen com a animação de "giro" enquanto a server action corre.
+  // Decisão de UX: progress-bar (NavigationProgress) cobre transições normais
+  // entre views; este overlay é reservado pra ações de "promessa" — login pós-
+  // submit, onde o user espera feedback forte e a navegação seguinte.
+  const showOverlay = pending || oauthPending || certPending;
+
   return (
     <div className="flex w-full flex-col gap-6">
+      {showOverlay && (
+        <GiroLoader label="Entrando…" />
+      )}
+
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
         <p className="text-sm text-muted-foreground">Acesse sua conta GiroB2B.</p>
@@ -249,7 +263,9 @@ export default function LoginForm({ feedback }: LoginFormProps) {
       <p className="text-center text-sm text-muted-foreground">
         Novo por aqui?{" "}
         <Link
-          href="/cadastro"
+          href={inModal ? "?auth=register" : "/cadastro"}
+          scroll={false}
+          replace={inModal}
           className="font-semibold text-brand-700 hover:text-brand-800 hover:underline underline-offset-4"
         >
           Crie sua conta

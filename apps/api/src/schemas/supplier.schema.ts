@@ -4,6 +4,11 @@ export const UpgradeSupplierSchema = z.object({
   trade_name: z.string().min(2),
   cnpj: z.string().min(14),
   phone: z.string().min(8),
+  // company_name/city/state passaram a vir do form (BrasilAPI desligada no MVP).
+  // Opcionais aqui pra o backend resolver fallbacks (trade_name + userMetadata).
+  company_name: z.string().min(2).optional(),
+  city: z.string().min(2).optional(),
+  state: z.string().length(2).optional(),
   segments_json: z.string().optional(),
   custom_category: z.string().optional(),
 });

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { GiroLoader } from "@/components/ui/giro-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -26,7 +27,13 @@ function getSignupRedirectUrl() {
 
 type Step = "form" | "email_sent";
 
-export default function BuyerRegisterForm() {
+interface BuyerRegisterFormProps {
+  /** True quando o form está dentro do <AuthDialog>. Faz o link cruzado
+   *  trocar pro modal de login em vez de navegar pra rota dedicada. */
+  inModal?: boolean;
+}
+
+export default function BuyerRegisterForm({ inModal = false }: BuyerRegisterFormProps = {}) {
   const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -196,7 +203,9 @@ export default function BuyerRegisterForm() {
         <p className="text-sm text-muted-foreground">
           Já confirmou?{" "}
           <Link
-            href="/login"
+            href={inModal ? "?auth=login" : "/login"}
+            scroll={false}
+            replace={inModal}
             className="font-semibold text-brand-700 hover:text-brand-800 hover:underline underline-offset-4"
           >
             Fazer login
@@ -209,6 +218,8 @@ export default function BuyerRegisterForm() {
   // ── Estado: form de cadastro ─────────────────────────────────────────────
   return (
     <div className="flex w-full flex-col gap-6">
+      {submitting && <GiroLoader label="Criando sua conta…" />}
+
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">Criar conta</h1>
         <p className="text-sm text-muted-foreground">
@@ -339,7 +350,9 @@ export default function BuyerRegisterForm() {
       <p className="text-center text-sm text-muted-foreground">
         Já tem conta?{" "}
         <Link
-          href="/login"
+          href={inModal ? "?auth=login" : "/login"}
+          scroll={false}
+          replace={inModal}
           className="font-semibold text-brand-700 hover:text-brand-800 hover:underline underline-offset-4"
         >
           Fazer login

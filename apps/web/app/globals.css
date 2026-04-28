@@ -213,6 +213,19 @@
 .step-forward { animation: step-slide-in-right 0.22s ease-out both; }
 .step-backward { animation: step-slide-in-left  0.22s ease-out both; }
 
+/* ── GiroLoader: rotação contínua do spinner (alusão a "giro de estoque") ── */
+@keyframes giro-loader-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.giro-loader-spin {
+  animation: giro-loader-spin 1s linear infinite;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .giro-loader-spin { animation: none; }
+}
+
 /* ── Button Variants ─────────────────────────────────────────── */
 @layer components {
   .btn-primary {

@@ -1,4 +1,4 @@
-import { cleanCNPJ, validateCNPJ } from "../lib/brasilapi.js";
+import { cleanCNPJ } from "../lib/brasilapi.js";
 import { calcCompleteness } from "../lib/completeness.js";
 import { supplierSlug } from "../lib/slug.js";
 import { createAdminClient, createClient } from "../lib/supabase.js";
@@ -15,18 +15,6 @@ interface UserMetadata {
   city?: string;
   state?: string;
   onboarding_complete?: boolean;
-}
-
-function buildSupplierAddress(data: {
-  logradouro?: string;
-  numero?: string;
-  bairro?: string;
-}) {
-  const parts = [data.logradouro, data.numero, data.bairro]
-    .map(part => part?.trim())
-    .filter((part): part is string => Boolean(part));
-
-  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 type SupplierMutationResult =
@@ -65,14 +53,8 @@ export async function createSupplierUpgrade(
     return { errors: { cnpj: ["CNPJ invalido."] } };
   }
 
-  const cnpjValidation = await validateCNPJ(cleanedCNPJ);
-  if (!cnpjValidation.valid || !cnpjValidation.data) {
-    return {
-      errors: {
-        cnpj: [cnpjValidation.error ?? "Nao foi possivel validar o CNPJ informado."],
-      },
-    };
-  }
+  // Validação externa de CNPJ (BrasilAPI/ReceitaWS) está desligada neste MVP.
+  // Quando voltar, plugar aqui antes do select de duplicidade abaixo.
 
   const { data: existingByCNPJ } = await admin
     .from("suppliers")
@@ -119,24 +101,24 @@ export async function createSupplierUpgrade(
     );
   }
 
-  const cnpjData = cnpjValidation.data;
-  const normalizedTradeName =
-    input.trade_name.trim() ||
-    cnpjData.nome_fantasia?.trim() ||
-    cnpjData.razao_social.trim();
-  const normalizedCity = cnpjData.municipio?.trim() || baseCity;
-  const normalizedState = cnpjData.uf?.trim() || baseState;
+  const normalizedTradeName = input.trade_name.trim();
+  const normalizedCompanyName =
+    input.company_name?.trim() || normalizedTradeName;
+  const normalizedCity = input.city?.trim() || baseCity;
+  const normalizedState = input.state?.trim().toUpperCase() || baseState?.toUpperCase() || null;
   const normalizedPhone = input.phone.trim();
 
   if (!normalizedCity || !normalizedState) {
-    return { message: "Nao foi possivel determinar a localizacao da empresa a partir do CNPJ." };
+    return {
+      errors: {
+        city: !normalizedCity ? ["Informe a cidade da empresa."] : [],
+        state: !normalizedState ? ["Informe o estado (UF)."] : [],
+      },
+    };
   }
 
-  const address = buildSupplierAddress({
-    logradouro: cnpjData.logradouro,
-    numero: cnpjData.numero,
-    bairro: cnpjData.bairro,
-  });
+  // CEP e endereço ficam para preencher depois em /painel/perfil-publico ou /painel/perfil.
+  const address = null;
 
   const profileCompleteness = calcCompleteness(
     {
@@ -156,16 +138,15 @@ export async function createSupplierUpgrade(
   const { error: supplierError } = await admin.from("suppliers").insert({
     user_id: userId,
     cnpj: cleanedCNPJ,
-    company_name: cnpjData.razao_social.trim(),
+    company_name: normalizedCompanyName,
     trade_name: normalizedTradeName,
     slug: supplierSlug(normalizedTradeName, normalizedCity),
     city: normalizedCity,
     state: normalizedState,
     address,
-    cep: cnpjData.cep?.replace(/\D/g, "") || null,
+    cep: null,
     phone: normalizedPhone,
     categories: categoryIds,
-    cnpj_status: "ativa",
     is_verified: true,
     profile_completeness: profileCompleteness,
   });

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ensureMinimalProfile } from "@/lib/auth/ensure-profile";
 import { z } from "zod";
 
 const LoginSchema = z.object({
@@ -46,8 +47,13 @@ export async function login(
     return { message: "Erro ao entrar. Tente novamente." };
   }
 
+  // Princípio "facilitar comprador": no primeiro login, garante buyer mínimo +
+  // onboarding_complete=true. Login direto → /painel/explorar (cadastro completa
+  // depois via card "Complete seu cadastro").
+  await ensureMinimalProfile(supabase);
+
   revalidatePath("/", "layout");
-  redirect("/painel");
+  redirect("/painel/explorar");
 }
 
 // ─── Logout ───────────────────────────────────────────────────────────────────

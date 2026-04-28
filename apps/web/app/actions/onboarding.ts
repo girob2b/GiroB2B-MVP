@@ -28,8 +28,11 @@ export async function completeOnboarding(
   const raw = {
     segment: formData.get("segment"),
     trade_name: formData.get("trade_name"),
+    company_name: formData.get("company_name"),
     cnpj: formData.get("cnpj"),
     phone: formData.get("phone"),
+    city: formData.get("city"),
+    state: formData.get("state"),
     segments_json: formData.get("segments_json"),
     purchase_frequency: formData.get("purchase_frequency"),
     custom_category: formData.get("custom_category"),

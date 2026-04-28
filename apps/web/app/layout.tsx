@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import CookieBanner from "@/components/cookie-banner";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthModalRoot } from "@/components/auth/auth-modal-root";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
         <NavigationProgress />
         {children}
+        <AuthModalRoot />
         <CookieBanner />
         <Toaster richColors position="bottom-right" />
       </body>

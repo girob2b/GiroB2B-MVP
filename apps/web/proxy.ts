@@ -46,35 +46,29 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
-    const onboardingComplete = user.user_metadata?.onboarding_complete === true;
-    const isOnboarding = pathname.startsWith("/onboarding");
-
     // 2. Rota /admin — exige role admin
-    if (pathname.startsWith("/admin") && !isOnboarding) {
+    if (pathname.startsWith("/admin")) {
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("role")
         .eq("id", user.id)
         .single();
       if (profile?.role !== "admin") {
-        return NextResponse.redirect(new URL("/painel", request.url));
+        return NextResponse.redirect(new URL("/painel/explorar", request.url));
       }
     }
 
-    // 3. Onboarding incompleto → forçar /onboarding
-    if (!onboardingComplete && isProtected && !isOnboarding) {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+    // 3. Onboarding multi-step não é mais obrigatório (princípio "facilitar
+    //    comprador"): user logado vai direto pra /painel/explorar. Se acessar
+    //    /onboarding manualmente, redireciona pra Explorar.
+    if (pathname.startsWith("/onboarding")) {
+      return NextResponse.redirect(new URL("/painel/explorar", request.url));
     }
 
-    // 4. Onboarding completo → sair do /onboarding
-    if (onboardingComplete && isOnboarding) {
-      return NextResponse.redirect(new URL("/painel", request.url));
-    }
-
-    // 5. Já autenticado + onboarding completo → sair de login/cadastro
+    // 4. Já autenticado tentando entrar em /login ou /cadastro → /painel/explorar
     const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
-    if (isAuthRoute && onboardingComplete) {
-      return NextResponse.redirect(new URL("/painel", request.url));
+    if (isAuthRoute) {
+      return NextResponse.redirect(new URL("/painel/explorar", request.url));
     }
   }
 
