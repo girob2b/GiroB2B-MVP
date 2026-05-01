@@ -47,6 +47,9 @@ ARCHITECTURE.md
 # ─── Brainstorm / work sessions Vex (outputs internos, não código) ───────────
 /work/
 
+# ─── Landing page (repo separado, não faz parte do monorepo) ─────────────────
+/apps/girob2b-landing-page/
+
 # ─── Logs de sessão Vex na raiz (organização local) ──────────────────────────
 # Atenção: barra inicial isola a regra à raiz. Sem isso ignoraria docs/_sessions/.
 /_sessions/
