@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { JsonLd } from "@/components/seo/json-ld";
 import { MapPin, Package as PackageIcon, ArrowRight } from "lucide-react";
 
 interface ProductRow {
@@ -136,8 +137,45 @@ export default async function ProdutoPublicoPage({
   const location =
     [supplier.city, supplier.state].filter((v) => v && v.trim().length > 0).join(" / ") || "Brasil";
 
+  // ── Schema.org Product + BreadcrumbList (RF-05.08) ───────────────────────
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://girob2b.com.br").replace(/\/$/, "");
+  const productSchema: Record<string, unknown> = {
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? `${product.name} — ${supplier.trade_name}`,
+    url: `${baseUrl}/produto/${product.slug}`,
+    ...(image ? { image: product.images ?? [image] } : {}),
+    ...(category ? { category: category.name } : {}),
+    brand: { "@type": "Organization", name: supplier.trade_name },
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "BRL",
+      ...(product.price_min_cents ? { lowPrice: (product.price_min_cents / 100).toFixed(2) } : {}),
+      ...(product.price_max_cents ? { highPrice: (product.price_max_cents / 100).toFixed(2) } : {}),
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: supplier.trade_name,
+        url: `${baseUrl}/fornecedor/${supplier.slug}`,
+        ...(supplier.logo_url ? { logo: supplier.logo_url } : {}),
+      },
+    },
+  };
+
+  const breadcrumbSchema: Record<string, unknown> = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Explorar", item: `${baseUrl}/explorar` },
+      ...(category
+        ? [{ "@type": "ListItem", position: 2, name: category.name, item: `${baseUrl}/explorar?categoria=${encodeURIComponent(category.id)}` }]
+        : []),
+      { "@type": "ListItem", position: category ? 3 : 2, name: product.name, item: `${baseUrl}/produto/${product.slug}` },
+    ],
+  };
+
   return (
     <div className="space-y-8">
+      <JsonLd schema={[productSchema, breadcrumbSchema]} />
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <Link href="/explorar" className="hover:text-foreground transition-colors">
           Explorar

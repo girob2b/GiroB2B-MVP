@@ -7,12 +7,12 @@ WORKDIR /repo
 
 ENV NODE_ENV=development
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/scraper/package.json apps/scraper/package.json
-COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm install
+COPY apps/girob2b-landing-page/package.json apps/girob2b-landing-page/package.json
+RUN corepack enable && pnpm install --frozen-lockfile
 
 WORKDIR /repo/apps/scraper
 EXPOSE 3002
@@ -22,15 +22,15 @@ CMD ["npm", "run", "dev"]
 FROM node:20-alpine AS builder
 WORKDIR /repo
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ packages/
 COPY apps/scraper/ apps/scraper/
-COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm install
+COPY apps/girob2b-landing-page/package.json apps/girob2b-landing-page/package.json
+RUN corepack enable && pnpm install --frozen-lockfile
 
 WORKDIR /repo/apps/scraper
-RUN npm run build
+RUN pnpm build
 
 # ── Runner de produção ────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner

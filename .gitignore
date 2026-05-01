@@ -4,12 +4,11 @@ node_modules/
 # ─── Build ────────────────────────────────────────────────────────────────────
 apps/web/.next/
 apps/web/.vercel/
-apps/api/dist/
 .next/
 .playwright-mcp/
 
 # ─── Supabase CLI (config local — pode conter pooler-url/project-ref) ────────
-apps/api/supabase/.temp/
+apps/web/supabase/.temp/
 
 # ─── Variáveis de ambiente (NUNCA commitar) ───────────────────────────────────
 .env
@@ -18,8 +17,6 @@ apps/api/supabase/.temp/
 apps/web/.env
 apps/web/.env.local
 apps/web/.env.*.local
-apps/api/.env
-apps/api/.env.local
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log
@@ -47,6 +44,9 @@ ARCHITECTURE.md
 .claude/
 .claude-plugin/
 
+# ─── Brainstorm / work sessions Vex (outputs internos, não código) ───────────
+/work/
+
 # ─── Logs de sessão Vex na raiz (organização local) ──────────────────────────
 # Atenção: barra inicial isola a regra à raiz. Sem isso ignoraria docs/_sessions/.
 /_sessions/
@@ -66,3 +66,6 @@ apps/web/.playwright-mcp/
 # ─── Playwright artefacts ─────────────────────────────────────────────────────
 playwright-report/
 test-results/
+
+# ─── Fixtures de contrato (descartáveis — apagar antes de abrir PR) ───────────
+apps/web/tests/fixtures/api/*.json

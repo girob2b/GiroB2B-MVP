@@ -4,19 +4,13 @@
 #
 #  COMO USAR:
 #
-#    Só o app principal (web + api):
+#    Só o app principal (web):
 #      docker compose --profile girob2b up
 #
-#    Só a landing page:
-#      docker compose --profile landing up
-#
-#    Stack legada (Express + Vite + MySQL):
-#      docker compose --profile legacy up
-#
-#    Tudo junto:
+#    App + scraper completo:
 #      docker compose --profile full up
 #
-#    Background:  adicione -d    |    Rebuild forçado: adicione --build
+#    Background: adicione -d    |    Rebuild forçado: adicione --build
 #    Após mudar dependências (package.json):
 #      docker compose --profile girob2b down -v && docker compose --profile girob2b up --build
 #
@@ -28,7 +22,7 @@ services:
   girob2b-app:
     profiles: [girob2b, full]
     build:
-      context: .                        # raiz do monorepo
+      context: .
       dockerfile: apps/web/Dockerfile
       target: dev
     container_name: girob2b-app
@@ -38,45 +32,19 @@ services:
     env_file:
       - ./apps/web/.env.local
     volumes:
-      - .:/repo                                       # monorepo inteiro (hot-reload web + shared)
-      - girob2b_web_nm:/repo/node_modules             # node_modules raiz (workspace links)
+      - .:/repo
+      - girob2b_web_nm:/repo/node_modules
       - girob2b_web_app_nm:/repo/apps/web/node_modules
       - girob2b_web_next:/repo/apps/web/.next
     environment:
       NEXT_PUBLIC_APP_URL: "http://localhost:4000"
-      NEXT_PUBLIC_BACKEND_URL: "http://localhost:4001"
-      BACKEND_URL: "http://girob2b-backend:3001"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
-    depends_on:
-      - girob2b-backend
-    restart: unless-stopped
-
-  # ── PRINCIPAL: Fastify API (apps/api) ────────────────────────────────────────
-  girob2b-backend:
-    profiles: [girob2b, full]
-    build:
-      context: .                        # raiz do monorepo
-      dockerfile: apps/api/Dockerfile
-      target: dev
-    container_name: girob2b-backend
-    working_dir: /repo/apps/api
-    ports:
-      - "4001:3001"
-    env_file:
-      - ./apps/api/.env
-    volumes:
-      - .:/repo                                       # monorepo inteiro (hot-reload api + shared)
-      - girob2b_api_nm:/repo/node_modules             # node_modules raiz (workspace links)
-      - girob2b_api_app_nm:/repo/apps/api/node_modules
-    environment:
-      PORT: "3001"
-      NODE_ENV: "development"
     restart: unless-stopped
 
   # ── SCRAPER: microsserviço de descoberta web (apps/scraper) ──────────────────
   girob2b-scraper:
-    profiles: [girob2b, full, scraper]
+    profiles: [full, scraper]
     build:
       context: .
       dockerfile: apps/scraper/Dockerfile
@@ -101,7 +69,7 @@ services:
 
   # ── SCRAPER: Redis (BullMQ + cache) ─────────────────────────────────────────
   girob2b-redis:
-    profiles: [girob2b, full, scraper]
+    profiles: [full, scraper]
     image: redis:7-alpine
     container_name: girob2b-redis
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
@@ -118,7 +86,7 @@ services:
 
   # ── SCRAPER: SearXNG (meta-search engine self-hosted) ───────────────────────
   girob2b-searxng:
-    profiles: [girob2b, full, scraper]
+    profiles: [full, scraper]
     image: searxng/searxng:latest
     container_name: girob2b-searxng
     ports:
@@ -134,86 +102,10 @@ services:
     cap_add: ["CHOWN", "SETGID", "SETUID"]
     restart: unless-stopped
 
-  # ── LANDING PAGE (React + Vite) ───────────────────────────────────────────────
-  landing-page:
-    profiles: [landing, full]
-    build:
-      context: ../_legacy/saas-landing-page
-      dockerfile: Dockerfile
-    container_name: girob2b-landing
-    ports:
-      - "3030:3030"
-    volumes:
-      - ../_legacy/saas-landing-page:/app
-      - landing_nm:/app/node_modules
-    environment:
-      CHOKIDAR_USEPOLLING: "true"
-    restart: unless-stopped
-
-  # ── LEGADA: MySQL 8.4 ─────────────────────────────────────────────────────────
-  mysql:
-    profiles: [legacy, full]
-    image: mysql:8.4
-    container_name: bmarket-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: b2b_saas
-    volumes:
-      - bmarket-mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-
-  # ── LEGADA: Express API ───────────────────────────────────────────────────────
-  legacy-backend:
-    profiles: [legacy, full]
-    build:
-      context: ../_legacy/backend
-      dockerfile: Dockerfile
-    container_name: bmarket-backend
-    env_file:
-      - ../_legacy/backend/.env
-    environment:
-      DATABASE_URL: mysql://root:root@mysql:3306/b2b_saas
-      PORT: "4000"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    ports:
-      - "4000:4000"
-    restart: unless-stopped
-
-  # ── LEGADA: React + Vite frontend ─────────────────────────────────────────────
-  legacy-frontend:
-    profiles: [legacy, full]
-    build:
-      context: ../_legacy/frontend
-      dockerfile: Dockerfile
-    container_name: bmarket-frontend
-    depends_on:
-      - legacy-backend
-    environment:
-      VITE_API_PROXY_TARGET: http://legacy-backend:4000
-      CHOKIDAR_USEPOLLING: "true"
-    volumes:
-      - ../_legacy/frontend:/app
-      - legacy_frontend_nm:/app/node_modules
-    ports:
-      - "5173:5173"
-    restart: unless-stopped
-
 volumes:
   girob2b_web_nm:
   girob2b_web_app_nm:
   girob2b_web_next:
-  girob2b_api_nm:
-  girob2b_api_app_nm:
   girob2b_scraper_nm:
   girob2b_scraper_app_nm:
   girob2b_redis_data:
-  landing_nm:
-  bmarket-mysql-data:
-  legacy_frontend_nm:

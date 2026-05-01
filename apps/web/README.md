@@ -16,17 +16,15 @@ Esse handoff registra:
 
 ## Getting Started
 
-Para o modo local usado pelo Vitor, prefira Docker na raiz do repositorio:
+Pré-requisito: pnpm 10+ (`corepack enable && corepack prepare pnpm@10 --activate` ou `npm i -g pnpm`).
+
+Da raiz do monorepo:
 
 ```bash
-docker compose --profile girob2b up -d --build
-docker compose --profile girob2b ps
-```
-
-Tambem e possivel rodar o dev server do workspace web diretamente:
-
-```bash
-npm run dev
+pnpm install                  # instala todos os workspaces
+pnpm run dev                  # sobe API + WEB + LANDING via concurrently
+# ou só este app:
+pnpm run dev:web
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

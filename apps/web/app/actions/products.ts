@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { apiClient } from "@/lib/api-client";
+import { CreateProductSchema, UpdateProductSchema } from "@/lib/schemas/products";
+import {
+  createProduct as createProductService,
+  deleteProduct as deleteProductService,
+  updateProduct as updateProductService,
+} from "@/lib/services/products";
+import { getSupplierIdForUser } from "@/lib/services/supplier";
 
 export type ProductState = {
   error?: string;
@@ -53,9 +59,16 @@ export async function createProduct(
   const fields = parseProductFormData(formData);
   if (!fields.name) return { error: "Nome do produto é obrigatório." };
 
+  const parsed = CreateProductSchema.safeParse(fields);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supplierId = await getSupplierIdForUser(supabase, session.user.id);
+  if (!supplierId) return { error: "Fornecedor não encontrado." };
+
   try {
-    const client = apiClient(session.access_token);
-    await client.post("/products", fields);
+    await createProductService(supabase, supplierId, parsed.data);
   } catch (error) {
     return { error: errorMessage(error, "Erro ao criar produto.") };
   }
@@ -78,9 +91,16 @@ export async function updateProduct(
   const fields = parseProductFormData(formData);
   if (!fields.name) return { error: "Nome do produto é obrigatório." };
 
+  const parsed = UpdateProductSchema.safeParse(fields);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supplierId = await getSupplierIdForUser(supabase, session.user.id);
+  if (!supplierId) return { error: "Fornecedor não encontrado." };
+
   try {
-    const client = apiClient(session.access_token);
-    await client.patch(`/products/${productId}`, fields);
+    await updateProductService(supabase, productId, supplierId, parsed.data);
   } catch (error) {
     return { error: errorMessage(error, "Erro ao atualizar produto.") };
   }
@@ -119,7 +139,20 @@ export async function bulkCreateProducts(
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { results: [], created: 0, failed: rows.length };
 
-  const client = apiClient(session.access_token);
+  const supplierId = await getSupplierIdForUser(supabase, session.user.id);
+  if (!supplierId) {
+    return {
+      results: rows.map((row, index) => ({
+        index,
+        nome: row.nome ?? `Linha ${index + 2}`,
+        ok: false,
+        error: "Fornecedor não encontrado.",
+      })),
+      created: 0,
+      failed: rows.length,
+    };
+  }
+
   const results: BulkResult[] = [];
   let created = 0;
   let failed = 0;
@@ -159,7 +192,11 @@ export async function bulkCreateProducts(
     };
 
     try {
-      await client.post("/products", payload);
+      const parsed = CreateProductSchema.safeParse(payload);
+      if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      }
+      await createProductService(supabase, supplierId, parsed.data);
       results.push({ index: i, nome: row.nome, ok: true });
       created++;
     } catch (err) {
@@ -179,9 +216,11 @@ export async function deleteProduct(productId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return;
 
+  const supplierId = await getSupplierIdForUser(supabase, session.user.id);
+  if (!supplierId) return;
+
   try {
-    const client = apiClient(session.access_token);
-    await client.delete(`/products/${productId}`);
+    await deleteProductService(supabase, productId, supplierId);
   } catch (error) {
     console.error("Erro ao deletar produto:", error);
   }

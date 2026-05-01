@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ExternalLink, Globe, MapPin, MessageSquare, Phone, FileText, ImageIcon, Download } from "lucide-react";
 
 export const metadata = { title: "Perfil do Fornecedor" };
@@ -466,8 +467,42 @@ export default async function FornecedorPublicoPage({
     contact,
   } as const;
 
+  // ── Schema.org Organization + BreadcrumbList (RF-05.08) ────────────────
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://girob2b.com.br").replace(/\/$/, "");
+  const orgSchema: Record<string, unknown> = {
+    "@type": "Organization",
+    name: supplier.trade_name,
+    url: `${baseUrl}/fornecedor/${supplier.slug}`,
+    ...(supplier.description ? { description: supplier.description } : {}),
+    ...(supplier.logo_url ? { logo: supplier.logo_url } : {}),
+    ...(supplier.website ? { sameAs: [supplier.website, supplier.instagram, supplier.linkedin].filter(Boolean) } : {}),
+    ...(supplier.phone ? { telephone: supplier.phone } : {}),
+    ...(supplier.founded_year ? { foundingDate: String(supplier.founded_year) } : {}),
+    ...((supplier.city || supplier.state || supplier.address)
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            addressCountry: "BR",
+            ...(supplier.state ? { addressRegion: supplier.state } : {}),
+            ...(supplier.city ? { addressLocality: supplier.city } : {}),
+            ...(supplier.address ? { streetAddress: supplier.address } : {}),
+          },
+        }
+      : {}),
+    areaServed: "BR",
+  };
+
+  const breadcrumbSchema: Record<string, unknown> = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Explorar", item: `${baseUrl}/explorar` },
+      { "@type": "ListItem", position: 2, name: supplier.trade_name, item: `${baseUrl}/fornecedor/${supplier.slug}` },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
+      <JsonLd schema={[orgSchema, breadcrumbSchema]} />
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-6">
         {layout.map((b) => (
           <div key={b.key}>{blockMap[b.key]}</div>

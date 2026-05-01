@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { track } from "@/lib/analytics/track";
 
 /**
  * Nudge persistente exibido no topo da Explorar enquanto o user não completou
@@ -40,6 +43,7 @@ export function CompleteCadastroCard() {
 
         <Link
           href="/painel/perfil"
+          onClick={() => track("complete_cadastro_card_clicked", { location: "explorar" })}
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-700)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[color:var(--brand-green-800)]"
         >
           Completar meu cadastro

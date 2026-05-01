@@ -82,6 +82,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Fire-and-forget: registra search_event pra alimentar agregado de termos
+  // populares (migration 032). Só loga buscas com termo >= 2 chars (evita
+  // poluir tabela com listagens vazias). Sem await — falha aqui não pode
+  // bloquear a resposta de busca.
+  if (q.length >= 2) {
+    void supabase.rpc("log_search_event", {
+      p_raw_query: q,
+      p_filters: {
+        category: category || null,
+        state: state || null,
+        supplier_types: supplierTypes.length ? supplierTypes : null,
+      },
+      p_results_count: count ?? 0,
+      p_source: "explorar",
+    });
+  }
+
   return NextResponse.json({
     products: data ?? [],
     total: count ?? 0,

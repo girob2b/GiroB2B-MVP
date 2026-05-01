@@ -1,9 +1,10 @@
 # MVP_SCOPE — GiroB2B
 
 > **Documento operacional.** Define o que entra no primeiro lançamento e o que fica pra fase 2.
-> Criado em 14/04/2026. Os 27 documentos técnicos permanecem como visão de 12-24 meses; este recorte é o *escopo de execução imediato*.
+> Criado em 14/04/2026. Reconciliado com a realidade do código em 01/05/2026 (squad-fullstack de validação — ver `work/2026-05-01/validacao-plataforma/brainstorm.md`).
+> Os 27 documentos técnicos permanecem como visão de 12-24 meses; este recorte é o *escopo de execução imediato*.
 >
-> **Referências primárias:** `1.4_REQUISITOS_FUNCIONAIS.md`, `1.7_DEFINICAO_MVP_SCOPE_LOCK.md`, `4.5_ROADMAP_DE_DESENVOLVIMENTO.md`.
+> **Referências primárias:** `1.4_REQUISITOS_FUNCIONAIS.md`, `1.7_DEFINICAO_MVP_SCOPE_LOCK.md`, `4.5_ROADMAP_DE_DESENVOLVIMENTO.md`, `../ARCHITECTURE.md`.
 
 ---
 
@@ -173,21 +174,25 @@ Baseado em `memory/project_vibe_coding_strategy.md`.
 
 ---
 
-## 8. Stack travada (resolvido 16/04/2026)
+## 8. Stack travada (resolvido 16/04/2026 — reconciliado em 01/05/2026)
 
-Todas as 10 perguntas originais foram respondidas pelo Vitor em 16/04/2026. Fonte canônica: `admin/decisoes/RESPOSTAS_VITOR_10_PERGUNTAS.md`.
+Todas as 10 perguntas originais foram respondidas pelo Vitor em 16/04/2026. Fonte canônica das decisões: `admin/decisoes/RESPOSTAS_VITOR_10_PERGUNTAS.md`. A coluna **Realidade (01/05/2026)** registra como cada decisão foi efetivamente executada, com base no squad-fullstack de validação.
 
-| Item | Decisão |
-|------|---------|
-| Arquitetura | Monolito modular Next.js + Supabase |
-| Backend | Route Handlers (`app/api/*`), sem backend separado |
-| ORM | Prisma |
-| Auth | Supabase Auth |
-| Storage | Supabase Storage |
-| Observabilidade | Sentry |
-| CI/CD | Vercel auto-deploy em `main` |
-| Créditos cloud | Ativos desde já (hospedar pelo menos algo em produção) |
-| Carga horária Vitor | ~25h/semana (3h seg-sex + 5h sab + 5h dom) |
+| Item | Decisão original (16/04) | Realidade (01/05/2026) |
+|------|--------------------------|-------------------------|
+| Arquitetura | Monolito modular Next.js + Supabase | **Confirmado.** Monorepo pnpm workspaces (`apps/web`, `apps/girob2b-landing-page`, `apps/scraper`, `packages/shared`) com produto principal concentrado no Next.js. |
+| Backend | Route Handlers (`app/api/*`), sem backend separado | **Confirmado após migração 01/05/2026.** O Fastify em `apps/api` foi removido. Mutations server-side usam Server Actions → services locais → Supabase; fluxos client-side usam Route Handlers em `apps/web/app/api/*`. |
+| ORM | Prisma | **Não executado.** Em uso: `@supabase/supabase-js` direto + driver `pg` para RPC raw. Prisma nunca foi instalado. |
+| Auth | Supabase Auth | **Confirmado.** E-mail/senha + Google OAuth implementados. Cert Digital A1: UI presente, backend ainda é TODO. |
+| Storage | Supabase Storage | **Confirmado.** |
+| Observabilidade | Sentry | **Parcial.** `instrumentation.ts` e `instrumentation-client.ts` presentes mas operam como no-op se `SENTRY_DSN` não estiver definido. **Sem evidência de DSN configurado em Vercel prod.** Sem release tagging nem sourcemaps. Bloqueante pré-go-live. |
+| E-mail transacional | Resend (T1-17 declarado must-have) | **Não implementado de fato.** `enqueueInquiryNotification` insere row em `email_notifications` com `status='sent'` sem chamar a SDK Resend. Bloqueante pré-go-live — sem isso o MVP não testa a hipótese central (supplier não recebe lead). |
+| Migrations | Script `run_migrations.cjs` | **Obsoleto.** Cobre apenas 001-012; o banco tem 33 migrations aplicadas via Management API manualmente. Sem tabela `schema_migrations` rastreando estado. Decisão pendente: adotar `supabase db push` ou atualizar o script. |
+| Staging | (não decidido formalmente) | **Inexistente.** Previews da Vercel apontam para o mesmo projeto Supabase de produção. PRs em preview podem gravar dados reais. Bloqueante pré-go-live. |
+| CI/CD | Vercel auto-deploy em `main` | **Confirmado em parte.** Vercel auto-deploy funciona; CI em `.github/workflows/` roda apenas `tsc --noEmit` + lint — sem build real, sem Playwright, sem branch protection rule. |
+| Créditos cloud | Ativos desde já (hospedar pelo menos algo em produção) | **Confirmado.** |
+| Carga horária Vitor | ~25h/semana (3h seg-sex + 5h sab + 5h dom) | **Confirmado.** |
+| Token Supabase Management | (não previsto) | **Risco aberto:** `sbp_bc33261e...` foi exposto em sessões de chat. Aceito como risco enquanto banco está vazio; rotação obrigatória antes do primeiro deploy com dados reais. |
 
 ### Política de testes mínima antes de deploy em produção
 
@@ -196,6 +201,8 @@ Testes automatizados obrigatórios antes de qualquer deploy prod:
 - **criação de inquiry** (lead — coração do MVP)
 
 Fora do conjunto mínimo: validação CNPJ (BrasilAPI) e UI. Podem ganhar testes depois, não bloqueiam deploy no MVP.
+
+**Status (01/05/2026):** o conjunto mínimo **ainda não foi escrito**. Os specs Playwright existentes em `apps/web/tests/e2e/` cobrem `/explorar` pública e SEO técnico (`explorar-public.spec.ts`, `seo-sitemap.spec.ts`) — não cobrem signup/login nem criação de inquiry. Bloqueador estrutural: não há projeto Supabase de staging com seed de contas de teste para `globalSetup` do Playwright. **Deploy em produção hoje viola este critério.** Ver squad-fullstack 2026-05-01 e AVISOS.md.
 
 ---
 
@@ -225,3 +232,62 @@ Baseado em velocity combinada (Vitor ~25h/semana + Gustavo vibe coding em tarefa
 - **Adição de features novas** só se couber nos tiers existentes; caso contrário, vai pra "Fora do MVP".
 - **Reler este doc no início de cada sprint** antes de pegar tarefa nova.
 - Visão ampla e justificativas de negócio permanecem nos 27 docs técnicos. Este doc não substitui nenhum deles — é o recorte operacional.
+
+---
+
+## 11. Status de implementação — snapshot 01/05/2026
+
+Reconciliação entre o escopo declarado e a realidade do código, derivada do squad-fullstack `work/2026-05-01/validacao-plataforma/brainstorm.md`. Atualizar a cada sessão de doc-sync.
+
+### Tier 1 — divergências críticas
+
+| # | Feature | Status | Observação |
+|---|---------|--------|------------|
+| 5 | Ativação buyer com checkbox LGPD | ⚠ **Bug ativo** | `lgpd_consent` é gravado server-side sem checkbox de compartilhamento com fornecedores. RF-01.08 não cumprido. Bloqueante legal pré-go-live. |
+| 6 | Upgrade supplier com CNPJ via BrasilAPI | ⚠ **Desligado** | BrasilAPI desativada no MVP (instabilidade). Cadastro provisório sem validação externa. `is_company_verified` nunca acende para novos buyers até reativação. |
+| 14 | Página pública do produto SSR + meta tags | ✅ Entregue | `/produto/[slug]` RSC com `generateMetadata` + JsonLd. |
+| 15 | Página pública do fornecedor SSR + meta tags | ✅ Entregue | `/fornecedor/[slug]` idem. |
+| 17 | Notificação e-mail da inquiry pro supplier (Resend) | 🔴 **Fake** | `enqueueInquiryNotification` insere row com `status='sent'` sem chamar SDK Resend. Bloqueante — MVP não testa hipótese central. |
+| 20 | Rate limit 10 inquiries/dia por buyer | ✅ Entregue | Implementado em `create_directed_inquiry_tx` (Postgres). |
+| 21 | Deduplicação inquiry 48h | ✅ Entregue | Idem item 20. |
+| 22 | Admin dashboard mínimo | ✅ Entregue | (AVISOS 2026-04-21) |
+| 23 | Admin: suspender/reativar supplier | ✅ Entregue | (AVISOS 2026-04-21) |
+
+### Tier 2 — status
+
+| # | Feature | Status |
+|---|---------|--------|
+| T2-1 | Selo "Empresa Verificada" buyer | ⚠ Schema entregue (migration 030); UI carrega o campo; render do badge no painel supplier não auditado |
+| T2-4 | Schema.org JSON-LD | ✅ Entregue (sprint 2026-04-30) |
+| T2-5 | Sitemap XML automático | ✅ Entregue (`app/sitemap.ts`, `app/robots.ts`) |
+| T2-6 | Páginas SEO de categoria | ✅ Entregue (`/explorar/[categoria]` ISR + JSON-LD) |
+| T2-10 | Login social Google | ✅ Entregue |
+| T2-10b | Login Cert Digital A1 | ⚠ UI presente, backend é TODO — false affordance |
+| T2-11 | Lista de necessidades | ⚠ Implementada com `features.needs = false` mas botão visível na Explorar |
+| T2-12 | Gate de acesso "Pesquisa na web" | ✅ Implementada como gated |
+
+### Implementado FORA do escopo declarado
+
+Features presentes no código que MVP_SCOPE listava como "Fora do MVP" — promovidas de fato sem doc-sync formal. Decisão pendente: oficializar como Tier 1/2 ou retirar.
+
+- **Pipeline bilateral** (migrations 021/022). Bug conhecido: cards do comprador não movem por dependência de título exato de coluna.
+- **Propostas formais** com 7 campos estruturados (preço, prazo, frete, etc.) — Tier 1 previa apenas descrição+quantidade+prazo+localidade.
+- **Chat** entre buyer/supplier (migration 013).
+- **FTS com ranking composto 35/25/15/15/10** (migrations 032/033). RPC `search_explorar` aplicada no banco mas `/api/search` ainda usa ILIKE.
+- **Inquiries genéricas** (migration 018) — multi-fornecedor.
+- **Abas "Pesquisas" e "Análises com IA"** em `/painel/inquiries` (sem RF documentado).
+- **Layer de analytics tipada** (`lib/analytics/track.ts` + 6 eventos) — noop em produção (TODO: plugar PostHog ou similar).
+- **Refator security** removendo SERVICE_ROLE de endpoint público (migration 031 + view `search_needs_public`).
+
+### Páginas institucionais — pendentes (RF-14.01)
+
+`/sobre`, `/como-funciona`, `/contato`, `/precos` retornam 404. Risco de credibilidade B2B para tráfego orgânico.
+
+### Riscos operacionais documentados em ARCHITECTURE.md
+
+- 21 das 33 migrations sem rastreamento (`run_migrations.cjs` obsoleto).
+- Token Supabase Management exposto sem rotação.
+- Staging Supabase inexistente (previews tocam prod).
+- CI sem build do Next.js nem Playwright.
+- Sentry no-op (DSN ausente em prod).
+- ARCHITECTURE.md preenchido na v2.0 (01/05/2026); v1.0 era template em branco.

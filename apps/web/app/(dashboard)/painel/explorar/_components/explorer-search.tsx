@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { GiroLoader } from "@/components/ui/giro-loader";
 import { createClient } from "@/lib/supabase/client";
-import { apiClient } from "@/lib/api-client";
 import { createOrGetConversation } from "@/app/actions/chat";
+import { track } from "@/lib/analytics/track";
 import NeedsDialog from "./needs-dialog";
 import { RecentNeedsSuggestions } from "./recent-needs-suggestions";
 
@@ -122,7 +122,13 @@ const SUPPLIER_TYPES = [
 /** Sugestões populares mostradas no dropdown de autocomplete quando o user
  *  ainda não tem histórico próprio. Lista curada — pode evoluir pra dado real
  *  (ex.: top queries de search analytics) quando houver volume. */
-const POPULAR_SUGGESTIONS = [
+/**
+ * Fallback hardcoded usado durante bootstrap (sem volume real de busca).
+ * Em runtime, `/api/search/popular` retorna a lista real da view
+ * `search_terms_popular` (migration 032). Esse array só é usado se o fetch
+ * falhar OU enquanto o estado inicial ainda não carregou.
+ */
+const POPULAR_SUGGESTIONS_FALLBACK = [
   "Embalagens plásticas",
   "Parafusos",
   "Tecidos",
@@ -562,17 +568,28 @@ function ProdutoModal({
         return;
       }
 
-      const client = apiClient(session.access_token);
       const description = buildDescription();
 
-      const result = await client.post<CreateInquiryApiResponse>("/inquiries", {
-        supplier_id: p.supplier_id,
-        product_id: p.id,
-        description,
-        quantity_estimate: `${quantity} ${p.unit ?? "unid"}`,
-        desired_deadline: desiredDeadline || undefined,
-        lgpd_consent: true,
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          supplier_id: p.supplier_id,
+          product_id: p.id,
+          description,
+          quantity_estimate: `${quantity} ${p.unit ?? "unid"}`,
+          desired_deadline: desiredDeadline || undefined,
+          lgpd_consent: true,
+        }),
       });
+
+      const result = await response.json().catch(() => null) as (CreateInquiryApiResponse & { error?: string }) | null;
+      if (!response.ok || !result?.inquiry) {
+        throw new Error(result?.error ?? "Não foi possível enviar a cotação.");
+      }
 
       const convResult = await createOrGetConversation({
         supplierId: p.supplier_id,
@@ -584,6 +601,12 @@ function ProdutoModal({
       });
 
       setSubmitState("sent");
+      track("inquiry_sent", {
+        inquiry_id: result.inquiry.id,
+        supplier_id: p.supplier_id,
+        is_generic: false,
+        time_to_send_ms: null,
+      });
       if ("id" in convResult) {
         router.push(`/painel/chat?conv=${convResult.id}`);
       } else {
@@ -716,7 +739,14 @@ function ProdutoModal({
           {/* CTAs */}
           <div className="space-y-2 pt-1">
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                track("inquiry_started", {
+                  supplier_id: p.supplier_id,
+                  supplier_slug: p.supplier_slug,
+                  source: "explorar",
+                });
+                setShowForm(true);
+              }}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] text-white text-sm font-semibold h-11 transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
@@ -736,7 +766,14 @@ function ProdutoModal({
             </button>
             <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  track("inquiry_started", {
+                    supplier_id: p.supplier_id,
+                    supplier_slug: p.supplier_slug,
+                    source: "explorar",
+                  });
+                  setShowForm(true);
+                }}
                 className="flex flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-medium py-3 transition-colors"
               >
                 <DollarSign className="w-4 h-4 text-slate-500" />
@@ -1023,6 +1060,7 @@ export default function ExplorerSearch() {
     category: initialCategoria ?? "",
   });
   const [page, setPage] = useState(1);
+  const [retryNonce, setRetryNonce] = useState(0);
   const [view, setView] = useState<"list" | "grid">("list");
   const [selected, setSelected] = useState<SearchProduct | null>(null);
   const [pendingFormState, setPendingFormState] = useState<ProposalFormState | null>(null);
@@ -1072,10 +1110,28 @@ export default function ExplorerSearch() {
 
   // Autocomplete dropdown
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [popularSuggestions, setPopularSuggestions] = useState<string[]>(POPULAR_SUGGESTIONS_FALLBACK);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setRecentSearches(loadRecentSearches()); }, []);
+
+  // Carrega sugestões populares reais (view search_terms_popular, migration 032).
+  // Endpoint mistura agregado real com fallback se < 3 termos no banco.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/search/popular")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const terms: unknown = data?.terms;
+        if (Array.isArray(terms) && terms.every((t) => typeof t === "string")) {
+          setPopularSuggestions(terms as string[]);
+        }
+      })
+      .catch(() => { /* mantém fallback */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Fecha dropdown ao clicar fora
   useEffect(() => {
@@ -1089,7 +1145,7 @@ export default function ExplorerSearch() {
   }, []);
 
   /** Submete uma query: persiste no histórico, sincroniza filtro e dispara busca. */
-  function submitQuery(value: string) {
+  function submitQuery(value: string, source: "enter_key" | "popular_suggestion" | "recent_suggestion" = "enter_key") {
     const term = value.trim();
     setFilters((f) => ({ ...f, query: term }));
     setSubmittedQuery(term);
@@ -1099,11 +1155,21 @@ export default function ExplorerSearch() {
       setRecentSearches(loadRecentSearches());
     }
     setSearchFocused(false);
+
+    // Instrumentação — north-star funnel começa aqui (search_submitted).
+    if (term.length >= 2) {
+      const hasFilters =
+        !!filters.category ||
+        !!filters.state ||
+        filters.moqIndex > 0 ||
+        filters.supplierTypes.length > 0;
+      track("search_submitted", { query: term, has_filters: hasFilters, source });
+    }
   }
 
   const currentSearchKey = useMemo(
-    () => JSON.stringify([submittedQuery, filters.category, filters.state, filters.moqIndex, filters.sortBy, filters.supplierTypes, page]),
-    [submittedQuery, filters.category, filters.state, filters.moqIndex, filters.sortBy, filters.supplierTypes, page]
+    () => JSON.stringify([submittedQuery, filters.category, filters.state, filters.moqIndex, filters.sortBy, filters.supplierTypes, page, retryNonce]),
+    [submittedQuery, filters.category, filters.state, filters.moqIndex, filters.sortBy, filters.supplierTypes, page, retryNonce]
   );
 
   const [fetchResult, setFetchResult] = useState<{
@@ -1200,8 +1266,8 @@ export default function ExplorerSearch() {
     ? recentSearches.filter(s => s.toLowerCase().includes(queryLower))
     : recentSearches;
   const filteredPopular = queryLower
-    ? POPULAR_SUGGESTIONS.filter(s => s.toLowerCase().includes(queryLower) && !filteredRecent.some(r => r.toLowerCase() === s.toLowerCase()))
-    : POPULAR_SUGGESTIONS.filter(s => !filteredRecent.some(r => r.toLowerCase() === s.toLowerCase()));
+    ? popularSuggestions.filter(s => s.toLowerCase().includes(queryLower) && !filteredRecent.some(r => r.toLowerCase() === s.toLowerCase()))
+    : popularSuggestions.filter(s => !filteredRecent.some(r => r.toLowerCase() === s.toLowerCase()));
   const showSuggestions = searchFocused && (filteredRecent.length > 0 || filteredPopular.length > 0);
 
   return (
@@ -1251,7 +1317,10 @@ export default function ExplorerSearch() {
                       key={term}
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => submitQuery(term)}
+                      onClick={() => {
+                        track("search_suggestion_clicked", { suggestion: term, kind: "recent" });
+                        submitQuery(term, "recent_suggestion");
+                      }}
                       className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                     >
                       <Clock className="h-4 w-4 shrink-0 text-slate-400" />
@@ -1270,7 +1339,10 @@ export default function ExplorerSearch() {
                       key={term}
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => submitQuery(term)}
+                      onClick={() => {
+                        track("search_suggestion_clicked", { suggestion: term, kind: "popular" });
+                        submitQuery(term, "popular_suggestion");
+                      }}
                       className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                     >
                       <TrendingUp className="h-4 w-4 shrink-0 text-slate-400" />
@@ -1433,7 +1505,7 @@ export default function ExplorerSearch() {
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
           <button
-            onClick={() => setPage((p) => p)}
+            onClick={() => setRetryNonce((n) => n + 1)}
             className="ml-auto text-xs font-semibold underline"
           >
             Tentar novamente
@@ -1491,11 +1563,19 @@ export default function ExplorerSearch() {
             )
           ) : view === "list" ? (
             <div className="space-y-3">
-              {results.map((p) => (
+              {results.map((p, idx) => (
                 <ProdutoCardList
                   key={p.id}
                   p={p}
-                  onClick={() => setSelected(p)}
+                  onClick={() => {
+                    track("supplier_card_clicked", {
+                      supplier_id: p.supplier_id,
+                      supplier_slug: p.supplier_slug,
+                      position: idx + (page - 1) * PAGE_SIZE,
+                      query: submittedQuery || null,
+                    });
+                    setSelected(p);
+                  }}
                   onCompare={() => handleCompare(p)}
                   inCompare={!!compareList.find((x) => x.id === p.id)}
                 />
@@ -1503,11 +1583,19 @@ export default function ExplorerSearch() {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-              {results.map((p) => (
+              {results.map((p, idx) => (
                 <ProdutoCardGrid
                   key={p.id}
                   p={p}
-                  onClick={() => setSelected(p)}
+                  onClick={() => {
+                    track("supplier_card_clicked", {
+                      supplier_id: p.supplier_id,
+                      supplier_slug: p.supplier_slug,
+                      position: idx + (page - 1) * PAGE_SIZE,
+                      query: submittedQuery || null,
+                    });
+                    setSelected(p);
+                  }}
                   onCompare={() => handleCompare(p)}
                   inCompare={!!compareList.find((x) => x.id === p.id)}
                 />

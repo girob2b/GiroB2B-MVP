@@ -231,11 +231,15 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
               Google
             </Button>
 
-            {/* Certificado Digital A1 */}
+            {/*
+              Certificado Digital A1 — UI desativada até backend real.
+              Reativar removendo o `hidden` quando handleCertFileSelected
+              tiver implementação de validação PKCS#12 + autenticação.
+            */}
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-xl border-slate-200 bg-white hover:bg-slate-50 gap-2 text-slate-700"
+              className="hidden h-11 rounded-xl border-slate-200 bg-white hover:bg-slate-50 gap-2 text-slate-700"
               onClick={handleCertLogin}
               disabled={certPending}
               aria-label="Entrar com Certificado Digital A1"
@@ -248,7 +252,6 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
             </Button>
           </div>
 
-          {/* Input oculto para seleção do arquivo de certificado */}
           <input
             ref={certInputRef}
             type="file"

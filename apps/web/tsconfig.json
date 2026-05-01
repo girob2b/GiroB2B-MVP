@@ -19,8 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@girob2b/shared": ["../../packages/shared/src"]
+      "@/*": ["./*"]
     }
   },
   "include": [

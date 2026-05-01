@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { apiClient } from "@/lib/api-client";
+import { UpdateProfileSchema, UpdateSettingsSchema } from "@/lib/schemas/supplier";
+import {
+  getSupplierForUser,
+  getSupplierIdForUser,
+  updateSupplierProfile,
+  updateSupplierSettings,
+} from "@/lib/services/supplier";
 
 export type ProfileState = {
   error?: string;
@@ -46,9 +52,16 @@ export async function updateProfile(
     })(),
   };
 
+  const parsed = UpdateProfileSchema.safeParse(fields);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supplier = await getSupplierForUser(supabase, session.user.id);
+  if (!supplier) return { error: "Fornecedor não encontrado." };
+
   try {
-    const client = apiClient(session.access_token);
-    await client.patch("/supplier/me", fields);
+    await updateSupplierProfile(supabase, supplier, parsed.data);
   } catch (error) {
     return { error: errorMessage(error, "Erro ao salvar perfil.") };
   }
@@ -85,8 +98,17 @@ export async function updatePublicProfileLayout(
   }
 
   try {
-    const client = apiClient(session.access_token);
-    await client.patch("/supplier/me", { public_profile_layout: parsed });
+    const supplier = await getSupplierForUser(supabase, session.user.id);
+    if (!supplier) return { error: "Fornecedor não encontrado." };
+
+    const result = UpdateProfileSchema.pick({ public_profile_layout: true }).safeParse({
+      public_profile_layout: parsed,
+    });
+    if (!result.success) {
+      return { error: result.error.issues[0]?.message ?? "Layout inválido." };
+    }
+
+    await updateSupplierProfile(supabase, supplier, result.data);
   } catch (error) {
     return { error: errorMessage(error, "Erro ao salvar layout.") };
   }
@@ -106,24 +128,30 @@ export async function updateCompanySettings(
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { error: "Sessão expirada. Faça login novamente." };
 
-  const get = (key: string) => (formData.get(key) as string) || null;
+  const str = (key: string) => (formData.get(key) as string | null) || undefined;
+  const nullable = (key: string) => (formData.get(key) as string | null) || null;
 
-  const fields = {
-    phone:                get("phone") ?? "",
-    whatsapp:             get("whatsapp"),
-    address:              get("address"),
-    cep:                  get("cep"),
-    city:                 get("city") ?? "",
-    state:                get("state") ?? "",
-    inscricao_municipal:  get("inscricao_municipal"),
-    inscricao_estadual:   get("inscricao_estadual"),
-    situacao_fiscal:      get("situacao_fiscal"),
-    allow_relisting:      formData.get("allow_relisting") === "true",
-  };
+  const parsed = UpdateSettingsSchema.safeParse({
+    phone:               str("phone"),
+    whatsapp:            nullable("whatsapp"),
+    address:             nullable("address"),
+    cep:                 nullable("cep"),
+    city:                str("city"),
+    state:               str("state"),
+    inscricao_municipal: nullable("inscricao_municipal"),
+    inscricao_estadual:  nullable("inscricao_estadual"),
+    situacao_fiscal:     nullable("situacao_fiscal"),
+    allow_relisting:     formData.get("allow_relisting") === "true",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supplierId = await getSupplierIdForUser(supabase, session.user.id);
+  if (!supplierId) return { error: "Perfil de fornecedor não encontrado." };
 
   try {
-    const client = apiClient(session.access_token);
-    await client.patch("/supplier/settings", fields);
+    await updateSupplierSettings(supabase, supplierId, parsed.data);
   } catch (error) {
     return { error: errorMessage(error, "Erro ao salvar configurações.") };
   }

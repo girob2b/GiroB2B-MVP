@@ -209,7 +209,7 @@ export default function PublicProfileContentForm({ supplier, rootCategories, sub
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="description">
-                Descrição <span className="text-muted-foreground text-xs">(mín. 50 caracteres para pontuar)</span>
+                Descrição <span className="text-muted-foreground text-xs">(mín. 100 caracteres para pontuar)</span>
               </Label>
               <Textarea
                 id="description"

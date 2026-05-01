@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Package, Loader2, Plus, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { apiClient } from "@/lib/api-client";
 
 interface ImportableProduct {
   id: string;
@@ -35,10 +34,19 @@ export default function ImportCatalogClient({ products }: ImportCatalogClientPro
         return;
       }
 
-      const client = apiClient(session.access_token);
-      const result = await client.post<{ id: string }>("/products/import", {
-        original_product_id: productId,
+      const response = await fetch("/api/products/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ original_product_id: productId }),
       });
+
+      const result = await response.json().catch(() => null) as { id?: string; error?: string } | null;
+      if (!response.ok || !result?.id) {
+        throw new Error(result?.error ?? "Erro ao importar produto.");
+      }
 
       router.push(`/painel/produtos/${result.id}`);
     } catch (err) {

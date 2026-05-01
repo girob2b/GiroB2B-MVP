@@ -10,7 +10,6 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@girob2b/shared": "*",
     "@fastify/cors": "^10.0.2",
     "@supabase/supabase-js": "^2.101.1",
     "bullmq": "^5.34.1",

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { apiClient } from "@/lib/api-client";
+import { CompleteOnboardingSchema } from "@/lib/schemas/onboarding";
+import { completeOnboardingForUser } from "@/lib/services/onboarding";
 
 export type OnboardingState = {
   errors?: Record<string, string[]>;
@@ -45,21 +46,21 @@ export async function completeOnboarding(
     }
   }
 
+  const parsed = CompleteOnboardingSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
   try {
-    const client = apiClient(session.access_token);
-    await client.post("/onboarding/complete", payload);
+    const result = await completeOnboardingForUser(
+      session.user.id,
+      session.user.email ?? "",
+      parsed.data
+    );
+
+    if (!("success" in result)) return result;
   } catch (error) {
-    // Se o backend retornou erro de validação (422), ele vem no formato { errors, message }
-    const message = errorMessage(error);
-    try {
-      const parsedError = JSON.parse(message);
-      return {
-        errors: parsedError.errors,
-        message: parsedError.message,
-      };
-    } catch {
-      return { message: message || "Erro ao processar onboarding." };
-    }
+    return { message: errorMessage(error) || "Erro ao processar onboarding." };
   }
 
   // Força refresh da sessão pra que o JWT no cookie reflita o onboarding_complete=true

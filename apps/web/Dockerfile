@@ -11,11 +11,12 @@ ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Instala dependências do workspace inteiro de uma vez
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/web/package.json apps/web/package.json
-COPY apps/api/package.json apps/api/package.json
-RUN npm install
+COPY apps/girob2b-landing-page/package.json apps/girob2b-landing-page/package.json
+COPY apps/scraper/package.json apps/scraper/package.json
+RUN corepack enable && pnpm install --frozen-lockfile
 
 WORKDIR /repo/apps/web
 EXPOSE 3000
@@ -25,14 +26,15 @@ CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
 FROM node:20 AS builder
 WORKDIR /repo
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ packages/
 COPY apps/web/ apps/web/
-COPY apps/api/package.json apps/api/package.json
-RUN npm install
+COPY apps/girob2b-landing-page/package.json apps/girob2b-landing-page/package.json
+COPY apps/scraper/package.json apps/scraper/package.json
+RUN corepack enable && pnpm install --frozen-lockfile
 
 WORKDIR /repo/apps/web
-RUN npm run build
+RUN pnpm build
 
 # ── Runner de produção ────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner

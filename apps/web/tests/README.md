@@ -5,33 +5,35 @@ Cobertura mínima E2E exigida pelo [`docs/MVP_SCOPE.md`](../../../docs/MVP_SCOPE
 ## Setup (uma vez)
 
 ```bash
-cd apps/web
-npm install                  # adiciona @playwright/test
-npm run test:e2e:install     # baixa o Chromium do Playwright
+# Da raiz do monorepo:
+pnpm install                                      # instala todos os workspaces
+pnpm --filter @girob2b/web exec playwright install --with-deps chromium
 ```
 
-> Se `npm install` falhar com `ENOTEMPTY` em `lightningcss-linux-x64-musl`,
-> rode `sudo rm -rf node_modules/.lightningcss-linux-x64-musl-*` e tente de novo
-> (artefato deixado por sandbox de install antigo).
+> Se `pnpm install` falhar com permissão em `node_modules`, sobrou leftover
+> de instalação antiga com owner root: `sudo rm -rf apps/*/node_modules`.
 
 ## Rodar
 
 Dev server precisa estar de pé (Playwright config aponta pra `http://localhost:3000`).
 
 ```bash
-# Em um terminal:
-npm run dev          # ou ./dev.sh na raiz do repo
+# Em um terminal (raiz do repo):
+pnpm run dev          # sobe WEB + LANDING via concurrently
+# alternativa: pnpm run dev:web (só Next)
 
 # Em outro terminal:
-cd apps/web
-npm run test:e2e         # headless
-npm run test:e2e:ui      # UI mode (debug visual)
+pnpm --filter @girob2b/web test:e2e        # headless
+pnpm --filter @girob2b/web test:e2e:ui     # UI mode (debug visual)
 ```
+
+> Se a porta 3000/5173 estiver ocupada por processo zumbi, libere com
+> `lsof -ti:3000 | xargs kill -9` (substituindo a porta).
 
 Para apontar pra outra URL (preview/staging):
 
 ```bash
-E2E_BASE_URL=https://staging.girob2b.com.br npm run test:e2e
+E2E_BASE_URL=https://staging.girob2b.com.br pnpm --filter @girob2b/web test:e2e
 ```
 
 ## Estrutura

@@ -1,16 +1,16 @@
 {
   "name": "girob2b",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgGreen.bold,bgBlue.bold\" -n \"API,WEB\" \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
-    "dev:web": "npm run dev --workspace=apps/web",
-    "dev:api": "npm run dev --workspace=apps/api",
-    "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/api",
-    "lint": "npm run lint --workspace=apps/web && npm run lint --workspace=apps/api"
+    "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgGreen.bold,bgYellow.bold\" -n \"WEB,LANDING\" \"pnpm --filter @girob2b/web dev\" \"pnpm --filter landing-page dev\"",
+    "dev:web": "pnpm --filter @girob2b/web dev",
+    "dev:landing": "pnpm --filter landing-page dev",
+    "dev:scraper": "pnpm --filter @girob2b/scraper dev",
+    "build": "pnpm --filter @girob2b/web build && pnpm --filter landing-page build",
+    "build:web": "pnpm --filter @girob2b/web build",
+    "lint": "pnpm --filter @girob2b/web lint && pnpm --filter landing-page lint",
+    "typecheck": "pnpm --filter @girob2b/web exec tsc --noEmit"
   },
   "devDependencies": {
     "concurrently": "9.2.1"
