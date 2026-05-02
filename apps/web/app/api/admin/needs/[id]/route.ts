@@ -4,6 +4,22 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+type NeedStatus = "pending" | "in_progress" | "fulfilled" | "rejected";
+
+function normalizeNeedStatus(value: unknown): NeedStatus | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "pending" || normalized === "pendente") return "pending";
+  if (normalized === "in_progress" || normalized === "em_andamento" || normalized === "em andamento") {
+    return "in_progress";
+  }
+  if (normalized === "fulfilled" || normalized === "registered" || normalized === "cadastrado") {
+    return "fulfilled";
+  }
+  if (normalized === "rejected" || normalized === "rejeitado") return "rejected";
+  return null;
+}
+
 async function requireAdmin() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -36,12 +52,15 @@ export async function PATCH(
   const body = await req.json().catch(() => ({}));
   const updates: Record<string, unknown> = {};
 
-  const allowedStatus = new Set(["pending", "in_progress", "fulfilled", "rejected"]);
-  if (typeof body.status === "string" && allowedStatus.has(body.status)) {
-    updates.status = body.status;
-    if (body.status === "fulfilled" || body.status === "rejected") {
+  const status = normalizeNeedStatus(body.status);
+  if (status) {
+    updates.status = status;
+    if (status === "fulfilled" || status === "rejected") {
       updates.resolved_at = new Date().toISOString();
       updates.resolved_by_admin_id = auth.user!.id;
+    } else {
+      updates.resolved_at = null;
+      updates.resolved_by_admin_id = null;
     }
   }
   if (typeof body.admin_notes === "string" || body.admin_notes === null) {

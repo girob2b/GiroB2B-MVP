@@ -1,113 +1,76 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, CheckCircle2, ClipboardList } from "lucide-react";
+import { X, CheckCircle2, ClipboardList } from "lucide-react";
 import LoginModal from "@/components/auth/login-modal";
 import RegisterModal from "@/components/auth/register-modal";
+import NeedForm, { submitNeedRequest, type NeedFormValues } from "@/components/needs/need-form";
 
 const PENDING_NEED_KEY = "girob2b_pending_need";
 
 interface NeedsDialogProps {
   open: boolean;
-  initialQuery: string;
+  initialProductName: string;
   initialDescription?: string | null;
-  filters?: {
-    state?: string;
-    category?: string;
-  };
   onClose: () => void;
 }
 
 export default function NeedsDialog({
   open,
-  initialQuery,
+  initialProductName,
   initialDescription,
-  filters,
   onClose,
 }: NeedsDialogProps) {
-  const [query, setQuery] = useState(initialQuery);
-  const [description, setDescription] = useState(initialDescription ?? "");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [pendingValues, setPendingValues] = useState<NeedFormValues>({
+    productName: initialProductName,
+    description: initialDescription ?? "",
+  });
 
   useEffect(() => {
     if (open) {
-      setQuery(initialQuery);
-      setDescription(initialDescription ?? "");
-      setError(null);
       setSuccess(false);
-      setSubmitting(false);
       setShowLogin(false);
       setShowRegister(false);
+      setPendingValues({
+        productName: initialProductName,
+        description: initialDescription ?? "",
+      });
     }
-  }, [open, initialQuery, initialDescription]);
+  }, [open, initialProductName, initialDescription]);
 
   if (!open) return null;
 
-  function persistPendingNeed() {
+  function persistPendingNeed(values: NeedFormValues) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
         PENDING_NEED_KEY,
         JSON.stringify({
-          query: query.trim(),
-          description: description.trim() || null,
-          filters: filters ?? {},
+          query: values.productName.trim(),
+          description: values.description.trim() || null,
           timestamp: Date.now(),
         })
       );
     } catch {
-      /* ignore */
+      // ignore
     }
   }
 
-  async function submitNeed(): Promise<boolean> {
-    setError(null);
-    if (query.trim().length < 2) {
-      setError("Informe o que você procura (mínimo 2 caracteres).");
-      return false;
-    }
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/search/needs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: query.trim(),
-          description: description.trim() || null,
-          filters: filters ?? {},
-        }),
-      });
-      if (res.status === 401) {
-        persistPendingNeed();
-        setShowLogin(true);
-        return false;
-      }
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error ?? `Erro ${res.status}`);
-      }
+  async function submitPendingNeedAfterAuth(values: NeedFormValues) {
+    const { response } = await submitNeedRequest(values);
+    if (response.ok) {
       setSuccess(true);
-      return true;
-    } catch (err) {
-      setError(
-        err instanceof Error && err.message !== "unauthenticated"
-          ? err.message
-          : "Não foi possível enviar sua necessidade. Tente novamente."
-      );
-      return false;
-    } finally {
-      setSubmitting(false);
+      return;
     }
   }
 
-  async function handleAuthSuccess() {
+  function handleAuthSuccess() {
     setShowLogin(false);
     setShowRegister(false);
-    await submitNeed();
+    void submitPendingNeedAfterAuth(pendingValues);
   }
 
   return (
@@ -127,10 +90,10 @@ export default function NeedsDialog({
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-900">
-                  Adicionar à lista de necessidades
+                  Adicionar a lista de necessidades
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Nossos administradores buscam e cadastram o fornecedor em 1 a 2 dias úteis.
+                  Nossos administradores buscam e cadastram o fornecedor em 1 a 2 dias uteis.
                 </p>
               </div>
             </div>
@@ -147,7 +110,7 @@ export default function NeedsDialog({
               <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-[color:var(--brand-green-600)]" />
               <h3 className="text-base font-semibold text-slate-900">Necessidade registrada</h3>
               <p className="mt-1 text-sm text-slate-600">
-                Avisaremos por email quando o fornecedor for cadastrado (geralmente 1 a 2 dias úteis).
+                Avisaremos por email quando o fornecedor for cadastrado (geralmente 1 a 2 dias uteis).
               </p>
               <button
                 onClick={onClose}
@@ -158,61 +121,28 @@ export default function NeedsDialog({
             </div>
           ) : (
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">
-                  O que você procura?
-                </label>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
-                  placeholder="ex.: fornecedor de embalagens biodegradáveis"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">
-                  Detalhes adicionais <span className="font-normal text-slate-400">(opcional)</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
-                  placeholder="Volume estimado, região preferida, certificações, prazo, etc."
-                />
-              </div>
-
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                <strong>Importante:</strong> o cadastro manual pode levar de <strong>1 a 2 dias úteis</strong>.
-                Enquanto isso, a necessidade ficará visível para a equipe interna.
+                <strong>Importante:</strong> o cadastro manual pode levar de <strong>1 a 2 dias uteis</strong>.
+                Enquanto isso, a necessidade ficara visivel para a equipe interna.
               </div>
 
-              {error && <div className="alert-error text-xs">{error}</div>}
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  onClick={onClose}
-                  disabled={submitting}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => void submitNeed()}
-                  disabled={submitting}
-                  className="flex items-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
-                >
-                  {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Enviar necessidade
-                </button>
-              </div>
+              <NeedForm
+                initialProductName={pendingValues.productName}
+                initialDescription={pendingValues.description}
+                showCancel
+                onCancel={onClose}
+                onUnauthenticated={(values) => {
+                  setPendingValues(values);
+                  persistPendingNeed(values);
+                  setShowLogin(true);
+                }}
+                onSuccess={() => setSuccess(true)}
+              />
             </div>
           )}
         </aside>
       </div>
 
-      {/* Modais centrados por cima do drawer, quando o gate dispara */}
       <LoginModal
         open={showLogin}
         onClose={() => setShowLogin(false)}
@@ -222,7 +152,7 @@ export default function NeedsDialog({
           setShowRegister(true);
         }}
         title="Entre para enviar sua necessidade"
-        subtitle="Sua busca já está salva — é só confirmar quem você é."
+        subtitle="Sua busca ja esta salva - e so confirmar quem voce e."
       />
 
       <RegisterModal
@@ -233,8 +163,8 @@ export default function NeedsDialog({
           setShowRegister(false);
           setShowLogin(true);
         }}
-        title="Criar cadastro grátis"
-        subtitle="Sua busca já está salva — leva menos de 1 minuto."
+        title="Criar cadastro gratis"
+        subtitle="Sua busca ja esta salva - leva menos de 1 minuto."
       />
     </>
   );

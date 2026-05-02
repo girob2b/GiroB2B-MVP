@@ -13,12 +13,20 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const query = typeof body.query === "string" ? body.query.trim() : "";
+    const productNameRaw =
+      typeof body.productName === "string"
+        ? body.productName
+        : typeof body.query === "string"
+        ? body.query
+        : "";
+    const query = productNameRaw.trim();
     const description = typeof body.description === "string" ? body.description.trim() : null;
-    const filters = body.filters && typeof body.filters === "object" ? body.filters : {};
 
     if (query.length < 2) {
-      return NextResponse.json({ error: "invalid_query" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Informe o nome do produto com pelo menos 2 caracteres." },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
@@ -34,9 +42,10 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         query,
         description,
-        filters,
+        filters: {},
+        status: "pending",
       })
-      .select("id, created_at")
+      .select("id, query, description, status, created_at, updated_at")
       .single();
 
     if (error) {
@@ -65,7 +74,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("search_needs")
-      .select("id, query, description, filters, status, admin_notes, created_at, resolved_at")
+      .select("id, query, description, filters, status, admin_notes, created_at, updated_at, resolved_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);

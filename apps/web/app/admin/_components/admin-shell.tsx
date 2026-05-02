@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, ClipboardList, LogOut } from "lucide-react";
-import { logout } from "@/app/actions/auth";
+import { LayoutDashboard, ClipboardList, LogOut, Users, FileText } from "lucide-react";
+import { adminLogout } from "@/lib/actions/admin-auth";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/admin",             label: "Visão geral",   icon: LayoutDashboard },
-  { href: "/admin/fornecedores",label: "Fornecedores",  icon: Building2       },
-  { href: "/admin/needs",       label: "Necessidades",  icon: ClipboardList   },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/usuarios", label: "Usuários", icon: Users },
+  { href: "/admin/cotacoes", label: "Cotações", icon: FileText },
+  { href: "/admin/needs", label: "Necessidades", icon: ClipboardList },
 ];
 
 export default function AdminShell({
@@ -55,7 +56,7 @@ export default function AdminShell({
 
         <div className="px-2 py-3 border-t border-slate-800 space-y-1">
           <p className="px-3 text-xs text-slate-500 truncate">{email}</p>
-          <form action={logout}>
+          <form action={adminLogout}>
             <button
               type="submit"
               className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
@@ -71,3 +72,4 @@ export default function AdminShell({
     </div>
   );
 }
+

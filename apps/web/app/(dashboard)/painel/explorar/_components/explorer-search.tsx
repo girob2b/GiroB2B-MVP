@@ -1634,12 +1634,8 @@ export default function ExplorerSearch() {
       {/* ── Dialog de necessidade (gate da busca web) ─────────────────────── */}
       <NeedsDialog
         open={needsOpen}
-        initialQuery={needsInitial?.query ?? filters.query}
+        initialProductName={needsInitial?.query ?? filters.query}
         initialDescription={needsInitial?.description ?? null}
-        filters={{
-          state: filters.state || undefined,
-          category: filters.category || undefined,
-        }}
         onClose={() => {
           setNeedsOpen(false);
           setNeedsInitial(null);

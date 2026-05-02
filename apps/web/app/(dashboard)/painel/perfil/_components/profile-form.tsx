@@ -40,7 +40,7 @@ const ESTADOS = [
 
 const FREQUENCY_OPTIONS = [
   { value: "weekly",        label: "Toda semana" },
-  { value: "monthly",       label: "Toda mês" },
+  { value: "monthly",       label: "Todo mês" },
   { value: "quarterly",     label: "A cada 3 meses" },
   { value: "occasional",    label: "Eventualmente" },
   { value: "project_based", label: "Por projeto" },

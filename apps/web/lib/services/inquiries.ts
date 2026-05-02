@@ -74,6 +74,17 @@ type CreateInquiryRpcResult = {
   inquiry?: InquiryListRow;
 };
 
+export type CreateGenericInquiryInput = {
+  product_name: string;
+  quantity?: string | null;
+  target_price?: string | null;
+  category?: string | null;
+  state?: string | null;
+  city?: string | null;
+  contact_type?: "fabricante" | "importador" | "atacado" | null;
+  notes?: string | null;
+};
+
 export class InquiryValidationError extends Error {
   constructor(
     message: string,
@@ -123,7 +134,7 @@ async function getUserProfile(userId: string) {
   return data;
 }
 
-async function ensureSupplier(supplierId: string, productId?: string | null) {
+async function ensureSupplier(supplierId: string, productId: string) {
   const admin = createAdminClient();
   const { data: supplier, error } = await admin
     .from("suppliers")
@@ -134,22 +145,25 @@ async function ensureSupplier(supplierId: string, productId?: string | null) {
   if (error || !supplier) throw new InquiryValidationError("Fornecedor nao encontrado.", 404);
   if (supplier.suspended) throw new InquiryValidationError("Fornecedor indisponivel para contato.", 422);
 
-  if (productId) {
-    const { data: product, error: productError } = await admin
-      .from("products")
-      .select("id, supplier_id, status")
-      .eq("id", productId)
-      .single<ProductLookup>();
+  const { data: product, error: productError } = await admin
+    .from("products")
+    .select("id, supplier_id, status")
+    .eq("id", productId)
+    .single<ProductLookup>();
 
-    if (productError || !product || product.supplier_id !== supplierId || product.status === "deleted") {
-      throw new InquiryValidationError("Produto invalido para este fornecedor.", 422);
-    }
+  if (productError || !product || product.supplier_id !== supplierId || product.status === "deleted") {
+    throw new InquiryValidationError("Produto invalido para este fornecedor.", 422);
   }
 
   return supplier;
 }
 
-async function getOrCreateBuyer(userId: string, userEmail: string, input: CreateInquiryInput) {
+type BuyerUpsertInput = {
+  company_name?: string | null;
+  cnpj?: string | null;
+};
+
+async function getOrCreateBuyer(userId: string, userEmail: string, input: BuyerUpsertInput) {
   const admin = createAdminClient();
   const { data: existing, error: existingError } = await admin
     .from("buyers")
@@ -270,13 +284,16 @@ export async function createDirectedInquiry(
   input: CreateInquiryInput
 ) {
   const admin = createAdminClient();
-  const supplier = await ensureSupplier(input.supplier_id, input.product_id ?? null);
-  const buyer = await getOrCreateBuyer(userId, userEmail, input);
+  const supplier = await ensureSupplier(input.supplier_id, input.product_id);
+  const buyer = await getOrCreateBuyer(userId, userEmail, {
+    company_name: input.company_name ?? null,
+    cnpj: input.cnpj ?? null,
+  });
 
   const { data, error } = await admin.rpc("create_directed_inquiry_tx", {
     p_buyer_id: buyer.id,
     p_supplier_id: supplier.id,
-    p_product_id: input.product_id ?? null,
+    p_product_id: input.product_id,
     p_buyer_name: buyer.name,
     p_buyer_email: buyer.email,
     p_buyer_phone: buyer.phone,
@@ -286,22 +303,22 @@ export async function createDirectedInquiry(
     p_description: input.description,
     p_quantity_estimate: input.quantity_estimate ?? null,
     p_desired_deadline: input.desired_deadline ?? null,
-    p_dedup_key: buildDedupKey(buyer.id, supplier.id, input.product_id ?? null),
+    p_dedup_key: buildDedupKey(buyer.id, supplier.id, input.product_id),
     p_start_of_day: getSaoPauloDayStart().toISOString(),
     p_dedup_since: new Date(Date.now() - INQUIRY_DEDUP_HOURS * 60 * 60 * 1000).toISOString(),
     p_daily_limit: INQUIRY_DAILY_LIMIT,
   });
 
-  if (error || !data) throw new InquiryValidationError("Nao foi possivel criar a cotacao.", 500);
+  if (error || !data) throw new InquiryValidationError("Não foi possível criar a cotação.", 500);
 
   const result = data as CreateInquiryRpcResult;
   if (!result.success) {
     if (result.error_code === "daily_limit_exceeded") {
-      throw new InquiryValidationError("Limite diario de cotacoes atingido. Tente novamente amanha.", 429);
+      throw new InquiryValidationError("Limite diário de cotações atingido. Tente novamente amanha.", 429);
     }
-    throw new InquiryValidationError("Nao foi possivel criar a cotacao.", 500);
+    throw new InquiryValidationError("ão foi possível criar a cotação.", 500);
   }
-  if (!result.inquiry) throw new InquiryValidationError("Nao foi possivel criar a cotacao.", 500);
+  if (!result.inquiry) throw new InquiryValidationError("Não foi possível criar a cotação.", 500);
 
   if (!result.deduplicated) {
     await enqueueInquiryNotification(supplier, result.inquiry.id).catch(() => {});
@@ -312,6 +329,94 @@ export async function createDirectedInquiry(
     deduplicated: Boolean(result.deduplicated),
     supplier_name: supplier.trade_name,
     inquiry: result.inquiry,
+  };
+}
+
+export async function createGenericInquiryQuote(
+  userId: string,
+  userEmail: string,
+  input: CreateGenericInquiryInput
+) {
+  const productName = input.product_name.trim();
+  if (productName.length < 2) {
+    throw new InquiryValidationError("Nome do produto ou material e obrigatorio.", 422, {
+      product_name: ["Informe o nome do produto ou material."],
+    });
+  }
+
+  const admin = createAdminClient();
+  const buyer = await getOrCreateBuyer(userId, userEmail, {});
+
+  const quantity = input.quantity?.trim() || null;
+  const targetPrice = input.target_price?.trim() || null;
+  const category = input.category?.trim() || null;
+  const state = input.state?.trim().toUpperCase() || null;
+  const city = input.city?.trim() || null;
+  const notes = input.notes?.trim() || null;
+
+  const descriptionParts = [
+    `Produto/material: ${productName}.`,
+    quantity ? `Quantidade estimada: ${quantity}.` : null,
+    category ? `Categoria: ${category}.` : null,
+    notes ? `Detalhes adicionais: ${notes}` : null,
+  ].filter(Boolean) as string[];
+
+  const description = descriptionParts.join("\n");
+
+  if (description.length < 20) {
+    throw new InquiryValidationError("Descreva a cotacao com pelo menos 20 caracteres.", 422, {
+      description: ["Detalhe melhor sua solicitacao para abrir a cotacao."],
+    });
+  }
+
+  const { data, error } = await admin
+    .from("inquiries")
+    .insert({
+      buyer_id: buyer.id,
+      supplier_id: null,
+      product_id: null,
+      inquiry_type: "generic",
+      buyer_name: buyer.name,
+      buyer_email: buyer.email,
+      buyer_phone: buyer.phone,
+      buyer_company: buyer.company_name ?? null,
+      buyer_city: city ?? buyer.city ?? null,
+      buyer_state: state ?? buyer.state ?? null,
+      description,
+      quantity_estimate: quantity,
+      target_price: targetPrice,
+      contact_type: input.contact_type ?? null,
+      buyer_consent_to_share: true,
+      status: "new",
+    })
+    .select(`
+      id,
+      inquiry_type,
+      supplier_id,
+      product_id,
+      buyer_id,
+      description,
+      quantity_estimate,
+      desired_deadline,
+      status,
+      buyer_name,
+      buyer_email,
+      buyer_phone,
+      buyer_company,
+      buyer_city,
+      buyer_state,
+      contact_unlocked,
+      created_at
+    `)
+    .single<InquiryListRow>();
+
+  if (error || !data) {
+    throw new InquiryValidationError("Nao foi possivel criar a cotacao.", 500);
+  }
+
+  return {
+    success: true as const,
+    inquiry: data,
   };
 }
 

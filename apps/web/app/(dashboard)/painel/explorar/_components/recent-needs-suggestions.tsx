@@ -80,7 +80,7 @@ export function RecentNeedsSuggestions({ onPick }: RecentNeedsSuggestionsProps) 
         </div>
         <div>
           <h2 className="text-sm font-bold text-slate-900">
-            {isFallback ? "Ideias para começar" : "Cotações recentes de compradores"}
+            {isFallback ? "Ideias para começar" : "Necessidades recentes de compradores"}
           </h2>
           <p className="text-xs text-slate-500">
             {isFallback

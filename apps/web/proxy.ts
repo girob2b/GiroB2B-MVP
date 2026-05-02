@@ -36,24 +36,35 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  const isAdminLoginRoute = pathname === "/admin/login";
+  const isAdminAreaRoute = pathname.startsWith("/admin") && !isAdminLoginRoute;
+
   // 1. Não autenticado tentando acessar área protegida
-  const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+  const isProtected =
+    PROTECTED_ROUTES.some((r) => pathname.startsWith(r)) && !isAdminLoginRoute;
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
+    redirectUrl.pathname = isAdminAreaRoute ? "/admin/login" : "/login";
     redirectUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   if (user) {
-    // 2. Rota /admin — exige role admin
+    // 2. Rotas /admin — exigem role admin (exceto /admin/login)
     if (pathname.startsWith("/admin")) {
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("role")
         .eq("id", user.id)
         .single();
-      if (profile?.role !== "admin") {
+
+      const isAdmin = profile?.role === "admin";
+
+      if (isAdminLoginRoute && isAdmin) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+
+      if (!isAdminLoginRoute && !isAdmin) {
         return NextResponse.redirect(new URL("/painel/explorar", request.url));
       }
     }

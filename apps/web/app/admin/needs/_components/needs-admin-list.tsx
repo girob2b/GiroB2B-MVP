@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 export type NeedStatus = "pending" | "in_progress" | "fulfilled" | "rejected";
+type NeedStatusInput = NeedStatus | "registered" | "cadastrado";
 
 export interface AdminSearchNeed {
   id: string;
@@ -11,12 +12,15 @@ export interface AdminSearchNeed {
   query: string;
   description: string | null;
   filters: Record<string, unknown> | null;
-  status: NeedStatus;
+  status: NeedStatusInput;
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
   resolved_by_supplier_id: string | null;
+  buyer_name?: string | null;
+  buyer_company?: string | null;
+  buyer_email?: string | null;
 }
 
 const STATUS_LABEL: Record<NeedStatus, string> = {
@@ -37,8 +41,29 @@ interface Props {
   initialNeeds: AdminSearchNeed[];
 }
 
+const NEXT_STATUS_OPTIONS: Array<{ value: "pending" | "in_progress" | "cadastrado" | "rejected"; label: string }> = [
+  { value: "pending", label: "Pendente" },
+  { value: "in_progress", label: "Em andamento" },
+  { value: "cadastrado", label: "Cadastrado" },
+  { value: "rejected", label: "Rejeitado" },
+];
+
+function normalizeNeedStatus(status: NeedStatusInput): NeedStatus {
+  if (status === "registered" || status === "cadastrado") return "fulfilled";
+  return status;
+}
+
+function normalizeNeed(need: AdminSearchNeed): AdminSearchNeed & { status: NeedStatus } {
+  return {
+    ...need,
+    status: normalizeNeedStatus(need.status),
+  };
+}
+
 export default function NeedsAdminList({ initialNeeds }: Props) {
-  const [needs, setNeeds] = useState(initialNeeds);
+  const [needs, setNeeds] = useState<Array<AdminSearchNeed & { status: NeedStatus }>>(
+    initialNeeds.map(normalizeNeed)
+  );
   const [savingId, setSavingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<NeedStatus | "all">("all");
 
@@ -57,7 +82,8 @@ export default function NeedsAdminList({ initialNeeds }: Props) {
         throw new Error(payload.error ?? `Erro ${res.status}`);
       }
       const { need } = (await res.json()) as { need: AdminSearchNeed };
-      setNeeds((prev) => prev.map((n) => (n.id === id ? need : n)));
+      const normalizedNeed = normalizeNeed(need);
+      setNeeds((prev) => prev.map((n) => (n.id === id ? normalizedNeed : n)));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Falha ao atualizar");
     } finally {
@@ -114,6 +140,15 @@ export default function NeedsAdminList({ initialNeeds }: Props) {
                   {need.description && (
                     <p className="text-xs text-slate-600 whitespace-pre-line">{need.description}</p>
                   )}
+                  <p className="text-[11px] text-slate-500">
+                    Comprador: {need.buyer_name ?? "Nao informado"}
+                    {need.buyer_company ? ` - ${need.buyer_company}` : ""}
+                    {need.buyer_email ? ` (${need.buyer_email})` : ""}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Criado em {new Date(need.created_at).toLocaleString("pt-BR")} - Atualizado em{" "}
+                    {new Date(need.updated_at).toLocaleString("pt-BR")}
+                  </p>
                   {need.filters && Object.keys(need.filters).length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-1">
                       {Object.entries(need.filters).map(([k, v]) =>
@@ -133,12 +168,12 @@ export default function NeedsAdminList({ initialNeeds }: Props) {
                   value={need.status}
                   disabled={savingId === need.id}
                   onChange={(e) =>
-                    updateNeed(need.id, { status: e.target.value as NeedStatus })
+                    updateNeed(need.id, { status: e.target.value as NeedStatusInput })
                   }
                   className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 focus:border-slate-400 focus:outline-none"
                 >
-                  {Object.entries(STATUS_LABEL).map(([v, label]) => (
-                    <option key={v} value={v}>
+                  {NEXT_STATUS_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>
                       {label}
                     </option>
                   ))}

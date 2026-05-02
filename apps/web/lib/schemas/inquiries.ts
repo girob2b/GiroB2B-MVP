@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const CreateInquirySchema = z.object({
   supplier_id: z.string().uuid("Fornecedor invalido."),
-  product_id: z.string().uuid("Produto invalido.").nullable().optional(),
+  product_id: z.string().uuid("Produto invalido."),
   description: z
     .string()
     .trim()

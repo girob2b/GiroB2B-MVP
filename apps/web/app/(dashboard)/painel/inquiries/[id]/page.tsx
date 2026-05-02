@@ -51,18 +51,22 @@ interface InquiryPageProps {
 
 const ERROR_MESSAGES: Record<string, string> = {
   buyer_orphan:
-    "Este comprador não está mais ativo na plataforma. Não é possível iniciar uma negociação.",
+    "Este comprador nao esta mais ativo na plataforma. Nao e possivel iniciar uma negociacao.",
   no_supplier_profile:
-    "Você precisa ter um perfil de fornecedor para iniciar uma negociação.",
-  inquiry_not_found: "Cotação não encontrada.",
-  not_authorized: "Você não tem permissão para responder esta cotação.",
+    "Voce precisa ter um perfil de fornecedor para iniciar uma negociacao.",
+  inquiry_not_found: "Cotacao nao encontrada.",
+  not_authorized: "Voce nao tem permissao para responder esta cotacao.",
   conversation_insert_failed:
-    "Não foi possível abrir o chat. Tente novamente em instantes.",
+    "Nao foi possivel abrir o chat. Tente novamente em instantes.",
 };
 
 function statusInfo(status: InquiryStatus | string) {
   const map: Record<string, { label: string; className: string }> = {
-    new: { label: "Nova", className: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
+    new: {
+      label: "Nova",
+      className:
+        "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]",
+    },
     viewed: { label: "Visualizada", className: "bg-slate-100 text-slate-600 border-slate-200" },
     responded: { label: "Respondida", className: "bg-slate-100 text-slate-600 border-slate-200" },
     archived: { label: "Arquivada", className: "bg-slate-100 text-slate-500 border-slate-200" },
@@ -83,7 +87,7 @@ function formatDate(value: string) {
 }
 
 function locationLabel(inquiry: InquiryRow) {
-  return [inquiry.buyer_city, inquiry.buyer_state].filter(Boolean).join(" - ") || "Não informado";
+  return [inquiry.buyer_city, inquiry.buyer_state].filter(Boolean).join(" - ") || "Nao informado";
 }
 
 async function getInquiry(userId: string, id: string) {
@@ -126,9 +130,6 @@ async function getInquiry(userId: string, id: string) {
 
   const inquiry = data as unknown as InquiryRow;
 
-  // Carrega o selo "Empresa Verificada" do buyer em query separada — tolera a
-  // ausência da migration 030 (a coluna pode ainda não existir, e nesse caso
-  // o badge silenciosamente não renderiza).
   if (inquiry.buyer_id) {
     const verifyRes = await supabase
       .from("buyers")
@@ -140,22 +141,20 @@ async function getInquiry(userId: string, id: string) {
     }
   }
 
-  // Quem pode ver:
-  // - Buyer dono da inquiry (qualquer tipo)
-  // - Supplier dono (inquiry direcionada com supplier_id == seu id)
-  // - QUALQUER supplier autenticado (inquiry genérica — supplier_id null)
-  const isSupplierOwner = Boolean(supplierRes.data && inquiry.supplier_id === supplierRes.data.id);
-  const isGenericVisibleToSupplier = Boolean(supplierRes.data && inquiry.supplier_id === null);
-  const isSupplierViewer = isSupplierOwner || isGenericVisibleToSupplier;
+  const isSupplierViewer = Boolean(
+    supplierRes.data &&
+      (inquiry.inquiry_type === "generic" ||
+        (inquiry.inquiry_type === "directed" && inquiry.supplier_id === supplierRes.data.id))
+  );
   const isBuyerViewer = Boolean(buyerRes.data && inquiry.buyer_id === buyerRes.data.id);
 
   if (!isSupplierViewer && !isBuyerViewer) return null;
 
   return {
     inquiry,
-    mode: isSupplierViewer ? "supplier" as const : "buyer" as const,
+    mode: isSupplierViewer ? ("supplier" as const) : ("buyer" as const),
     supplier: supplierRes.data,
-    isGeneric: inquiry.supplier_id === null,
+    isDirected: inquiry.inquiry_type === "directed",
   };
 }
 
@@ -169,13 +168,13 @@ export default async function InquiryDetailPage({ params, searchParams }: Inquir
   const data = await getInquiry(authData.user.id, id);
   if (!data) notFound();
 
-  const { inquiry, isGeneric } = data;
+  const { inquiry, isDirected } = data;
   const info = statusInfo(inquiry.status);
   const canShowContact =
     data.mode === "buyer" ||
     Boolean(data.supplier && data.supplier.plan !== "free" && inquiry.contact_unlocked);
   const isOrphan = inquiry.buyer_id === null;
-  const canSupplierAct = data.mode === "supplier" && !isOrphan;
+  const canSupplierAct = data.mode === "supplier" && !isOrphan && isDirected;
   const errorMessage = errorCode ? ERROR_MESSAGES[errorCode] : null;
 
   return (
@@ -186,18 +185,19 @@ export default async function InquiryDetailPage({ params, searchParams }: Inquir
             <ArrowLeft className="mr-1 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="mt-3 text-2xl font-bold text-foreground">Detalhes da cotação</h1>
+          <h1 className="mt-3 text-2xl font-bold text-foreground">Detalhes da cotacao</h1>
           <p className="mt-1 text-sm text-muted-foreground">Recebida em {formatDate(inquiry.created_at)}</p>
         </div>
-        <Badge variant="outline" className={info.className}>{info.label}</Badge>
+        <Badge variant="outline" className={info.className}>
+          {info.label}
+        </Badge>
       </div>
 
       {errorMessage && <div className="alert-error text-sm">{errorMessage}</div>}
 
       {isOrphan && data.mode === "supplier" && (
         <div className="alert-warning text-sm">
-          ⚠ Esta cotação foi criada por um comprador que não está mais ativo na plataforma.
-          Não é possível iniciar uma negociação.
+          Esta cotacao foi criada por um comprador que nao esta mais ativo na plataforma.
         </div>
       )}
 
@@ -208,20 +208,18 @@ export default async function InquiryDetailPage({ params, searchParams }: Inquir
               <MessageSquare className="h-5 w-5 text-[color:var(--brand-green-700)]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-muted-foreground">Solicitação</p>
+              <p className="text-sm font-semibold text-muted-foreground">Solicitacao</p>
               <p className="mt-1 whitespace-pre-wrap text-foreground">{inquiry.description}</p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <InfoBlock label="Produto" value={inquiry.products?.name ?? "Não informado"} />
-            {!isGeneric && (
-              <InfoBlock label="Fornecedor" value={inquiry.suppliers?.trade_name ?? "Fornecedor"} />
-            )}
-            <InfoBlock label="Quantidade estimada" value={inquiry.quantity_estimate ?? "Não informada"} />
-            {inquiry.target_price && <InfoBlock label="Preço-alvo" value={inquiry.target_price} />}
-            {inquiry.contact_type && <InfoBlock label="Tipo de fornecedor desejado" value={inquiry.contact_type} />}
-            <InfoBlock label="Prazo desejado" value={inquiry.desired_deadline ?? "Não informado"} />
+            <InfoBlock label="Produto" value={inquiry.products?.name ?? "Nao informado"} />
+            {isDirected && <InfoBlock label="Fornecedor" value={inquiry.suppliers?.trade_name ?? "Fornecedor"} />}
+            <InfoBlock label="Quantidade estimada" value={inquiry.quantity_estimate ?? "Nao informada"} />
+            {inquiry.target_price && <InfoBlock label="Preco alvo" value={inquiry.target_price} />}
+            {inquiry.contact_type && <InfoBlock label="Tipo de fornecedor" value={inquiry.contact_type} />}
+            <InfoBlock label="Prazo desejado" value={inquiry.desired_deadline ?? "Nao informado"} />
             <InfoBlock label="Cidade do comprador" value={locationLabel(inquiry)} />
           </div>
         </CardContent>
@@ -231,19 +229,16 @@ export default async function InquiryDetailPage({ params, searchParams }: Inquir
         <Card>
           <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">
-                {isGeneric ? "Cotação aberta — envie sua proposta" : "Responda esta cotação"}
-              </p>
+              <p className="text-sm font-semibold text-foreground">Responda esta cotacao</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Iniciar uma conversa abre o chat com o comprador. Você pode mandar mensagens
-                e formalizar uma proposta a partir de lá.
+                Iniciar uma conversa abre o chat com o comprador para negociacao e proposta.
               </p>
             </div>
             <form action={startSupplierConversation}>
               <input type="hidden" name="inquiry_id" value={inquiry.id} />
               <Button type="submit" className="btn-primary shrink-0">
                 <Send className="mr-2 h-4 w-4" />
-                Iniciar negociação
+                Iniciar negociacao
               </Button>
             </form>
           </CardContent>
@@ -269,15 +264,14 @@ export default async function InquiryDetailPage({ params, searchParams }: Inquir
 
           {canShowContact ? (
             <div className="grid gap-4 sm:grid-cols-2">
-              <InfoBlock label="Nome" value={inquiry.buyer_name ?? "Não informado"} />
-              <InfoBlock label="Empresa" value={inquiry.buyer_company ?? "Não informada"} />
-              <InfoBlock label="Email" value={inquiry.buyer_email ?? "Não informado"} />
-              <InfoBlock label="Telefone" value={inquiry.buyer_phone ?? "Não informado"} />
+              <InfoBlock label="Nome" value={inquiry.buyer_name ?? "Nao informado"} />
+              <InfoBlock label="Empresa" value={inquiry.buyer_company ?? "Nao informada"} />
+              <InfoBlock label="Email" value={inquiry.buyer_email ?? "Nao informado"} />
+              <InfoBlock label="Telefone" value={inquiry.buyer_phone ?? "Nao informado"} />
             </div>
           ) : (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              Fornecedores gratuitos veem a necessidade do comprador, mas os dados de contato ficam ocultos.
-              Essa mecânica prepara o funil de assinatura previsto para a próxima fase do produto.
+              Os dados de contato ficam ocultos para fornecedores do plano gratuito.
             </div>
           )}
         </CardContent>

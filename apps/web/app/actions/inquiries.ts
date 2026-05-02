@@ -3,95 +3,103 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  createGenericInquiryQuote,
+  InquiryValidationError,
+} from "@/lib/services/inquiries";
 
-export interface CreateGenericInquiryState {
+export interface PublishNeedState {
   error?: string;
   success?: boolean;
 }
 
-export async function createGenericInquiry(
-  _prev: CreateGenericInquiryState,
+export interface CreateQuoteState {
+  error?: string;
+  success?: boolean;
+}
+
+export async function createPublishedNeed(
+  _prev: PublishNeedState,
   formData: FormData
-): Promise<CreateGenericInquiryState> {
+): Promise<PublishNeedState> {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) redirect("/login");
 
-  const productName  = (formData.get("product_name") as string | null)?.trim() ?? "";
-  const quantity     = (formData.get("quantity") as string | null)?.trim() ?? "";
-  const targetPrice  = (formData.get("target_price") as string | null)?.trim() || null;
-  const contactType  = (formData.get("contact_type") as string | null)?.trim() || null;
-  const notes        = (formData.get("notes") as string | null)?.trim() ?? "";
+  const productName = (formData.get("product_name") as string | null)?.trim() ?? "";
+  const description = (formData.get("description") as string | null)?.trim() || null;
 
-  if (!productName) return { error: "Informe o nome do produto ou material." };
-  if (!quantity)    return { error: "Informe a quantidade que você precisa." };
-
-  // Build description with enough chars to satisfy the ≥ 20 constraint
-  const parts = [`Produto: ${productName}`, `Quantidade: ${quantity}`];
-  if (targetPrice)  parts.push(`Preço-alvo: ${targetPrice}`);
-  if (contactType)  parts.push(`Tipo de contato: ${contactType}`);
-  if (notes)        parts.push(notes);
-
-  const description = parts.join(" | ");
-  if (description.length < 20) {
-    // Pad if somehow still too short
-    return { error: "Forneça mais detalhes sobre o produto ou material (mínimo 20 caracteres)." };
+  if (productName.length < 2) {
+    return { error: "Informe o nome do produto (minimo 2 caracteres)." };
   }
 
-  // Ensure buyer profile exists + cadastro fiscal completo (gate B2B)
-  const { data: buyerData, error: buyerError } = await supabase
-    .from("buyers")
-    .select("id, name, cnpj, company_name, phone, address, cep, city, state")
-    .eq("user_id", authData.user.id)
-    .maybeSingle();
-
-  if (buyerError) return { error: "Erro ao verificar perfil de comprador." };
-  if (!buyerData) return { error: "Perfil de comprador não encontrado. Complete seu cadastro primeiro." };
-
-  const missing: string[] = [];
-  if (!buyerData.cnpj)         missing.push("CNPJ");
-  if (!buyerData.company_name) missing.push("razão social");
-  if (!buyerData.phone)        missing.push("telefone");
-  if (!buyerData.address)      missing.push("endereço");
-  if (!buyerData.cep)          missing.push("CEP");
-  if (!buyerData.city)         missing.push("cidade");
-  if (!buyerData.state)        missing.push("estado");
-  if (missing.length > 0) {
-    return {
-      error: `Complete seu cadastro antes de enviar cotações. Faltam: ${missing.join(", ")}. Acesse "Meu perfil" pra preencher.`,
-    };
-  }
-
-  const { error } = await supabase.from("inquiries").insert({
-    buyer_id:              buyerData.id,
-    supplier_id:           null,
-    inquiry_type:          "generic",
+  const { error } = await supabase.from("search_needs").insert({
+    user_id: authData.user.id,
+    query: productName,
     description,
-    quantity_estimate:     quantity,
-    target_price:          targetPrice,
-    contact_type:          contactType,
-    buyer_name:            buyerData.name ?? authData.user.email ?? "Comprador",
-    buyer_email:           authData.user.email ?? "",
-    buyer_consent_to_share: true,
-    status:                "new",
+    filters: {},
+    status: "pending",
   });
 
   if (error) {
-    console.error("[createGenericInquiry]", error);
-    return { error: "Não foi possível criar a cotação. Tente novamente." };
+    console.error("[createPublishedNeed]", error);
+    return { error: "Nao foi possivel publicar a necessidade. Tente novamente." };
   }
 
   return { success: true };
 }
 
+// Backward-compatible alias while remaining imports are updated.
+export const createGenericInquiry = createPublishedNeed;
+
+export async function createNewQuote(
+  _prev: CreateQuoteState,
+  formData: FormData
+): Promise<CreateQuoteState> {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) redirect("/login");
+
+  const productName = (formData.get("product_name") as string | null)?.trim() ?? "";
+  const quantity = (formData.get("quantity") as string | null)?.trim() || null;
+  const targetPrice = (formData.get("target_price") as string | null)?.trim() || null;
+  const category = (formData.get("category") as string | null)?.trim() || null;
+  const state = (formData.get("state") as string | null)?.trim() || null;
+  const city = (formData.get("city") as string | null)?.trim() || null;
+  const contactTypeRaw = (formData.get("contact_type") as string | null)?.trim() || null;
+  const notes = (formData.get("notes") as string | null)?.trim() || null;
+  const contactType =
+    contactTypeRaw === "fabricante" || contactTypeRaw === "importador" || contactTypeRaw === "atacado"
+      ? contactTypeRaw
+      : null;
+
+  try {
+    await createGenericInquiryQuote(authData.user.id, authData.user.email ?? "", {
+      product_name: productName,
+      quantity,
+      target_price: targetPrice,
+      category,
+      state,
+      city,
+      contact_type: contactType,
+      notes,
+    });
+
+    revalidatePath("/painel/inquiries");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof InquiryValidationError) return { error: error.message };
+    return { error: "Nao foi possivel criar a cotacao. Tente novamente." };
+  }
+}
+
 /**
  * Cria (ou recupera) uma conversa entre o supplier autenticado e o buyer
- * dono de uma inquiry — e redireciona pro chat com a conversa selecionada.
+ * dono de uma inquiry e redireciona para o chat com a conversa selecionada.
  *
- * Usado pelo botão "Iniciar negociação" no detalhe da cotação genérica.
- *
- * Em caso de erro, redireciona pra própria página da inquiry com `?error=<code>`
- * para feedback visível ao usuário (não cai silenciosamente na central).
+ * Em caso de erro, redireciona para a propria pagina da inquiry com
+ * `?error=<code>` para feedback visivel ao usuario.
  */
 export async function startSupplierConversation(formData: FormData) {
   const inquiryId = (formData.get("inquiry_id") as string | null)?.trim();
@@ -124,14 +132,12 @@ export async function startSupplierConversation(formData: FormData) {
     }>();
 
   if (!inquiry) errBack("inquiry_not_found");
-  // Nota: bang seguro porque errBack acima faz redirect (não retorna)
   if (!inquiry!.buyer_id) errBack("buyer_orphan");
 
   if (inquiry!.supplier_id !== null && inquiry!.supplier_id !== supplier!.id) {
     errBack("not_authorized");
   }
 
-  // Conversa existente?
   const { data: existing } = await supabase
     .from("conversations")
     .select("id")
