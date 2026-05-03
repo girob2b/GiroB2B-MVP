@@ -140,11 +140,16 @@ export async function POST(request: NextRequest) {
 
     if (identity) {
       userId = identity.user_id;
-      // Update last usage
       await admin
         .from("cert_a1_identities")
         .update({ last_used_at: new Date().toISOString() })
         .eq("cnpj", cnpj);
+      // Keep company_name and cnpj in sync on the buyer row (cert may be renewed)
+      await admin
+        .from("buyers")
+        .update({ company_name: companyName, cnpj })
+        .eq("user_id", userId)
+        .is("company_name", null);
     } else {
       // Create Supabase user and minimal profile
       const { data: newUserData, error: createErr } = await admin.auth.admin.generateLink({
@@ -172,11 +177,13 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Minimal buyer row
+      // Minimal buyer row — pre-populate CNPJ and razão social from certificate
       const { error: buyerErr } = await admin.from("buyers").insert({
         user_id:         userId,
         name:            companyName ?? `CNPJ ${cnpj}`,
         email:           syntheticEmail,
+        company_name:    companyName,
+        cnpj:            cnpj,
         lgpd_consent:    true,
         lgpd_consent_at: new Date().toISOString(),
       });
