@@ -3,7 +3,8 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = "GiroB2B <notificacoes@girob2b.com.br>";
+// Trocar para "GiroB2B <notificacoes@girob2b.com.br>" após verificar o domínio no Resend.
+const FROM = process.env.RESEND_FROM ?? "GiroB2B <onboarding@resend.dev>";
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://girob2b.com.br").replace(/\/$/, "");
 
 export type SendResult = { ok: true; id: string } | { ok: false; error: string };
