@@ -4,7 +4,16 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowRight, MapPin, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { JsonLd } from "@/components/seo/json-ld";
+
+// Client sem cookies — seguro em build time (generateStaticParams / generateMetadata)
+function buildClient() {
+  return createAnonClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 /**
  * /explorar/[categoria] — Página SSR/ISR programática (RF-05.02).
@@ -52,7 +61,7 @@ interface CategoryRow {
 }
 
 async function loadCategoryAndProducts(slug: string) {
-  const supabase = await createClient();
+  const supabase = buildClient();
 
   const { data: category } = await supabase
     .from("categories")
@@ -85,7 +94,7 @@ async function loadCategoryAndProducts(slug: string) {
 
 export async function generateStaticParams() {
   // Lista categorias ativas com produtos suficientes pra evitar thin content.
-  const supabase = await createClient();
+  const supabase = buildClient();
   const { data } = await supabase
     .from("categories")
     .select("slug")
