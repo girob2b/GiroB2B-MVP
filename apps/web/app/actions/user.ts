@@ -152,6 +152,11 @@ export async function chooseInitialMode(
     supabase.from("suppliers").select("id").eq("user_id", user.id).maybeSingle(),
   ]);
 
+  if (buyerRes.error) {
+    console.error("[chooseInitialMode] buyer query error:", buyerRes.error.message, buyerRes.error.code);
+    return { error: `Erro ao carregar dados da empresa: ${buyerRes.error.message}` };
+  }
+
   const hasBuyer = !!buyerRes.data;
   const hasSupplier = !!supplierRes.data;
   const wantsBuyer    = targetMode === "buyer"    || targetMode === "both";
