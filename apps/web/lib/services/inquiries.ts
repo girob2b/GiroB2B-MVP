@@ -3,6 +3,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncDerivedUserRoleWithAdmin } from "@/lib/services/user-role";
+import { sendNovaCotacaoEmail } from "@/lib/email";
 import type { CreateInquiryInput } from "@/lib/schemas/inquiries";
 
 const INQUIRY_DAILY_LIMIT = 10;
@@ -251,30 +252,42 @@ async function getOrCreateBuyer(userId: string, userEmail: string, input: BuyerU
   return created;
 }
 
-async function enqueueInquiryNotification(supplier: SupplierLookup, inquiryId: string) {
+async function enqueueInquiryNotification(
+  supplier: SupplierLookup,
+  inquiryId: string,
+  buyer: Pick<BuyerRow, "name" | "company_name" | "city" | "state">,
+  description: string,
+  quantityEstimate: string | null,
+  desiredDeadline: string | null,
+) {
   const admin = createAdminClient();
   const supplierUser = await admin.auth.admin.getUserById(supplier.user_id);
   const supplierEmail = supplierUser.data.user?.email;
   if (!supplierEmail) return;
 
-  await admin.from("email_notifications").insert({
-    type: "new_inquiry",
-    recipient: supplierEmail,
-    subject: `Nova cotacao recebida para ${supplier.trade_name}`,
-    status: "sent",
+  const result = await sendNovaCotacaoEmail({
+    to: supplierEmail,
+    supplierName: supplier.trade_name,
+    buyerName: buyer.name,
+    buyerCompany: buyer.company_name,
+    buyerCity: buyer.city,
+    buyerState: buyer.state,
+    description,
+    quantityEstimate,
+    desiredDeadline,
+    inquiryId,
   });
 
   try {
-    await admin.from("notifications").insert({
-      recipient_id: supplier.user_id,
-      event_type: "new_inquiry",
-      channel: "email",
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      metadata: { inquiry_id: inquiryId },
+    await admin.from("email_notifications").insert({
+      type: "new_inquiry",
+      recipient: supplierEmail,
+      subject: `Nova cotação recebida — ${supplier.trade_name}`,
+      status: result.ok ? "sent" : "failed",
+      metadata: result.ok ? { resend_id: result.id } : { error: result.error },
     });
   } catch {
-    // Notifications are best-effort while environments converge.
+    // Audit log is best-effort.
   }
 }
 
@@ -321,7 +334,14 @@ export async function createDirectedInquiry(
   if (!result.inquiry) throw new InquiryValidationError("Não foi possível criar a cotação.", 500);
 
   if (!result.deduplicated) {
-    await enqueueInquiryNotification(supplier, result.inquiry.id).catch(() => {});
+    await enqueueInquiryNotification(
+      supplier,
+      result.inquiry.id,
+      buyer,
+      input.description,
+      input.quantity_estimate ?? null,
+      input.desired_deadline ?? null,
+    ).catch(() => {});
   }
 
   return {
