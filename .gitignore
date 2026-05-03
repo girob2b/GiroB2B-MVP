@@ -75,3 +75,4 @@ test-results/
 
 # ─── Fixtures de contrato (descartáveis — apagar antes de abrir PR) ───────────
 apps/web/tests/fixtures/api/*.json
+.vercel
