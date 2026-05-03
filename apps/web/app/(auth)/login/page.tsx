@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import LoginForm from "./login-form";
 
@@ -18,6 +19,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const error = pickParam(params.error);
   const status = pickParam(params.status);
+
+  // Sem mensagem especial → abre modal sobre a página de explorar
+  if (!error && !status) redirect("/explorar?auth=login");
 
   let feedback: { kind: "success" | "error"; message: string } | undefined;
 

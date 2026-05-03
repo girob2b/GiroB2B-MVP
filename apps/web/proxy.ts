@@ -43,10 +43,16 @@ export async function proxy(request: NextRequest) {
 
   // 1) Nao autenticado tentando acessar area protegida.
   if (isProtected && !user) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = isAdminAreaRoute ? "/admin/login" : "/login";
-    redirectUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(redirectUrl);
+    if (isAdminAreaRoute) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/admin/login";
+      return NextResponse.redirect(redirectUrl);
+    }
+    // Para rotas de usuario, abre o modal de login sobre a pagina de explorar
+    // em vez de redirecionar para a pagina /login isolada.
+    const url = new URL("/explorar", request.url);
+    url.searchParams.set("auth", "login");
+    return NextResponse.redirect(url);
   }
 
   if (user) {
