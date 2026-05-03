@@ -1,6 +1,9 @@
 # ─── Dependências ────────────────────────────────────────────────────────────
 node_modules/
 
+# ─── npm lockfile (projeto usa pnpm — package-lock.json não deve existir) ────
+package-lock.json
+
 # ─── Build ────────────────────────────────────────────────────────────────────
 apps/web/.next/
 apps/web/.vercel/
