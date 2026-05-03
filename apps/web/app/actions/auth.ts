@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureMinimalProfile } from "@/lib/auth/ensure-profile";
+import { updateCredibility } from "@/lib/auth/credibility";
 import { z } from "zod";
 
 const LoginSchema = z.object({
@@ -51,6 +52,9 @@ export async function login(
   // onboarding_complete=true. Login direto → /painel/explorar (cadastro completa
   // depois via card "Complete seu cadastro").
   await ensureMinimalProfile(supabase);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) await updateCredibility(supabase, user.id, "email");
 
   revalidatePath("/", "layout");
   redirect("/painel/explorar");

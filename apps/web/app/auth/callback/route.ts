@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ensureMinimalProfile } from "@/lib/auth/ensure-profile";
+import { updateCredibility } from "@/lib/auth/credibility";
 
 /**
  * Supabase redireciona para cá após:
@@ -26,7 +27,14 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      if (type !== "recovery") await ensureMinimalProfile(supabase);
+      if (type !== "recovery") {
+        await ensureMinimalProfile(supabase);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const hasGoogle = user.identities?.some((i) => i.provider === "google");
+          await updateCredibility(supabase, user.id, hasGoogle ? "google" : "email");
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
@@ -36,7 +44,11 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      if (type !== "recovery") await ensureMinimalProfile(supabase);
+      if (type !== "recovery") {
+        await ensureMinimalProfile(supabase);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) await updateCredibility(supabase, user.id, "email");
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

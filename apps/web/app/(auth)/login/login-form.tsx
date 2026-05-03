@@ -11,6 +11,7 @@ import { GiroLoader } from "@/components/ui/giro-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { CertA1Section } from "@/components/auth/cert-a1-section";
 
 const REMEMBER_EMAIL_KEY = "girob2b.remembered-email";
 
@@ -43,7 +44,7 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
   const [email, setEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [oauthPending, setOauthPending] = useState(false);
-  const [certPending, setCertPending] = useState(false);
+  const [certMode, setCertMode] = useState(false);
   const certInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,19 +85,6 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
     }
   }
 
-  function handleCertLogin() {
-    certInputRef.current?.click();
-  }
-
-  function handleCertFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setCertPending(true);
-    // TODO: implementar validação e autenticação via certificado A1 (.pfx/.p12)
-    setCertPending(false);
-    event.target.value = "";
-  }
-
   function handleSubmit() {
     if (rememberMe && email.trim()) {
       window.localStorage.setItem(REMEMBER_EMAIL_KEY, email.trim());
@@ -109,7 +97,7 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
   // Decisão de UX: progress-bar (NavigationProgress) cobre transições normais
   // entre views; este overlay é reservado pra ações de "promessa" — login pós-
   // submit, onde o user espera feedback forte e a navegação seguinte.
-  const showOverlay = pending || oauthPending || certPending;
+  const showOverlay = pending || oauthPending;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -122,7 +110,15 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
         <p className="text-sm text-muted-foreground">Acesse sua conta GiroB2B.</p>
       </div>
 
-      <form action={action} onSubmit={handleSubmit} className="space-y-5">
+      {/* Cert A1 mode — replaces the form */}
+      {certMode && (
+        <CertA1Section
+          onCancel={() => setCertMode(false)}
+          redirectTo="/painel/explorar"
+        />
+      )}
+
+      <form action={action} onSubmit={handleSubmit} className={certMode ? "hidden" : "space-y-5"}>
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-sm font-medium text-slate-700">
             <span className="flex items-center gap-2">
@@ -231,34 +227,18 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
               Google
             </Button>
 
-            {/*
-              Certificado Digital A1 — UI desativada até backend real.
-              Reativar removendo o `hidden` quando handleCertFileSelected
-              tiver implementação de validação PKCS#12 + autenticação.
-            */}
             <Button
               type="button"
               variant="outline"
-              className="hidden h-11 rounded-xl border-slate-200 bg-white hover:bg-slate-50 gap-2 text-slate-700"
-              onClick={handleCertLogin}
-              disabled={certPending}
+              className="h-11 rounded-xl border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 gap-2 text-emerald-700"
+              onClick={() => setCertMode(true)}
               aria-label="Entrar com Certificado Digital A1"
               title="Certificado Digital A1 (.pfx / .p12)"
             >
-              {certPending
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <FileKey className="h-4 w-4 shrink-0" />}
+              <FileKey className="h-4 w-4 shrink-0" />
               <span className="text-xs font-medium">Cert. A1</span>
             </Button>
           </div>
-
-          <input
-            ref={certInputRef}
-            type="file"
-            accept=".pfx,.p12"
-            className="hidden"
-            onChange={handleCertFileSelected}
-          />
         </div>
       </form>
 
