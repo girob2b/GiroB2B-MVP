@@ -173,16 +173,16 @@ export async function POST(request: NextRequest) {
       });
 
       // Minimal buyer row
-      await admin.from("buyers").upsert(
-        {
-          user_id:         userId,
-          name:            companyName ?? `CNPJ ${cnpj}`,
-          email:           syntheticEmail,
-          lgpd_consent:    true,
-          lgpd_consent_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id", ignoreDuplicates: true },
-      );
+      const { error: buyerErr } = await admin.from("buyers").insert({
+        user_id:         userId,
+        name:            companyName ?? `CNPJ ${cnpj}`,
+        email:           syntheticEmail,
+        lgpd_consent:    true,
+        lgpd_consent_at: new Date().toISOString(),
+      });
+      if (buyerErr) {
+        console.error("[cert-a1] buyer insert failed:", buyerErr.message, buyerErr.code);
+      }
 
       // Register cert identity
       await admin.from("cert_a1_identities").insert({

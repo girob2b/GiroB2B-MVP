@@ -108,9 +108,10 @@ export default async function PerfilPage() {
   // sem a flag), tratamos como `true` — modo normal de troca via aprovação admin.
   const initialSegmentChosen = authData.user!.user_metadata?.initial_segment_chosen !== false;
 
-  // Sem supplier nem buyer → onboarding incompleto, manda pra começar
+  // Sem supplier nem buyer → redireciona direto pro explorar (evita double
+  // redirect via /onboarding que quebra o RSC fetch do Next.js).
   if (!supplier && !buyer) {
-    redirect("/onboarding");
+    redirect("/painel/explorar");
   }
 
   // Pra supplier sem buyer, deriva um shape de buyer pra preencher o card "Dados da empresa".
