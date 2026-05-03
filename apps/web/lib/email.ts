@@ -1,7 +1,8 @@
 import "server-only";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy — evita falha de build quando RESEND_API_KEY não está injetada em build time
+function getResend() { return new Resend(process.env.RESEND_API_KEY!); }
 
 // Trocar para "GiroB2B <notificacoes@girob2b.com.br>" após verificar o domínio no Resend.
 const FROM = process.env.RESEND_FROM ?? "GiroB2B <onboarding@resend.dev>";
@@ -154,7 +155,7 @@ export async function sendNovaCotacaoEmail(p: {
 }): Promise<SendResult> {
   const inquiryUrl = `${APP_URL}/painel/inquiries/${p.inquiryId}`;
 
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: FROM,
     to: p.to,
     subject: `Nova cotação recebida — ${p.supplierName}`,
