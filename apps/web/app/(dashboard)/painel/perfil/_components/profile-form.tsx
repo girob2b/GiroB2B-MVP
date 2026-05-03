@@ -155,17 +155,16 @@ function CompanyDataForm({ buyer }: { buyer: Buyer }) {
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nome do contato" name="name" defaultValue={buyer.name} placeholder="Seu nome" required />
+            <Field label="Nome do contato" name="name" defaultValue={buyer.name} placeholder="Seu nome" />
             <Field label="Email" name="email" defaultValue={buyer.email} readOnly />
-            <Field label="Telefone / WhatsApp" name="phone" defaultValue={buyer.phone} placeholder="(11) 99999-9999" required />
-            <Field label="Razão social" name="company_name" defaultValue={buyer.company_name} placeholder="Nome jurídico" required />
+            <Field label="Telefone / WhatsApp" name="phone" defaultValue={buyer.phone} placeholder="(11) 99999-9999" />
+            <Field label="Razão social" name="company_name" defaultValue={buyer.company_name} placeholder="Nome jurídico" />
             <Field
               label="CNPJ"
               name="cnpj"
               defaultValue={buyer.cnpj ? maskCnpj(buyer.cnpj) : ""}
               placeholder="00.000.000/0000-00"
               autoFormat={maskCnpj}
-              required
             />
             <Field
               label="CEP"
@@ -173,15 +172,14 @@ function CompanyDataForm({ buyer }: { buyer: Buyer }) {
               defaultValue={buyer.cep ? maskCep(buyer.cep) : ""}
               placeholder="00000-000"
               autoFormat={maskCep}
-              required
             />
             <Field label="Inscrição municipal" name="inscricao_municipal" defaultValue={buyer.inscricao_municipal} placeholder="" />
             <Field label="Inscrição estadual" name="inscricao_estadual" defaultValue={buyer.inscricao_estadual} placeholder="Isento, se aplicável" />
             <div className="sm:col-span-2">
-              <Field label="Endereço" name="address" defaultValue={buyer.address} placeholder="Rua, número, bairro" required />
+              <Field label="Endereço" name="address" defaultValue={buyer.address} placeholder="Rua, número, bairro" />
             </div>
-            <Field label="Cidade" name="city" defaultValue={buyer.city} placeholder="Ex: São Paulo" required />
-            <Field label="Estado" name="state" required>
+            <Field label="Cidade" name="city" defaultValue={buyer.city} placeholder="Ex: São Paulo" />
+            <Field label="Estado" name="state">
               <select
                 id="state"
                 name="state"
