@@ -93,6 +93,12 @@ async function loadCategoryAndProducts(slug: string) {
 }
 
 export async function generateStaticParams() {
+  // Guard: if env vars are absent at build time, skip static generation.
+  // Pages will be rendered on-demand via ISR (revalidate = 3600) — SEO-safe.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return [];
+  }
+
   // Lista categorias ativas com produtos suficientes pra evitar thin content.
   const supabase = buildClient();
   const { data } = await supabase

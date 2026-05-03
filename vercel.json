@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["gru1"],
+  "buildCommand": "pnpm --filter @girob2b/web build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "apps/web/.next",
+  "functions": {
+    "apps/web/app/api/products/import/route.ts": {
+      "maxDuration": 60
+    },
+    "apps/web/app/api/products/parse/route.ts": {
+      "maxDuration": 30
+    },
+    "apps/web/app/api/search/web/[jobId]/stream/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
