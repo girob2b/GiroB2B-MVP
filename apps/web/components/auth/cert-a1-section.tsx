@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { FileKey, Eye, EyeOff, Loader2, X, Upload, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -16,8 +16,7 @@ export function CertA1Section({
   onCancel,
   redirectTo = "/painel/explorar",
 }: CertA1SectionProps) {
-  const router              = useRouter();
-  const fileRef             = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const [file, setFile]     = useState<File | null>(null);
   const [password, setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -98,19 +97,18 @@ export function CertA1Section({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        {/* File picker */}
+        {/* File picker — label ativa o input diretamente, sem JS */}
         <div>
           <input
-            ref={fileRef}
+            id="cert-pfx-input"
             type="file"
             accept=".pfx,.p12"
-            className="hidden"
+            className="sr-only"
             onChange={handleFileChange}
           />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-left hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors"
+          <label
+            htmlFor="cert-pfx-input"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors"
           >
             <Upload className="h-4 w-4 shrink-0 text-slate-400" />
             <div className="min-w-0">
@@ -123,7 +121,7 @@ export function CertA1Section({
                 </>
               )}
             </div>
-          </button>
+          </label>
         </div>
 
         {/* Password */}
