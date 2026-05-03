@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Sans } from "next/font/google";
 import CookieBanner from "@/components/cookie-banner";
 import { NavigationProgress } from "@/components/navigation-progress";
@@ -32,9 +33,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`${dmSans.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
-        <NavigationProgress />
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         {children}
-        <AuthModalRoot />
+        <Suspense fallback={null}>
+          <AuthModalRoot />
+        </Suspense>
         <CookieBanner />
         <Toaster richColors position="bottom-right" />
       </body>
