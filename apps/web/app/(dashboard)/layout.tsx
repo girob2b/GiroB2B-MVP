@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import DashboardShell from "@/components/layout/dashboard-shell";
+import { isSuspendedAccountStatus } from "@/lib/auth/account-status";
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,15 @@ export default async function DashboardLayout({
 
   const userId    = authData.user.id;
   const userEmail = authData.user.email ?? "";
+  const [{ data: profile }, { data: profileStatus }, { data: legacySupplierStatus }] = await Promise.all([
+    supabase.from("user_profiles").select("full_name").eq("id", userId).maybeSingle(),
+    supabase.from("user_profiles").select("status").eq("id", userId).maybeSingle(),
+    supabase.from("suppliers").select("suspended").eq("user_id", userId).maybeSingle(),
+  ]);
+
+  if (isSuspendedAccountStatus(profileStatus?.status, Boolean(legacySupplierStatus?.suspended))) {
+    redirect("/suspended");
+  }
 
   // role vem do user_metadata (salvo pelo action de onboarding como "segment")
   // "both" é um valor válido que não existe na tabela user_profiles
@@ -77,13 +87,6 @@ export default async function DashboardLayout({
   //   - supplier sempre é completo (insert exige dados mínimos B2B)
   //   - buyer-only depende dos campos B2B preenchidos via /painel/perfil
   const cadastroCompleto = role === "supplier" || role === "both" || buyerProfileComplete;
-
-  // full_name do user_profiles (fallback para user_metadata)
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("full_name")
-    .eq("id", userId)
-    .maybeSingle();
 
   const fullName =
     (profile?.full_name ?? "").trim() ||

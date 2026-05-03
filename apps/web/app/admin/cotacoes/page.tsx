@@ -261,8 +261,8 @@ export default async function AdminCotacoesPage({
                   <th className="text-left px-4 py-3">Fornecedor</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-left px-4 py-3">Propostas</th>
-                  <th className="text-left px-4 py-3">Criacao</th>
-                  <th className="text-left px-4 py-3">Acoes</th>
+                  <th className="text-left px-4 py-3">Criação</th>
+                  <th className="text-left px-4 py-3">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

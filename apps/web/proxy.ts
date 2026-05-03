@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isSuspendedAccountStatus } from "@/lib/auth/account-status";
 
-/** Rotas que exigem autenticação */
+/** Rotas que exigem autenticacao */
 const PROTECTED_ROUTES = ["/painel", "/comprador", "/admin", "/onboarding"];
-/** Rotas que redirecionam para o painel se já estiver logado E com onboarding completo */
+/** Rotas que redirecionam para o painel se ja estiver logado */
 const AUTH_ROUTES = ["/login", "/cadastro"];
 
 export async function proxy(request: NextRequest) {
@@ -18,9 +19,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -35,13 +34,14 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-
+  const isSuspendedRoute = pathname === "/suspended";
   const isAdminLoginRoute = pathname === "/admin/login";
   const isAdminAreaRoute = pathname.startsWith("/admin") && !isAdminLoginRoute;
-
-  // 1. Não autenticado tentando acessar área protegida
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
   const isProtected =
-    PROTECTED_ROUTES.some((r) => pathname.startsWith(r)) && !isAdminLoginRoute;
+    PROTECTED_ROUTES.some((route) => pathname.startsWith(route)) && !isAdminLoginRoute;
+
+  // 1) Nao autenticado tentando acessar area protegida.
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = isAdminAreaRoute ? "/admin/login" : "/login";
@@ -50,16 +50,37 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
-    // 2. Rotas /admin — exigem role admin (exceto /admin/login)
-    if (pathname.startsWith("/admin")) {
+    let isAdmin = false;
+
+    // 2) Conta suspensa nao acessa rotas protegidas nem rotas de autenticacao.
+    if (isProtected || isAuthRoute || isSuspendedRoute || pathname.startsWith("/admin")) {
+      const [{ data: profile }, { data: profileStatus }, { data: supplier }] = await Promise.all([
+        supabase.from("user_profiles").select("role").eq("id", user.id).maybeSingle(),
+        supabase.from("user_profiles").select("status").eq("id", user.id).maybeSingle(),
+        supabase.from("suppliers").select("suspended").eq("user_id", user.id).maybeSingle(),
+      ]);
+
+      isAdmin = profile?.role === "admin";
+
+      const isSuspended = isSuspendedAccountStatus(profileStatus?.status, Boolean(supplier?.suspended));
+      if (isSuspended && !isSuspendedRoute) {
+        return NextResponse.redirect(new URL("/suspended", request.url));
+      }
+
+      if (!isSuspended && isSuspendedRoute) {
+        return NextResponse.redirect(new URL("/painel/explorar", request.url));
+      }
+    } else if (pathname.startsWith("/admin")) {
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+      isAdmin = profile?.role === "admin";
+    }
 
-      const isAdmin = profile?.role === "admin";
-
+    // 3) Rotas /admin exigem role admin (exceto /admin/login).
+    if (pathname.startsWith("/admin")) {
       if (isAdminLoginRoute && isAdmin) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
@@ -69,15 +90,12 @@ export async function proxy(request: NextRequest) {
       }
     }
 
-    // 3. Onboarding multi-step não é mais obrigatório (princípio "facilitar
-    //    comprador"): user logado vai direto pra /painel/explorar. Se acessar
-    //    /onboarding manualmente, redireciona pra Explorar.
+    // 4) Onboarding multi-step nao eh mais obrigatorio.
     if (pathname.startsWith("/onboarding")) {
       return NextResponse.redirect(new URL("/painel/explorar", request.url));
     }
 
-    // 4. Já autenticado tentando entrar em /login ou /cadastro → /painel/explorar
-    const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
+    // 5) Ja autenticado tentando entrar em /login ou /cadastro.
     if (isAuthRoute) {
       return NextResponse.redirect(new URL("/painel/explorar", request.url));
     }
@@ -87,7 +105,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public|api|sitemap.xml|robots.txt).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|public|api|sitemap.xml|robots.txt).*)"],
 };

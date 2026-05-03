@@ -2,35 +2,10 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
-
-import { createAdminClient } from "@/lib/supabase/admin";
-
-/**
- * Helper de autenticação para Route Handlers e Server Actions.
- *
- * Estratégia híbrida (definida na Fase 0 da migração Fastify → Next):
- *  - **Cookie SSR primeiro** (idiomático Next.js + Supabase): chamadas de
- *    Server Components/Actions e do browser que mantêm a sessão via cookie
- *    httpOnly, gerenciada pelo `@supabase/ssr`.
- *  - **Bearer token como fallback**: chamadas Server-to-Server, integrações
- *    e componentes Client que ainda passam `Authorization: Bearer <token>`
- *    explicitamente (ex.: `apiClient` legado durante a migração).
- *
- * Retorna `{ user, supabase, accessToken }` quando autenticado, ou
- * `{ user: null, response }` com `NextResponse.json(401)` pronto para retornar.
- *
- * Uso típico em route handler:
- *   const auth = await requireAuth(request);
- *   if (!auth.user) return auth.response;
- *   const { user, supabase } = auth;
- *
- * O `supabase` retornado já tem o JWT do usuário aplicado — RLS funciona
- * normalmente. Se precisar de service_role, importe `createAdminClient`
- * diretamente em vez de usar o `supabase` deste helper.
- */
-
 import { NextResponse } from "next/server";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isSuspendedAccountStatus } from "@/lib/auth/account-status";
 
 type AuthOk = {
   user: User;
@@ -49,14 +24,23 @@ type AuthErr = {
 export type AuthResult = AuthOk | AuthErr;
 
 const AUTH_MISSING = NextResponse.json(
-  { error: "Token de autenticação ausente." },
+  { error: "Token de autenticacao ausente." },
   { status: 401 }
 );
-
 const AUTH_INVALID = NextResponse.json(
-  { error: "Token inválido ou expirado." },
+  { error: "Token invalido ou expirado." },
   { status: 401 }
 );
+const AUTH_SUSPENDED = NextResponse.json({ error: "Conta suspensa." }, { status: 403 });
+
+async function isSuspendedUser(supabase: SupabaseClient, userId: string) {
+  const [{ data: profile }, { data: supplier }] = await Promise.all([
+    supabase.from("user_profiles").select("status").eq("id", userId).maybeSingle(),
+    supabase.from("suppliers").select("suspended").eq("user_id", userId).maybeSingle(),
+  ]);
+
+  return isSuspendedAccountStatus(profile?.status, Boolean(supplier?.suspended));
+}
 
 export async function requireAuth(request: Request): Promise<AuthResult> {
   const authHeader = request.headers.get("authorization");
@@ -79,6 +63,10 @@ export async function requireAuth(request: Request): Promise<AuthResult> {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
+    if (await isSuspendedUser(supabase, data.user.id)) {
+      return { user: null, response: AUTH_SUSPENDED };
+    }
+
     return { user: data.user, supabase, accessToken: token };
   }
 
@@ -97,7 +85,7 @@ export async function requireAuth(request: Request): Promise<AuthResult> {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Server Components não podem setar cookie — ignorar.
+            // Server Components nao podem setar cookie.
           }
         },
       },
@@ -107,6 +95,10 @@ export async function requireAuth(request: Request): Promise<AuthResult> {
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
     return { user: null, response: AUTH_INVALID };
+  }
+
+  if (await isSuspendedUser(supabase, data.user.id)) {
+    return { user: null, response: AUTH_SUSPENDED };
   }
 
   const session = await supabase.auth.getSession();
