@@ -83,10 +83,18 @@ export default async function DashboardLayout({
     );
   }
 
+  // Modo de uso nunca foi escolhido explicitamente → trava tudo até o user
+  // confirmar no RoleModeCard (chooseInitialMode). Evita desbloquear opções
+  // só por ter dados preenchidos, sem ter escolhido como vai usar a plataforma.
+  const initialSegmentChosen = (meta.initial_segment_chosen as boolean | undefined) !== false;
+
   // "Cadastro completo" — pra sidebar e card de nudge:
   //   - supplier sempre é completo (insert exige dados mínimos B2B)
   //   - buyer-only depende dos campos B2B preenchidos via /painel/perfil
-  const cadastroCompleto = role === "supplier" || role === "both" || buyerProfileComplete;
+  //   - nenhum dos casos destrava se o user ainda não escolheu o modo de uso
+  const cadastroCompleto =
+    initialSegmentChosen &&
+    (role === "supplier" || role === "both" || buyerProfileComplete);
 
   const fullName =
     (profile?.full_name ?? "").trim() ||
