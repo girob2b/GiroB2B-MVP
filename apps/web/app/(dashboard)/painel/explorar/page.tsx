@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import ExplorerSearch from "./_components/explorer-search";
 import CatalogSuppliersSection, { type CatalogSupplierRow } from "./_components/catalog-suppliers-section";
@@ -64,7 +65,9 @@ export default async function ExplorarPage() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Explorar</h1>
         <p className="text-sm text-muted-foreground">Encontre fornecedores e produtos B2B de todo o Brasil.</p>
       </div>
-      <ExplorerSearch />
+      <Suspense fallback={null}>
+        <ExplorerSearch />
+      </Suspense>
       <CatalogSuppliersSection suppliers={catalogSuppliers} />
     </div>
   );

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "./_components/profile-form";
@@ -139,14 +140,16 @@ export default async function PerfilPage() {
           Mantenha seus dados atualizados pra fornecedores te encontrarem com facilidade.
         </p>
       </div>
-      <ProfileForm
-        buyer={effectiveBuyer}
-        supplier={supplier}
-        hasRealBuyer={!!buyer}
-        lastRoleChangeAt={lastRoleChangeAt}
-        pendingRoleRequest={pendingRoleRequest}
-        initialSegmentChosen={initialSegmentChosen}
-      />
+      <Suspense fallback={null}>
+        <ProfileForm
+          buyer={effectiveBuyer}
+          supplier={supplier}
+          hasRealBuyer={!!buyer}
+          lastRoleChangeAt={lastRoleChangeAt}
+          pendingRoleRequest={pendingRoleRequest}
+          initialSegmentChosen={initialSegmentChosen}
+        />
+      </Suspense>
     </div>
   );
 }
