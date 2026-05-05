@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, LogOut, Users, FileText } from "lucide-react";
+import { LayoutDashboard, ClipboardList, LogOut, Users, FileText, ListChecks } from "lucide-react";
 import { adminLogout } from "@/lib/actions/admin-auth";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/cotacoes", label: "Cotações", icon: FileText },
   { href: "/admin/needs", label: "Necessidades", icon: ClipboardList },
+  { href: "/admin/waitlist", label: "Lista de Espera", icon: ListChecks },
 ];
 
 export default function AdminShell({
