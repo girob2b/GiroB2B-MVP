@@ -97,7 +97,7 @@ export default async function AdminUsuariosPage({ searchParams }: UsersPageProps
     adminClient.from("suppliers").select("user_id, trade_name, company_name, cnpj, phone, suspended, created_at"),
   ]);
 
-  const authUsers = (authUsersRes.data.users ?? []) as AdminAuthUser[];
+  const authUsers = (authUsersRes.data?.users ?? []) as AdminAuthUser[];
   const profiles = (profilesRes.data ?? []) as UserProfileRow[];
   const profileStatusRows = (profileStatusRes.error
     ? []

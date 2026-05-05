@@ -123,7 +123,7 @@ export default async function AdminPage() {
   const profiles = ((profilesRes.data ?? []) as ProfileRow[]).filter((item) => Boolean(item.id));
   const openInquiries = (openInquiriesRes.data ?? []) as InquiryRow[];
   const searchNeeds = (searchNeedsRes.data ?? []) as SearchNeedRow[];
-  const authUsers = (authUsersRes.data.users ?? []) as AuthUserRow[];
+  const authUsers = (authUsersRes.data?.users ?? []) as AuthUserRow[];
 
   const profileIds = profiles.map((profile) => profile.id);
   const needUserIds = [...new Set(searchNeeds.map((need) => need.user_id))];
