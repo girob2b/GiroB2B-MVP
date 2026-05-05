@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com",
-      "frame-src https://accounts.google.com https://challenges.cloudflare.com",
+      "frame-src https://accounts.google.com https://challenges.cloudflare.com https://vercel.live",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self' https://accounts.google.com",
