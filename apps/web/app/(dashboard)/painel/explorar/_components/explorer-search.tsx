@@ -524,6 +524,7 @@ function ProdutoModal({
   const [freightPayer, setFreightPayer] = useState<FreightPayer>(initialFormState?.freightPayer ?? "negotiable");
   const [freightType, setFreightType] = useState<FreightType>(initialFormState?.freightType ?? "carrier");
   const [notes, setNotes] = useState(initialFormState?.notes ?? "");
+  const [lgpdConsent, setLgpdConsent] = useState(false);
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "sent">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [directContactLoading, setDirectContactLoading] = useState(false);
@@ -557,6 +558,10 @@ function ProdutoModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!lgpdConsent) {
+      setSubmitError("Você precisa concordar com a Política de Privacidade e os Termos de Uso para enviar a cotação.");
+      return;
+    }
     setSubmitError(null);
     setSubmitState("submitting");
 
@@ -582,7 +587,7 @@ function ProdutoModal({
           description,
           quantity_estimate: `${quantity} ${p.unit ?? "unid"}`,
           desired_deadline: desiredDeadline || undefined,
-          lgpd_consent: true,
+          lgpd_consent: lgpdConsent,
         }),
       });
 
@@ -902,6 +907,28 @@ function ProdutoModal({
                 />
               </label>
 
+              <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={lgpdConsent}
+                  onChange={(e) => setLgpdConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  required
+                />
+                <span className="leading-relaxed">
+                  Autorizo o GiroB2B a compartilhar meus dados (nome, e-mail, telefone, empresa)
+                  com o fornecedor selecionado para que ele responda esta cotação. Li e aceito a{" "}
+                  <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline underline-offset-2 hover:text-[color:var(--brand-green-800)]">
+                    Política de Privacidade
+                  </Link>{" "}
+                  e os{" "}
+                  <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline underline-offset-2 hover:text-[color:var(--brand-green-800)]">
+                    Termos de Uso
+                  </Link>
+                  .
+                </span>
+              </label>
+
               {submitError && (
                 <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   {submitError}
@@ -918,8 +945,8 @@ function ProdutoModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={submitState === "submitting"}
-                  className="h-10 flex-1 rounded-lg bg-[color:var(--brand-green-600)] text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-50"
+                  disabled={submitState === "submitting" || !lgpdConsent}
+                  className="h-10 flex-1 rounded-lg bg-[color:var(--brand-green-600)] text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submitState === "submitting" ? "Enviando..." : "Enviar proposta"}
                 </button>
