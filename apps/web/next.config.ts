@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     // por nonce gerado em middleware. HSTS 1 ano + preload pra aplicação prod.
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://accounts.google.com https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://accounts.google.com https://challenges.cloudflare.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
