@@ -12,7 +12,6 @@ const AdminLoginSchema = z.object({
 export type AdminLoginActionState = {
   errors?: Record<string, string[]>;
   message?: string;
-  redirectTo?: string;
 };
 
 export async function adminLogin(
@@ -41,7 +40,7 @@ export async function adminLogin(
   }
 
   await createAdminSession();
-  return { redirectTo: "/admin" };
+  redirect("/admin");
 }
 
 export async function adminLogout() {

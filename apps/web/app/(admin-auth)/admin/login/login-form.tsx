@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, LockKeyhole, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { adminLogin } from "@/lib/actions/admin-auth";
@@ -11,17 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function AdminLoginForm() {
-  const router = useRouter();
   const [state, action, pending] = useActionState(adminLogin, undefined);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (state?.redirectTo) {
-      router.push(state.redirectTo);
-    } else if (state?.message) {
+    if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router]);
+  }, [state]);
 
   return (
     <Card className="border-slate-200 shadow-sm">
