@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, User, LogOut,
-  Menu, X, Search, Eye, ClipboardList, Plus,
+  Menu, X, Search, Eye, ClipboardList, Plus, Inbox,
   PanelLeftClose, ChevronUp,
   IdCard, Loader2,
 } from "lucide-react";
@@ -87,6 +87,7 @@ function supplierSection(): NavSection {
   return {
     label: "Vendedor",
     items: [
+      { href: "/painel/leads",          label: "Leads",             icon: Inbox },
       { href: "/painel/produtos",       label: "Material de venda", icon: Package },
       { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
     ],

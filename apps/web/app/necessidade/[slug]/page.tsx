@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarClock, MapPin, Package, Eye, MessageCircle, ArrowLeft, Lock } from "lucide-react";
+import { CalendarClock, MapPin, Package, Eye, MessageCircle, ArrowLeft } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { bumpViews, getDemandBySlug } from "@/lib/services/demands";
 import { APP_URL } from "@/lib/email";
+import ContactButton from "@/app/(dashboard)/painel/leads/_components/contact-button";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,34 @@ export default async function NecessidadeDetailPage({
   void bumpViews(demand.id);
 
   const admin = createAdminClient();
+
+  // Tenta resolver o user logado (silencioso — página é pública)
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+
+  let viewerSupplier: {
+    id: string;
+    canContact: boolean;
+  } | null = null;
+
+  if (authData.user) {
+    const { data: supplier } = await admin
+      .from("suppliers")
+      .select("id, subscription_status, subscription_expires_at")
+      .eq("user_id", authData.user.id)
+      .maybeSingle<{
+        id: string;
+        subscription_status: "inactive" | "trialing" | "active" | "expired";
+        subscription_expires_at: string | null;
+      }>();
+    if (supplier) {
+      const isActive =
+        (supplier.subscription_status === "active" || supplier.subscription_status === "trialing") &&
+        (!supplier.subscription_expires_at || new Date(supplier.subscription_expires_at) > new Date());
+      viewerSupplier = { id: supplier.id, canContact: isActive };
+    }
+  }
+
   const { data: category } = demand.category_id
     ? await admin
         .from("categories")
@@ -157,23 +187,29 @@ export default async function NecessidadeDetailPage({
               Vendedores assinantes contatam o comprador direto pelo WhatsApp, com a mensagem já
               pré-formatada.
             </p>
-            <button
-              type="button"
-              disabled
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-500"
-            >
-              <Lock className="h-4 w-4" /> Contatar via WhatsApp
-            </button>
-            <p className="mt-3 text-xs text-slate-500">
-              Disponível para vendedores com assinatura ativa. Os planos chegam em breve nesta
-              página de detalhes.
-            </p>
-            <Link
-              href="/seja-vendedor"
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--brand-green-300)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)]"
-            >
-              Ver planos de vendedor
-            </Link>
+
+            <div className="mt-4">
+              <ContactButton
+                demandId={demand.id}
+                canContact={viewerSupplier?.canContact ?? false}
+                hasSupplier={!!viewerSupplier}
+              />
+            </div>
+
+            {!viewerSupplier?.canContact && (
+              <p className="mt-3 text-xs text-slate-500">
+                Disponível para vendedores com assinatura ativa.
+              </p>
+            )}
+
+            {!viewerSupplier && (
+              <Link
+                href="/seja-vendedor"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--brand-green-300)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)]"
+              >
+                Ver planos de vendedor
+              </Link>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-xs text-slate-500">
