@@ -15,7 +15,14 @@ const BR_STATES = [
 interface CategoryOption { id: string; name: string; slug: string }
 interface DemandFormProps {
   categories: CategoryOption[];
-  defaults: { whatsapp: string; city: string; state: string };
+  defaults: {
+    title?: string;
+    description?: string;
+    category_id?: string;
+    whatsapp: string;
+    city: string;
+    state: string;
+  };
 }
 
 export default function DemandForm({ categories, defaults }: DemandFormProps) {
@@ -38,6 +45,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             required
             minLength={5}
             maxLength={120}
+            defaultValue={defaults.title ?? ""}
             placeholder="Ex.: 1.000 caixas de papelão 30x40 ondulado"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           />
@@ -56,6 +64,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             minLength={20}
             maxLength={5000}
             rows={6}
+            defaultValue={defaults.description ?? ""}
             placeholder="Detalhes da necessidade — quanto mais claro, melhor a qualidade dos contatos."
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           />
@@ -66,7 +75,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             id="category_id"
             name="category_id"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
-            defaultValue=""
+            defaultValue={defaults.category_id ?? ""}
           >
             <option value="">Sem categoria</option>
             {categories.map((c) => (

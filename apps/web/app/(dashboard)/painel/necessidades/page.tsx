@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Eye, MessageCircle, Plus } from "lucide-react";
+import { Eye, MessageCircle, Plus, BadgeCheck, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { listMyDemands } from "@/lib/services/demands";
 import DemandActions from "./_components/demand-actions";
 
@@ -41,7 +42,36 @@ export default async function NecessidadesPage({
   const params = await searchParams;
   const justPublished = params.published === "1";
 
-  const demands = await listMyDemands(authData.user.id);
+  const admin = createAdminClient();
+  const [demands, { data: buyerProfile }] = await Promise.all([
+    listMyDemands(authData.user.id),
+    admin
+      .from("buyers")
+      .select("name, phone, cnpj, company_name, city, state")
+      .eq("user_id", authData.user.id)
+      .maybeSingle<{
+        name: string | null;
+        phone: string | null;
+        cnpj: string | null;
+        company_name: string | null;
+        city: string | null;
+        state: string | null;
+      }>(),
+  ]);
+
+  // Score simples de completude — usado pra decidir o tom do banner.
+  const profileChecks = {
+    name: !!buyerProfile?.name,
+    phone: !!buyerProfile?.phone,
+    cnpj: !!buyerProfile?.cnpj,
+    company_name: !!buyerProfile?.company_name,
+    city: !!buyerProfile?.city,
+    state: !!buyerProfile?.state,
+  };
+  const completedCount = Object.values(profileChecks).filter(Boolean).length;
+  const totalChecks = Object.keys(profileChecks).length;
+  const profileComplete = completedCount === totalChecks;
+  const isVerified = !!buyerProfile?.cnpj && !!buyerProfile?.company_name;
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
@@ -65,6 +95,24 @@ export default async function NecessidadesPage({
           Necessidade publicada. Agora é só esperar — fornecedores assinantes vão te contatar pelo
           WhatsApp.
         </div>
+      )}
+
+      {!profileComplete ? (
+        <ProfileNudge
+          completedCount={completedCount}
+          totalChecks={totalChecks}
+          isVerified={isVerified}
+        />
+      ) : (
+        isVerified && (
+          <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)] flex items-start gap-3">
+            <BadgeCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-green-700)]" />
+            <p>
+              <strong>Comprador Verificado.</strong> Suas necessidades aparecem em destaque para os
+              vendedores assinantes.
+            </p>
+          </div>
+        )
       )}
 
       {demands.length === 0 ? (
@@ -143,4 +191,38 @@ function formatDate(value: string) {
     month: "2-digit",
     year: "numeric",
   });
+}
+
+function ProfileNudge({
+  completedCount,
+  totalChecks,
+  isVerified,
+}: {
+  completedCount: number;
+  totalChecks: number;
+  isVerified: boolean;
+}) {
+  const percent = Math.round((completedCount / totalChecks) * 100);
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600" />
+      <div className="flex-1 text-sm">
+        <p className="font-semibold text-amber-900">
+          {isVerified
+            ? "Quase lá — complete seu perfil"
+            : "Aumente a visibilidade das suas necessidades"}
+        </p>
+        <p className="text-amber-800">
+          Compradores verificados (CNPJ + empresa) aparecem em destaque pros vendedores
+          assinantes — mais contatos, melhores leads. Seu perfil está {percent}% completo.
+        </p>
+      </div>
+      <Link
+        href="/painel/perfil"
+        className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+      >
+        Completar perfil
+      </Link>
+    </div>
+  );
 }

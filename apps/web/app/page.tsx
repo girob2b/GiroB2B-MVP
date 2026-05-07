@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Search as SearchIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import GuestShell from "@/components/layout/guest-shell";
 import { listPublicDemands } from "@/lib/services/demands";
 import { DemandCard } from "@/components/demands/demand-card";
+import { QuickPublishForm } from "@/components/demands/quick-publish-form";
 
 export const metadata: Metadata = {
   title: "GiroB2B — Compradores publicam, vendedores contatam",
@@ -37,6 +38,7 @@ export default async function HomePage() {
   const categories = (categoriesData ?? []) as { id: string; name: string; slug: string; icon: string | null }[];
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const featuredDemands = demandsResult.rows;
+  const totalDemands = demandsResult.total;
 
   return (
     <GuestShell>
@@ -54,40 +56,26 @@ export default async function HomePage() {
             entram em contato com você pelo WhatsApp. Cadastro grátis, sem CNPJ obrigatório.
           </p>
 
-          <form action="/buscar" method="get" className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 sm:flex-row">
-            <div className="flex-1">
-              <label htmlFor="q" className="sr-only">Buscar necessidades</label>
-              <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="q"
-                  name="q"
-                  placeholder="Buscar por produto, categoria, especificação..."
-                  className="h-12 w-full rounded-xl border-0 bg-transparent pl-10 pr-3 text-sm focus:outline-none"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-6 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
-            >
-              Buscar <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
+          <QuickPublishForm categories={categories} />
 
-          <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 pt-2 text-sm sm:flex-row sm:items-center">
             <Link
-              href="/cadastro"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white hover:bg-slate-800"
+              href="/buscar"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Publicar necessidade <ArrowRight className="h-4 w-4" />
+              Veja o que outros estão pedindo
             </Link>
             <Link
               href="/seja-vendedor"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white hover:bg-slate-800"
             >
-              Sou vendedor
+              Sou vendedor <ArrowRight className="h-4 w-4" />
             </Link>
+            {totalDemands > 0 && (
+              <span className="text-slate-500">
+                <strong className="text-slate-700">{totalDemands}</strong> necessidades publicadas
+              </span>
+            )}
           </div>
         </div>
       </section>

@@ -19,10 +19,12 @@ import { GiroLoader } from "@/components/ui/giro-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function getSignupRedirectUrl() {
+function getSignupRedirectUrl(next: string | null) {
   // Após confirmar o email, o callback cria sessão e redireciona.
   // Sem `next`, o callback usa /painel — middleware leva pra /onboarding se incompleto.
-  return `${window.location.origin}/auth/callback`;
+  const base = `${window.location.origin}/auth/callback`;
+  if (!next) return base;
+  return `${base}?next=${encodeURIComponent(next)}`;
 }
 
 type Step = "form" | "email_sent";
@@ -31,9 +33,12 @@ interface BuyerRegisterFormProps {
   /** True quando o form está dentro do <AuthDialog>. Faz o link cruzado
    *  trocar pro modal de login em vez de navegar pra rota dedicada. */
   inModal?: boolean;
+  /** Caminho para onde redirecionar após confirmação de email.
+   *  Vem do query param `next` em `/cadastro?next=/painel/postar?...`. */
+  next?: string | null;
 }
 
-export default function BuyerRegisterForm({ inModal = false }: BuyerRegisterFormProps = {}) {
+export default function BuyerRegisterForm({ inModal = false, next = null }: BuyerRegisterFormProps = {}) {
   const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -76,7 +81,7 @@ export default function BuyerRegisterForm({ inModal = false }: BuyerRegisterForm
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: getSignupRedirectUrl(),
+        emailRedirectTo: getSignupRedirectUrl(next),
         // Guarda a hora exata do aceite no user_metadata.
         // Auditável em qualquer fluxo posterior (LGPD Art. 8º — consentimento livre, informado e inequívoco).
         data: { terms_accepted_at: new Date().toISOString() },
@@ -130,7 +135,7 @@ export default function BuyerRegisterForm({ inModal = false }: BuyerRegisterForm
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
-      options: { emailRedirectTo: getSignupRedirectUrl() },
+      options: { emailRedirectTo: getSignupRedirectUrl(next) },
     });
 
     if (error) {

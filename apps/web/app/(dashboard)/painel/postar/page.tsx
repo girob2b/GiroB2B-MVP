@@ -20,13 +20,26 @@ interface BuyerRow {
   state: string | null;
 }
 
-export default async function PostarNecessidadePage() {
+interface SearchParams {
+  title?: string;
+  description?: string;
+  category_id?: string;
+  delivery_state?: string;
+  delivery_city?: string;
+}
+
+export default async function PostarNecessidadePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) redirect("/login");
 
   const userId = authData.user.id;
   const admin = createAdminClient();
+  const params = await searchParams;
 
   const [{ data: categoriesData }, { data: buyerData }, { data: profileData }] = await Promise.all([
     admin
@@ -49,10 +62,27 @@ export default async function PostarNecessidadePage() {
 
   const categories = (categoriesData ?? []) as CategoryRow[];
 
+  // Validação dos query params: só aceita category_id que exista na lista carregada,
+  // só aceita delivery_state que esteja no padrão UF de 2 letras maiúsculas.
+  const allowedCategoryIds = new Set(categories.map((c) => c.id));
+  const prefilledCategoryId =
+    typeof params.category_id === "string" && allowedCategoryIds.has(params.category_id)
+      ? params.category_id
+      : "";
+  const prefilledState =
+    typeof params.delivery_state === "string" && /^[A-Z]{2}$/.test(params.delivery_state)
+      ? params.delivery_state
+      : "";
+
   const defaults = {
+    title: typeof params.title === "string" ? params.title.slice(0, 120) : "",
+    description: typeof params.description === "string" ? params.description.slice(0, 5000) : "",
+    category_id: prefilledCategoryId,
     whatsapp: buyerData?.phone ?? profileData?.phone ?? "",
-    city: buyerData?.city ?? profileData?.city ?? "",
-    state: buyerData?.state ?? profileData?.state ?? "",
+    city: typeof params.delivery_city === "string"
+      ? params.delivery_city
+      : buyerData?.city ?? profileData?.city ?? "",
+    state: prefilledState || (buyerData?.state ?? profileData?.state ?? ""),
   };
 
   return (
