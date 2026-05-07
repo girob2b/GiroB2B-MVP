@@ -1,13 +1,24 @@
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * /painel → /painel/explorar.
- *
- * Princípio "facilitar comprador" (project_buyer_friction_principle):
- * Explorar é a porta de entrada da plataforma. O "Início" antigo (cards de
- * status do dia) foi removido pra encurtar o caminho até o user ver valor.
- * Conteúdo original disponível no git history caso se queira reviver.
+ * /painel → roteia conforme papel do user (PIVOT 2026-05-07):
+ *   - supplier sem buyer → /painel/leads
+ *   - buyer sem supplier → /painel/necessidades
+ *   - both / nenhum → /painel/necessidades (default seguro do reverse marketplace)
  */
-export default function PainelPage() {
-  redirect("/painel/explorar");
+export default async function PainelPage() {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) redirect("/login");
+
+  const admin = createAdminClient();
+  const [{ data: supplier }, { data: buyer }] = await Promise.all([
+    admin.from("suppliers").select("id").eq("user_id", authData.user.id).maybeSingle(),
+    admin.from("buyers").select("id").eq("user_id", authData.user.id).maybeSingle(),
+  ]);
+
+  if (supplier && !buyer) redirect("/painel/leads");
+  redirect("/painel/necessidades");
 }
