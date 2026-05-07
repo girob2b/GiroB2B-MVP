@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Search, Menu, X, Lock, FileText, KanbanSquare, MessageSquare, Package,
+  Search, Menu, X, Lock, Package,
   PanelLeftClose, LogIn, UserPlus,
 } from "lucide-react";
 import { GiroLogo } from "@/components/ui/giro-logo";
@@ -21,10 +21,7 @@ type NavItem = {
 
 const publicNav: NavItem[] = [
   { href: "/explorar",          label: "Explorar",          icon: Search },
-  { href: "/painel/inquiries",  label: "Cotações",          icon: FileText,      locked: true },
-  { href: "/painel/pipeline",   label: "Pipeline",          icon: KanbanSquare,  locked: true },
-  { href: "/painel/chat",       label: "Chat",              icon: MessageSquare, locked: true },
-  { href: "/painel/produtos",   label: "Material de venda", icon: Package,       locked: true },
+  { href: "/painel/produtos",   label: "Material de venda", icon: Package, locked: true },
 ];
 
 const SIDEBAR_COOKIE = "girob2b_sidebar";

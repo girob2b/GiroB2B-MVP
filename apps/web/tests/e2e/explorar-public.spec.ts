@@ -139,10 +139,4 @@ test.describe("/fornecedor/[slug] — página pública (não pode ficar vazia)",
   });
 });
 
-test.describe("/painel/comparador — feature gated, deve redirecionar", () => {
-  test("acesso direto sem sessão vai pro login", async ({ page }) => {
-    const response = await page.goto("/painel/comparador");
-    await expect(page).not.toHaveURL(/\/painel\/comparador$/);
-    expect(response?.status()).toBeLessThan(500);
-  });
-});
+// [PIVOT 2026-05-07] Suíte do /painel/comparador removida junto com a feature.

@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Package, MessageSquare, FileText, KanbanSquare, User, LogOut,
-  Menu, X, Search, Scale, Eye, BarChart3,
+  LayoutDashboard, Package, User, LogOut,
+  Menu, X, Search, Eye,
   PanelLeftClose, ChevronUp,
   IdCard, Loader2,
 } from "lucide-react";
@@ -13,7 +13,6 @@ import { logout } from "@/app/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
-import { FEATURES } from "@/lib/features";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,22 +55,15 @@ interface SidebarProps {
 }
 
 // ─── Nav definitions ──────────────────────────────────────────────────────────
-// Estrutura definida pelo Vitor:
-//   1. Comprador  → Explorar, Cotações
-//   2. Vendedor   → Material de venda, Perfil público
-//   3. Geral      → Pipeline, Chat, Relatórios, Dashboard
+// Reverse-marketplace MVP (PIVOT 2026-05-07):
+//   - Comprador → Explorar (legado, virá /painel/necessidades + /painel/postar nas próximas fases)
+//   - Vendedor  → Material de venda + Perfil público (provisório até /painel/leads)
+//   - Geral     → Dashboard
 //
-// Sidebar adapta às roles do user:
-//   - Cadastro incompleto → só Explorar (minimal nav)
-//   - buyer-only           → Comprador + Geral
-//   - supplier-only        → Vendedor  + Geral
-//   - both                 → Comprador + Vendedor + Geral
-//
-// Itens não-MVP ficam atrás de FEATURES (lib/features.ts). Ao ligar a flag, voltam.
+// Tudo de chat / pipeline / comparador / relatórios / cotações foi removido
+// junto com o pivô. Voltam só se o modelo voltar a ser clássico.
 
-/** Sidebar mínima — exibida enquanto o cadastro não está completo. Princípio
- *  "facilitar comprador": Explorar é a porta de entrada; o resto vem depois
- *  via card de "Complete seu cadastro". */
+/** Sidebar mínima — exibida enquanto o cadastro não está completo. */
 function buildMinimalNav(): NavSection[] {
   return [
     { items: [
@@ -85,8 +77,6 @@ function buyerSection(): NavSection {
     label: "Comprador",
     items: [
       { href: "/painel/explorar",  label: "Explorar", icon: Search },
-      { href: "/painel/inquiries", label: "Cotações", icon: FileText },
-      ...(FEATURES.comparador ? [{ href: "/painel/comparador", label: "Comparador", icon: Scale }] : []),
     ],
   };
 }
@@ -105,9 +95,6 @@ function generalSection(): NavSection {
   return {
     label: "Geral",
     items: [
-      ...(FEATURES.pipeline ? [{ href: "/painel/pipeline", label: "Pipeline", icon: KanbanSquare }] : []),
-      ...(FEATURES.chat     ? [{ href: "/painel/chat",     label: "Chat",     icon: MessageSquare }] : []),
-      { href: "/painel/relatorios", label: "Relatórios", icon: BarChart3 },
       { href: "/painel/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
     ],
   };

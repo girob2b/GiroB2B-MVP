@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, LogOut, Users, FileText, ListChecks } from "lucide-react";
+import { LayoutDashboard, ClipboardList, LogOut, Users, ListChecks } from "lucide-react";
 import { adminLogout } from "@/app/actions";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/usuarios", label: "Usuários", icon: Users },
-  { href: "/cotacoes", label: "Cotações", icon: FileText },
   { href: "/needs", label: "Necessidades", icon: ClipboardList },
   { href: "/waitlist", label: "Lista de Espera", icon: ListChecks },
 ];

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { GiroLoader } from "@/components/ui/giro-loader";
 import { createClient } from "@/lib/supabase/client";
-import { createOrGetConversation } from "@/app/actions/chat";
 import { track } from "@/lib/analytics/track";
 import NeedsDialog from "./needs-dialog";
 import { RecentNeedsSuggestions } from "./recent-needs-suggestions";
@@ -202,10 +201,6 @@ function formatPriceDraft(value: string): string {
 
 function catBg(slug: string | null): string {
   return CAT_BG[slug ?? ""] ?? "bg-slate-100";
-}
-
-function hasRealInquiryIds(p: SearchProduct): boolean {
-  return Boolean(p.id && p.supplier_id);
 }
 
 // ─── Filter state ─────────────────────────────────────────────────────────────
@@ -495,13 +490,6 @@ function ProdutoCardGrid({
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-type CreateInquiryApiResponse = {
-  success: true;
-  deduplicated: boolean;
-  supplier_name: string;
-  inquiry: { id: string };
-};
-
 function ProdutoModal({
   p, onClose, onCompare, inCompare, initialFormState,
 }: {
@@ -527,7 +515,6 @@ function ProdutoModal({
   const [lgpdConsent, setLgpdConsent] = useState(false);
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "sent">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [directContactLoading, setDirectContactLoading] = useState(false);
 
   function buildDescription() {
     return [
@@ -556,101 +543,24 @@ function ProdutoModal({
     router.push(`/cadastro?redirect=${encodeURIComponent(redirectTo)}`);
   }
 
+  // [PIVOT 2026-05-07] Inquiry direta + chat interno removidos. Contato passa
+  // a ser via WhatsApp depois que o paywall e a página /necessidade/[slug]
+  // entrarem nas próximas fases. Por ora o submit avisa o usuário.
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!lgpdConsent) {
-      setSubmitError("Você precisa concordar com a Política de Privacidade e os Termos de Uso para enviar a cotação.");
+      setSubmitError("Você precisa concordar com a Política de Privacidade e os Termos de Uso.");
       return;
     }
-    setSubmitError(null);
-    setSubmitState("submitting");
-
-    try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        saveAndRedirect();
-        return;
-      }
-
-      const description = buildDescription();
-
-      const response = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          supplier_id: p.supplier_id,
-          product_id: p.id,
-          description,
-          quantity_estimate: `${quantity} ${p.unit ?? "unid"}`,
-          desired_deadline: desiredDeadline || undefined,
-          lgpd_consent: lgpdConsent,
-        }),
-      });
-
-      const result = await response.json().catch(() => null) as (CreateInquiryApiResponse & { error?: string }) | null;
-      if (!response.ok || !result?.inquiry) {
-        throw new Error(result?.error ?? "Não foi possível enviar a cotação.");
-      }
-
-      const convResult = await createOrGetConversation({
-        supplierId: p.supplier_id,
-        inquiryId: result.inquiry.id,
-        productId: p.id,
-        productName: p.name,
-        contextType: "inquiry",
-        firstMessage: description,
-      });
-
-      setSubmitState("sent");
-      track("inquiry_sent", {
-        inquiry_id: result.inquiry.id,
-        supplier_id: p.supplier_id,
-        is_generic: false,
-        time_to_send_ms: null,
-      });
-      if ("id" in convResult) {
-        router.push(`/painel/chat?conv=${convResult.id}`);
-      } else {
-        router.push(`/painel/inquiries/${result.inquiry.id}`);
-      }
-      onClose();
-    } catch (err) {
-      setSubmitState("idle");
-      setSubmitError(err instanceof Error ? err.message : "Não foi possível enviar a cotação.");
-    }
-  }
-
-  async function handleDirectContact() {
-    if (!hasRealInquiryIds(p)) return;
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      saveAndRedirect();
-      return;
-    }
-    setDirectContactLoading(true);
-    try {
-      const convResult = await createOrGetConversation({
-        supplierId: p.supplier_id,
-        productId: p.id,
-        productName: p.name,
-        contextType: "direct_purchase",
-      });
-      if ("id" in convResult) {
-        router.push(`/painel/chat?conv=${convResult.id}`);
-        onClose();
-      } else {
-        setSubmitError(convResult.error);
-      }
-    } catch {
-      setSubmitError("Não foi possível abrir o chat.");
-    } finally {
-      setDirectContactLoading(false);
-    }
+    setSubmitError(
+      "Estamos migrando para um modelo novo: o contato com o fornecedor passará a ser via WhatsApp em breve."
+    );
+    setSubmitState("idle");
+    track("inquiry_started", {
+      supplier_id: p.supplier_id,
+      supplier_slug: p.supplier_slug,
+      source: "explorar",
+    });
   }
 
   return (
@@ -756,18 +666,6 @@ function ProdutoModal({
             >
               <MessageSquare className="w-4 h-4" />
               Solicitar cotação
-            </button>
-            <button
-              onClick={handleDirectContact}
-              disabled={directContactLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-[color:var(--brand-green-300)] bg-white hover:bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] text-sm font-semibold h-10 transition-colors disabled:opacity-50"
-            >
-              {directContactLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <MessageSquare className="w-4 h-4" />
-              )}
-              Contato direto (Chat)
             </button>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -1655,7 +1553,7 @@ export default function ExplorerSearch() {
         items={compareList}
         onRemove={(id) => setCompareList((prev) => prev.filter((x) => x.id !== id))}
         onClear={() => setCompareList([])}
-        onGo={() => { router.push("/painel/comparador"); setSelected(null); }}
+        onGo={() => { setSelected(null); }}
       />
 
       {/* ── Dialog de necessidade (gate da busca web) ─────────────────────── */}
