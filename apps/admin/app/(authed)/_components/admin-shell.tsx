@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/usuarios", label: "Usuários", icon: Users },
-  { href: "/needs", label: "Necessidades", icon: ClipboardList },
+  { href: "/necessidades", label: "Necessidades", icon: ClipboardList },
   { href: "/waitlist", label: "Lista de Espera", icon: ListChecks },
 ];
 

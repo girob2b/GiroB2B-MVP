@@ -50,12 +50,13 @@ interface ProposalRow {
   conversation_id: string;
 }
 
-interface SearchNeedRow {
+interface DemandRow {
   id: string;
-  user_id: string;
-  query: string;
-  description: string | null;
-  status: "pending" | "in_progress" | "fulfilled" | "registered" | "cadastrado" | "rejected";
+  buyer_user_id: string;
+  slug: string;
+  title: string;
+  description: string;
+  status: "open" | "negotiating" | "fulfilled" | "cancelled" | "expired";
   created_at: string;
   updated_at: string;
 }
@@ -66,13 +67,12 @@ interface AuthUserRow {
 }
 
 const OPEN_INQUIRY_STATUS: InquiryRow["status"][] = ["new", "viewed", "responded"];
-const NEEDS_STATUS_LABEL: Record<SearchNeedRow["status"], string> = {
-  pending: "Pendente",
-  in_progress: "Em andamento",
-  fulfilled: "Cadastrado",
-  registered: "Cadastrado",
-  cadastrado: "Cadastrado",
-  rejected: "Rejeitado",
+const NEEDS_STATUS_LABEL: Record<DemandRow["status"], string> = {
+  open: "Aberta",
+  negotiating: "Em negociação",
+  fulfilled: "Resolvida",
+  cancelled: "Cancelada",
+  expired: "Expirada",
 };
 
 const INQUIRY_STATUS_LABEL: Record<InquiryRow["status"], string> = {
@@ -100,7 +100,7 @@ export default async function AdminPage() {
       .from("inquiries")
       .select("id", { count: "exact", head: true })
       .in("status", OPEN_INQUIRY_STATUS),
-    adminClient.from("search_needs").select("id", { count: "exact", head: true }),
+    adminClient.from("demands").select("id", { count: "exact", head: true }),
     adminClient
       .from("user_profiles")
       .select("id, role, full_name, created_at")
@@ -113,8 +113,8 @@ export default async function AdminPage() {
       .order("created_at", { ascending: false })
       .limit(20),
     adminClient
-      .from("search_needs")
-      .select("id, user_id, query, description, status, created_at, updated_at")
+      .from("demands")
+      .select("id, buyer_user_id, slug, title, description, status, created_at, updated_at")
       .order("created_at", { ascending: false })
       .limit(20),
     adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 }),
@@ -122,11 +122,11 @@ export default async function AdminPage() {
 
   const profiles = ((profilesRes.data ?? []) as ProfileRow[]).filter((item) => Boolean(item.id));
   const openInquiries = (openInquiriesRes.data ?? []) as InquiryRow[];
-  const searchNeeds = (searchNeedsRes.data ?? []) as SearchNeedRow[];
+  const demandsRecent = (searchNeedsRes.data ?? []) as DemandRow[];
   const authUsers = (authUsersRes.data?.users ?? []) as AuthUserRow[];
 
   const profileIds = profiles.map((profile) => profile.id);
-  const needUserIds = [...new Set(searchNeeds.map((need) => need.user_id))];
+  const needUserIds = [...new Set(demandsRecent.map((d) => d.buyer_user_id))];
   const usersForLookup = [...new Set([...profileIds, ...needUserIds])];
 
   const [buyersRes, suppliersRes, conversationsRes] = await Promise.all([
@@ -167,7 +167,7 @@ export default async function AdminPage() {
       .map((buyer) => [buyer.user_id, buyer])
   );
   const supplierByUserId = new Map(suppliers.map((supplier) => [supplier.user_id, supplier]));
-  const publishedNeeds = searchNeeds;
+  const publishedNeeds = demandsRecent;
 
   const inquiryByConversationId = new Map(
     conversations
@@ -357,18 +357,18 @@ export default async function AdminPage() {
                     </tr>
                   )}
                   {publishedNeeds.map((need) => {
-                    const buyer = buyerByUserId.get(need.user_id);
+                    const buyer = buyerByUserId.get(need.buyer_user_id);
 
                     return (
                       <tr key={need.id} className="hover:bg-slate-50/60">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-slate-900">{need.query}</p>
+                          <p className="font-medium text-slate-900">{need.title}</p>
                         </td>
                         <td className="px-4 py-3 text-slate-600">{need.description ? truncate(need.description, 110) : "-"}</td>
                         <td className="px-4 py-3 text-slate-700">
                           <p className="font-medium text-slate-900">{buyer?.name ?? "Comprador"}</p>
                           <p className="text-xs text-slate-500">
-                            {buyer?.company_name ?? buyer?.company ?? userEmailById.get(need.user_id) ?? "-"}
+                            {buyer?.company_name ?? buyer?.company ?? userEmailById.get(need.buyer_user_id) ?? "-"}
                           </p>
                         </td>
                         <td className="px-4 py-3">
