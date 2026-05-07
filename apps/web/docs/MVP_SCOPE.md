@@ -1,5 +1,20 @@
 # MVP_SCOPE — GiroB2B
 
+> 🔄 **PIVÔ 2026-05-07 — REVERSE MARKETPLACE.**
+>
+> A partir de 2026-05-07 a fonte de verdade do MVP passa a ser
+> **`docs/today/MVP_PIVOT_2026-05-07.md`**. O modelo descrito abaixo (43 features T1
+> baseadas em catálogo de produto + inquiry direta + chat + pipeline) foi descartado.
+>
+> **Modelo novo:** comprador publica necessidade → vendedores assinantes contatam via
+> WhatsApp. Sem chat interno, sem pipeline, sem catálogo de produtos no MVP.
+> Vendedor paga assinatura. Comprador é grátis.
+>
+> Este documento é mantido como **histórico da direção anterior** durante a transição.
+> Não usar como guia de implementação.
+
+---
+
 > **Documento operacional.** Define o que entra no primeiro lancamento e o que fica pra fase 2+.
 > Criado em 14/04/2026. **Reescrito 05/05/2026** — varredura completa contra 7 fontes canonicas.
 >
