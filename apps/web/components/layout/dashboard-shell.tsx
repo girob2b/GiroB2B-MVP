@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, User, LogOut,
-  Menu, X, Search, Eye,
+  Menu, X, Search, Eye, ClipboardList, Plus,
   PanelLeftClose, ChevronUp,
   IdCard, Loader2,
 } from "lucide-react";
@@ -76,7 +76,9 @@ function buyerSection(): NavSection {
   return {
     label: "Comprador",
     items: [
-      { href: "/painel/explorar",  label: "Explorar", icon: Search },
+      { href: "/painel/explorar",       label: "Explorar",     icon: Search },
+      { href: "/painel/postar",         label: "Publicar",     icon: Plus },
+      { href: "/painel/necessidades",   label: "Necessidades", icon: ClipboardList },
     ],
   };
 }
