@@ -235,25 +235,61 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
       )}
 
       <div className="flex-1 min-w-0">
-        {/* Topbar mobile */}
-        <header className="h-16 flex items-center px-4 bg-white border-b border-border md:hidden sticky top-0 z-30 shrink-0">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="text-muted-foreground hover:text-foreground p-1"
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <Link href="/" aria-label="GiroB2B" className="mx-auto">
-            <GiroLogo size={28} iconOnly />
+        {/* Topbar desktop (estilo marketplace) */}
+        <header className="hidden md:flex h-16 items-center gap-6 px-6 bg-white border-b border-border sticky top-0 z-30 shrink-0">
+          <Link href="/" aria-label="GiroB2B" className="shrink-0">
+            <GiroLogo size={32} />
           </Link>
-          <div className="flex items-center gap-2">
+
+          <form action="/buscar" method="get" className="flex-1 max-w-2xl">
+            <label htmlFor="topbar-q" className="sr-only">Buscar necessidades</label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="topbar-q"
+                name="q"
+                placeholder="Buscar necessidades por produto, categoria ou especificação..."
+                className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-green-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-200)]"
+              />
+            </div>
+          </form>
+
+          <nav className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/seja-vendedor"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              Sou vendedor
+            </Link>
             <Link
               href="?auth=login"
               scroll={false}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
             >
               Entrar
+            </Link>
+            <Link
+              href="?auth=register"
+              scroll={false}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
+            >
+              Criar conta
+            </Link>
+          </nav>
+        </header>
+
+        {/* Topbar mobile */}
+        <header className="md:hidden bg-white border-b border-border sticky top-0 z-30 shrink-0">
+          <div className="h-16 flex items-center px-4 gap-3">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="text-muted-foreground hover:text-foreground p-1"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <Link href="/" aria-label="GiroB2B" className="mr-auto">
+              <GiroLogo size={28} iconOnly />
             </Link>
             <Link
               href="?auth=register"
@@ -263,6 +299,18 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               Criar conta
             </Link>
           </div>
+          <form action="/buscar" method="get" className="px-4 pb-3">
+            <label htmlFor="mobile-q" className="sr-only">Buscar</label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="mobile-q"
+                name="q"
+                placeholder="Buscar necessidades..."
+                className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-green-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-200)]"
+              />
+            </div>
+          </form>
         </header>
 
         <main className="p-4 md:p-8">{children}</main>

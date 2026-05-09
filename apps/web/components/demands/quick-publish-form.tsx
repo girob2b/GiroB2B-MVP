@@ -52,10 +52,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-    >
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div>
         <label htmlFor="qp-title" className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
           O que você precisa comprar?
