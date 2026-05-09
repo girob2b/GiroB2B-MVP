@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 /**
@@ -28,6 +28,51 @@ export function NavigationProgress() {
   const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevKey = useRef(navKey);
   const completing = useRef(false);
+
+  // Refs sincronizados com state pra ler valores atuais dentro de useCallback estáveis,
+  // sem precisar incluir visible/width nas deps (o que causaria recriação a cada tick).
+  const visibleRef = useRef(visible);
+  const widthRef = useRef(width);
+  useEffect(() => {
+    visibleRef.current = visible;
+    widthRef.current = width;
+  });
+
+  const complete = useCallback(() => {
+    if (tickRef.current !== null) clearInterval(tickRef.current);
+    if (fallbackRef.current !== null) clearTimeout(fallbackRef.current);
+    if (!visibleRef.current && widthRef.current === 0) return; // não havia barra ativa
+
+    completing.current = true;
+    setWidth(100);
+
+    hideRef.current = setTimeout(() => {
+      setVisible(false);
+      setWidth(0);
+      completing.current = false;
+    }, 250);
+  }, []);
+
+  const start = useCallback(() => {
+    if (completing.current) return;
+    if (tickRef.current !== null) clearInterval(tickRef.current);
+    if (fallbackRef.current !== null) clearTimeout(fallbackRef.current);
+    if (hideRef.current !== null) clearTimeout(hideRef.current);
+
+    setWidth(15);
+    setVisible(true);
+    completing.current = false;
+
+    let current = 15;
+    tickRef.current = setInterval(() => {
+      const step = Math.random() * 8 * (1 - current / 85);
+      current = Math.min(current + step, 85);
+      setWidth(current);
+    }, 350);
+
+    // Fallback: se nada acontecer em MAX_DURATION, força conclusão.
+    fallbackRef.current = setTimeout(() => complete(), MAX_DURATION);
+  }, [complete]);
 
   // ── Detect link clicks → start bar ─────────────────────────────────────
   useEffect(() => {
@@ -61,51 +106,14 @@ export function NavigationProgress() {
 
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
-  }, []);
+  }, [start]);
 
   // ── Pathname/search mudou → completa ───────────────────────────────────
   useEffect(() => {
     if (navKey === prevKey.current) return;
     prevKey.current = navKey;
     complete();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navKey]);
-
-  function start() {
-    if (completing.current) return;
-    if (tickRef.current !== null) clearInterval(tickRef.current);
-    if (fallbackRef.current !== null) clearTimeout(fallbackRef.current);
-    if (hideRef.current !== null) clearTimeout(hideRef.current);
-
-    setWidth(15);
-    setVisible(true);
-    completing.current = false;
-
-    let current = 15;
-    tickRef.current = setInterval(() => {
-      const step = Math.random() * 8 * (1 - current / 85);
-      current = Math.min(current + step, 85);
-      setWidth(current);
-    }, 350);
-
-    // Fallback: se nada acontecer em MAX_DURATION, força conclusão.
-    fallbackRef.current = setTimeout(() => complete(), MAX_DURATION);
-  }
-
-  function complete() {
-    if (tickRef.current !== null) clearInterval(tickRef.current);
-    if (fallbackRef.current !== null) clearTimeout(fallbackRef.current);
-    if (!visible && width === 0) return; // não havia barra ativa
-
-    completing.current = true;
-    setWidth(100);
-
-    hideRef.current = setTimeout(() => {
-      setVisible(false);
-      setWidth(0);
-      completing.current = false;
-    }, 250);
-  }
+  }, [navKey, complete]);
 
   // Cleanup
   useEffect(() => () => {

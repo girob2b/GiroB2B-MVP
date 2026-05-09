@@ -47,7 +47,6 @@ export function track<E extends AnalyticsEventName>(
   }
 
   if (isDev) {
-    // eslint-disable-next-line no-console
     console.debug("[analytics]", name, props);
   }
 
