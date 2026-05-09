@@ -329,61 +329,65 @@ export default function DashboardShell({
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Topbar desktop */}
-      <header className="hidden md:flex h-16 items-center gap-4 px-6 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-        <Link href="/painel" aria-label="GiroB2B" className="shrink-0 flex items-center gap-2">
-          <GiroLogo size={32} iconOnly />
-          <span className="font-bold text-base text-slate-900 hidden xl:inline">GiroB2B</span>
-        </Link>
+      <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
+        <div className="mx-auto max-w-7xl h-16 flex items-center gap-4 px-6">
+          <Link href="/painel" aria-label="GiroB2B" className="shrink-0 flex items-center gap-2">
+            <GiroLogo size={32} iconOnly />
+            <span className="font-bold text-base text-slate-900 hidden xl:inline">GiroB2B</span>
+          </Link>
 
-        <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || (href !== "/painel" && pathname.startsWith(href));
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                  active
-                    ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-              >
-                <Icon className="h-4 w-4 text-slate-400" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href || (href !== "/painel" && pathname.startsWith(href));
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                    active
+                      ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+                      : "text-slate-700 hover:bg-slate-100"
+                  )}
+                >
+                  <Icon className="h-4 w-4 text-slate-400" />
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        <AccountDropdown
-          user={user}
-          displayName={displayName}
-          avatarSrc={avatarSrc}
-          avatarFallback={avatarFallback}
-          roleLabel={roleLabel}
-        />
+          <AccountDropdown
+            user={user}
+            displayName={displayName}
+            avatarSrc={avatarSrc}
+            avatarFallback={avatarFallback}
+            roleLabel={roleLabel}
+          />
+        </div>
       </header>
 
       {/* Topbar mobile */}
-      <header className="md:hidden h-16 flex items-center px-4 gap-3 bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="text-slate-500 hover:text-slate-900 p-1"
-          aria-label="Abrir menu"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        <Link href="/painel" aria-label="GiroB2B" className="mr-auto">
-          <GiroLogo size={28} iconOnly />
-        </Link>
-        <Avatar className="w-8 h-8 border border-slate-200">
-          <AvatarImage src={avatarSrc} alt={displayName} />
-          <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
-            {avatarFallback}
-          </AvatarFallback>
-        </Avatar>
+      <header className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
+        <div className="mx-auto max-w-7xl h-16 flex items-center px-4 gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="text-slate-500 hover:text-slate-900 p-1"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <Link href="/painel" aria-label="GiroB2B" className="mr-auto">
+            <GiroLogo size={28} iconOnly />
+          </Link>
+          <Avatar className="w-8 h-8 border border-slate-200">
+            <AvatarImage src={avatarSrc} alt={displayName} />
+            <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
+              {avatarFallback}
+            </AvatarFallback>
+          </Avatar>
+        </div>
       </header>
 
       <MobileDrawer
@@ -398,7 +402,9 @@ export default function DashboardShell({
         avatarFallback={avatarFallback}
       />
 
-      <main className="flex-1 p-4 md:p-8">{children}</main>
+      <main className="flex-1">
+        <div className="mx-auto max-w-7xl p-4 md:p-8">{children}</div>
+      </main>
     </div>
   );
 }
