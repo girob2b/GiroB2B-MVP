@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Search, Menu, X, Lock, Package,
+  Search, Menu, X, Lock, Package, Plus, LayoutGrid,
   PanelLeftClose, LogIn, UserPlus,
 } from "lucide-react";
 import { GiroLogo } from "@/components/ui/giro-logo";
@@ -236,12 +236,20 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
 
       <div className="flex-1 min-w-0">
         {/* Topbar desktop (estilo marketplace) */}
-        <header className="hidden md:flex h-16 items-center gap-6 px-6 bg-white border-b border-border sticky top-0 z-30 shrink-0">
+        <header className="hidden md:flex h-16 items-center gap-4 px-6 bg-white border-b border-border sticky top-0 z-30 shrink-0">
           <Link href="/" aria-label="GiroB2B" className="shrink-0">
             <GiroLogo size={32} />
           </Link>
 
-          <form action="/buscar" method="get" className="flex-1 max-w-2xl">
+          <Link
+            href="/buscar"
+            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+          >
+            <LayoutGrid className="h-4 w-4 text-slate-500" />
+            Categorias
+          </Link>
+
+          <form action="/buscar" method="get" className="flex-1 max-w-xl">
             <label htmlFor="topbar-q" className="sr-only">Buscar necessidades</label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -256,6 +264,13 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
 
           <nav className="flex items-center gap-2 shrink-0">
             <Link
+              href="/cadastro?next=/painel/postar"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Publicar necessidade
+            </Link>
+            <Link
               href="/seja-vendedor"
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
             >
@@ -267,13 +282,6 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
             >
               Entrar
-            </Link>
-            <Link
-              href="?auth=register"
-              scroll={false}
-              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
-            >
-              Criar conta
             </Link>
           </nav>
         </header>
@@ -292,11 +300,11 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               <GiroLogo size={28} iconOnly />
             </Link>
             <Link
-              href="?auth=register"
-              scroll={false}
-              className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
+              href="/cadastro?next=/painel/postar"
+              className="inline-flex items-center gap-1 text-sm font-semibold px-3 py-1.5 rounded-lg bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
             >
-              Criar conta
+              <Plus className="h-4 w-4" />
+              Publicar
             </Link>
           </div>
           <form action="/buscar" method="get" className="px-4 pb-3">
