@@ -1,7 +1,13 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { CreateDemandInput, DemandStatus, UpdateDemandInput } from "@/lib/schemas/demands";
+import type {
+  CreateDemandInput,
+  DemandItem,
+  DemandKind,
+  DemandStatus,
+  UpdateDemandInput,
+} from "@/lib/schemas/demands";
 import { LGPD_CONSENT_TEXT_VERSION } from "@/lib/schemas/demands";
 
 // ─── Tipos de saída ──────────────────────────────────────────────────────────
@@ -20,6 +26,13 @@ export interface DemandPublic {
   delivery_city: string | null;
   delivery_state: string | null;
   photos_urls: string[];
+  // Modo estruturado (migration 037 — 2026-05-14)
+  kind: DemandKind;
+  items: DemandItem[] | null;
+  payment_terms: string | null;
+  delivery_terms: string | null;
+  required_docs: string | null;
+  attachment_url: string | null;
   status: DemandStatus;
   views_count: number;
   contact_count: number;
@@ -31,6 +44,9 @@ export interface DemandPublic {
 export interface DemandWithContact extends DemandPublic {
   whatsapp_number: string;
 }
+
+const DEMAND_PUBLIC_COLUMNS =
+  "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, kind, items, payment_terms, delivery_terms, required_docs, attachment_url, status, views_count, contact_count, published_at, expires_at, created_at";
 
 // ─── Slug ─────────────────────────────────────────────────────────────────────
 
@@ -65,7 +81,7 @@ export async function createDemand(buyerUserId: string, input: CreateDemandInput
   const admin = createAdminClient();
   const slug = await pickUniqueSlug(input.title);
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     buyer_user_id: buyerUserId,
     slug,
     title: input.title.trim(),
@@ -80,10 +96,19 @@ export async function createDemand(buyerUserId: string, input: CreateDemandInput
     delivery_state: input.delivery_state ?? null,
     whatsapp_number: input.whatsapp_number,
     photos_urls: input.photos_urls ?? [],
+    kind: input.kind,
     lgpd_consent: true,
     lgpd_consent_at: new Date().toISOString(),
     lgpd_consent_text_version: LGPD_CONSENT_TEXT_VERSION,
   };
+
+  if (input.kind === "structured") {
+    payload.items = input.items;
+    payload.payment_terms = input.payment_terms ?? null;
+    payload.delivery_terms = input.delivery_terms ?? null;
+    payload.required_docs = input.required_docs ?? null;
+    payload.attachment_url = input.attachment_url ?? null;
+  }
 
   const { data, error } = await admin
     .from("demands")
@@ -129,6 +154,11 @@ export async function updateDemand(
   if (input.whatsapp_number !== undefined) updatePayload.whatsapp_number = input.whatsapp_number;
   if (input.photos_urls !== undefined) updatePayload.photos_urls = input.photos_urls;
   if (input.status !== undefined) updatePayload.status = input.status;
+  if (input.items !== undefined) updatePayload.items = input.items;
+  if (input.payment_terms !== undefined) updatePayload.payment_terms = input.payment_terms;
+  if (input.delivery_terms !== undefined) updatePayload.delivery_terms = input.delivery_terms;
+  if (input.required_docs !== undefined) updatePayload.required_docs = input.required_docs;
+  if (input.attachment_url !== undefined) updatePayload.attachment_url = input.attachment_url;
 
   if (Object.keys(updatePayload).length === 0) return { id: demandId };
 
@@ -167,6 +197,7 @@ export interface DemandFeedFilters {
   query?: string | null;
   category_id?: string | null;
   state?: string | null;
+  kind?: DemandKind | null;
   limit?: number;
   offset?: number;
 }
@@ -175,15 +206,13 @@ export async function listPublicDemands(filters: DemandFeedFilters = {}) {
   const admin = createAdminClient();
   let q = admin
     .from("demands_public")
-    .select(
-      "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, status, views_count, contact_count, published_at, expires_at",
-      { count: "exact" }
-    )
+    .select(DEMAND_PUBLIC_COLUMNS, { count: "exact" })
     .order("published_at", { ascending: false });
 
   if (filters.query) q = q.ilike("title", `%${filters.query}%`);
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.state) q = q.eq("delivery_state", filters.state.toUpperCase());
+  if (filters.kind) q = q.eq("kind", filters.kind);
 
   const limit = Math.min(Math.max(filters.limit ?? 20, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);
@@ -198,7 +227,7 @@ export async function getDemandBySlug(slug: string): Promise<DemandPublic | null
   const admin = createAdminClient();
   const { data } = await admin
     .from("demands_public")
-    .select("*")
+    .select(DEMAND_PUBLIC_COLUMNS)
     .eq("slug", slug)
     .maybeSingle<DemandPublic>();
   return data;
@@ -220,9 +249,7 @@ export async function getDemandWithWhatsappForSubscriber(
 
   const { data } = await admin
     .from("demands")
-    .select(
-      "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, status, views_count, contact_count, published_at, expires_at, created_at, whatsapp_number"
-    )
+    .select(`${DEMAND_PUBLIC_COLUMNS}, whatsapp_number`)
     .eq("slug", slug)
     .eq("status", "open")
     .maybeSingle<DemandWithContact>();

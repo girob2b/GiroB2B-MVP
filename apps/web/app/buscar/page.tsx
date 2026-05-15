@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Search as SearchIcon } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listPublicDemands } from "@/lib/services/demands";
+import { DEMAND_KINDS, type DemandKind } from "@/lib/schemas/demands";
 import { DemandCard } from "@/components/demands/demand-card";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ interface SearchParams {
   q?: string;
   category?: string;
   state?: string;
+  kind?: string;
   page?: string;
 }
 
@@ -35,6 +37,10 @@ export default async function BuscarPage({
   const query = (params.q ?? "").trim();
   const categorySlug = (params.category ?? "").trim();
   const state = (params.state ?? "").trim().toUpperCase();
+  const kindParam = (params.kind ?? "").trim();
+  const kind: DemandKind | null = (DEMAND_KINDS as readonly string[]).includes(kindParam)
+    ? (kindParam as DemandKind)
+    : null;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -55,6 +61,7 @@ export default async function BuscarPage({
     query: query || null,
     category_id: selectedCategory?.id ?? null,
     state: state || null,
+    kind,
     limit: PAGE_SIZE,
     offset,
   });
@@ -103,6 +110,15 @@ export default async function BuscarPage({
           <option value="">Todos UF</option>
           {BR_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
         </select>
+        <select
+          name="kind"
+          defaultValue={kind ?? ""}
+          className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] sm:max-w-[180px]"
+        >
+          <option value="">Simples + estruturadas</option>
+          <option value="simple">Apenas simples</option>
+          <option value="structured">Apenas estruturadas</option>
+        </select>
         <button
           type="submit"
           className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-green-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
@@ -135,7 +151,7 @@ export default async function BuscarPage({
       )}
 
       {totalPages > 1 && (
-        <Pagination current={page} total={totalPages} params={{ q: query, category: categorySlug, state }} />
+        <Pagination current={page} total={totalPages} params={{ q: query, category: categorySlug, state, kind: kind ?? "" }} />
       )}
     </div>
   );
@@ -148,13 +164,14 @@ function Pagination({
 }: {
   current: number;
   total: number;
-  params: { q: string; category: string; state: string };
+  params: { q: string; category: string; state: string; kind: string };
 }) {
   const buildHref = (p: number) => {
     const u = new URLSearchParams();
     if (params.q) u.set("q", params.q);
     if (params.category) u.set("category", params.category);
     if (params.state) u.set("state", params.state);
+    if (params.kind) u.set("kind", params.kind);
     u.set("page", String(p));
     return `/buscar?${u.toString()}`;
   };

@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { CreateDemandSchema, DEMAND_STATUSES, type DemandStatus } from "@/lib/schemas/demands";
+import {
+  CreateDemandSchema,
+  DEMAND_KINDS,
+  DEMAND_STATUSES,
+  DemandItemSchema,
+  type DemandItem,
+  type DemandKind,
+  type DemandStatus,
+} from "@/lib/schemas/demands";
 import { createDemand, deleteDemand, updateDemand } from "@/lib/services/demands";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -36,6 +44,32 @@ function asBudgetCents(value: FormDataEntryValue | null): number | null {
   return Math.round(reais * 100);
 }
 
+function parseKind(value: FormDataEntryValue | null): DemandKind {
+  if (typeof value === "string" && (DEMAND_KINDS as readonly string[]).includes(value)) {
+    return value as DemandKind;
+  }
+  return "simple";
+}
+
+// items_json: o form serializa o array de itens em um hidden input.
+// Mais robusto que parsing de items[0][description] do FormData.
+function parseItemsJson(value: FormDataEntryValue | null): DemandItem[] | null {
+  if (typeof value !== "string" || value.trim().length === 0) return null;
+  try {
+    const raw = JSON.parse(value) as unknown;
+    if (!Array.isArray(raw)) return null;
+    // Sanitiza cada item via Zod — Zod do form valida de novo, mas evita
+    // injetar lixo no schema discriminado.
+    const parsed = raw
+      .map((row) => DemandItemSchema.safeParse(row))
+      .filter((r): r is { success: true; data: DemandItem } => r.success)
+      .map((r) => r.data);
+    return parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── createDemandAction ───────────────────────────────────────────────────────
 
 export async function createDemandAction(
@@ -50,8 +84,9 @@ export async function createDemandAction(
   const descRaw = formData.get("description");
   const whatsRaw = formData.get("whatsapp_number");
   const consentRaw = formData.get("lgpd_consent");
+  const kind = parseKind(formData.get("kind"));
 
-  const raw = {
+  const base = {
     title: typeof titleRaw === "string" ? titleRaw.trim() : "",
     description: typeof descRaw === "string" ? descRaw.trim() : "",
     category_id: asNullableString(formData.get("category_id")),
@@ -66,6 +101,19 @@ export async function createDemandAction(
     photos_urls: [] as string[],
     lgpd_consent: consentRaw === "on" || consentRaw === "true",
   };
+
+  const raw =
+    kind === "structured"
+      ? {
+          ...base,
+          kind: "structured" as const,
+          items: parseItemsJson(formData.get("items_json")),
+          payment_terms: asNullableString(formData.get("payment_terms")),
+          delivery_terms: asNullableString(formData.get("delivery_terms")),
+          required_docs: asNullableString(formData.get("required_docs")),
+          attachment_url: asNullableString(formData.get("attachment_url")),
+        }
+      : { ...base, kind: "simple" as const };
 
   const parsed = CreateDemandSchema.safeParse(raw);
   if (!parsed.success) {

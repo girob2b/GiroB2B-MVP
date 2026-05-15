@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, MapPin, Package, Eye, MessageCircle } from "lucide-react";
+import { CalendarClock, FileCheck2, MapPin, Package, Eye, MessageCircle } from "lucide-react";
 import type { DemandPublic } from "@/lib/services/demands";
 
 interface DemandCardProps {
@@ -24,15 +24,39 @@ export function DemandCard({ demand, categoryName }: DemandCardProps) {
       className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[color:var(--brand-green-300)] hover:shadow-md"
     >
       <div className="space-y-2">
-        {categoryName && (
-          <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-50)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--brand-green-700)]">
-            {categoryName}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {categoryName && (
+            <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-50)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--brand-green-700)]">
+              {categoryName}
+            </span>
+          )}
+          {demand.kind === "structured" && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--brand-green-300)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[color:var(--brand-green-700)]">
+              <FileCheck2 className="h-3 w-3" /> Proposta estruturada
+            </span>
+          )}
+        </div>
         <h3 className="text-base font-bold leading-snug text-slate-900 line-clamp-2 group-hover:text-[color:var(--brand-green-700)]">
           {demand.title}
         </h3>
         <p className="text-sm text-slate-600 line-clamp-2">{demand.description}</p>
+        {demand.kind === "structured" && demand.items && demand.items.length > 0 && (
+          <ul className="space-y-0.5 text-xs text-slate-500">
+            {demand.items.slice(0, 2).map((it, i) => (
+              <li key={i} className="flex items-baseline gap-1.5 truncate">
+                <span className="text-slate-400">•</span>
+                <span className="truncate">
+                  <span className="font-medium text-slate-700">{it.quantity.toLocaleString("pt-BR")} {it.unit}</span> · {it.description}
+                </span>
+              </li>
+            ))}
+            {demand.items.length > 2 && (
+              <li className="text-[11px] italic text-slate-400">
+                + {demand.items.length - 2} {demand.items.length - 2 === 1 ? "item" : "itens"}
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600">
