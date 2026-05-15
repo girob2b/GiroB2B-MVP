@@ -15,7 +15,12 @@ const BR_STATES = [
 interface CategoryOption { id: string; name: string; slug: string }
 interface Props {
   categories: CategoryOption[];
-  defaults: { title: string; category_id: string; delivery_state: string };
+  defaults: {
+    title: string;
+    category_id: string;
+    delivery_state: string;
+    guest_email?: string;
+  };
 }
 
 export default function GuestDemandForm({ categories, defaults }: Props) {
@@ -47,6 +52,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               name="guest_email"
               type="email"
               required
+              defaultValue={defaults.guest_email ?? ""}
               placeholder="seu@empresa.com.br"
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
             />

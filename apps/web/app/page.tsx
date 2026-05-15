@@ -174,7 +174,8 @@ export default async function HomePage() {
               <li><strong className="text-slate-900">3.</strong> Fornecedores certos te chamam no WhatsApp.</li>
             </ol>
             <Link
-              href="/cadastro"
+              href="?auth=register"
+              scroll={false}
               className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
             >
               Criar conta de comprador

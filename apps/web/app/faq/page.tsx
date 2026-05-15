@@ -31,7 +31,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     q: "Como me cadastro como comprador?",
     a: (
       <>
-        Clique em <Link href="/cadastro" className="font-semibold text-[color:var(--brand-primary-700)] hover:underline">Criar conta</Link>,
+        Clique em <Link href="/?auth=register" className="font-semibold text-[color:var(--brand-primary-700)] hover:underline">Criar conta</Link>,
         informe email e senha, confirme pelo link enviado por email. Pronto — você já pode
         explorar fornecedores e enviar cotações.
       </>
@@ -103,8 +103,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
         O GiroB2B não é parte da transação comercial entre as empresas. Conflitos comerciais
         devem ser resolvidos diretamente entre vocês. Se houver fraude, golpe ou
         comportamento abusivo, escreva para{" "}
-        <a href="mailto:contato@girob2b.com.br" className="font-semibold text-[color:var(--brand-primary-700)] hover:underline">
-          contato@girob2b.com.br
+        <a href="mailto:comercial@girob2b.com.br" className="font-semibold text-[color:var(--brand-primary-700)] hover:underline">
+          comercial@girob2b.com.br
         </a>.
       </>
     ),
@@ -117,7 +117,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode }> = [
     q: "Como entro em contato?",
     a: (
       <>
-        Suporte geral: <a href="mailto:contato@girob2b.com.br">contato@girob2b.com.br</a>
+        Suporte geral: <a href="mailto:comercial@girob2b.com.br">comercial@girob2b.com.br</a>
         <br />
         Privacidade / LGPD: <a href="mailto:privacidade@girob2b.com.br">privacidade@girob2b.com.br</a>
       </>
@@ -136,8 +136,8 @@ export default function FAQPage() {
       </h1>
       <p className="mt-2 text-sm text-slate-500">
         Não achou o que procurava? Escreva para{" "}
-        <a href="mailto:contato@girob2b.com.br" className="text-[color:var(--brand-primary-700)] hover:underline font-semibold">
-          contato@girob2b.com.br
+        <a href="mailto:comercial@girob2b.com.br" className="text-[color:var(--brand-primary-700)] hover:underline font-semibold">
+          comercial@girob2b.com.br
         </a>
         .
       </p>

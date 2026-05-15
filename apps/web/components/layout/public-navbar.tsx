@@ -66,13 +66,15 @@ export function PublicNavbar({ isLoggedIn = false }: PublicNavbarProps) {
           ) : (
             <>
               <Link
-                href="/login"
+                href="?auth=login"
+                scroll={false}
                 className="h-9 px-4 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-sm font-medium transition-colors hidden sm:flex items-center"
               >
                 Entrar
               </Link>
               <Link
-                href="/cadastro"
+                href="?auth=register"
+                scroll={false}
                 className="h-9 px-4 rounded-xl bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] text-white text-sm font-semibold transition-colors flex items-center"
               >
                 Criar conta

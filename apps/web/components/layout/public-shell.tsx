@@ -23,13 +23,15 @@ export default function PublicShell({ children }: PublicShellProps) {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/login"
+              href="?auth=login"
+              scroll={false}
               className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Entrar
             </Link>
             <Link
-              href="/cadastro"
+              href="?auth=register"
+              scroll={false}
               className="px-4 py-2 text-sm font-semibold bg-[color:var(--brand-green-600)] text-white rounded-lg hover:bg-[color:var(--brand-green-700)] transition-colors"
             >
               Criar conta

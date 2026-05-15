@@ -104,7 +104,7 @@ export default function TermosPage() {
 
       <h2>10. Contato</h2>
       <p>
-        Dúvidas sobre estes Termos: <a href="mailto:contato@girob2b.com.br">contato@girob2b.com.br</a>
+        Dúvidas sobre estes Termos: <a href="mailto:comercial@girob2b.com.br">comercial@girob2b.com.br</a>
       </p>
 
       <hr className="my-8" />

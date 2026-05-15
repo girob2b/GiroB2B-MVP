@@ -22,6 +22,8 @@ interface SearchParams {
   title?: string;
   category_id?: string;
   delivery_state?: string;
+  /** Email pré-preenchido (vem da waitlist da landing — fluxo Comprador). */
+  email?: string;
 }
 
 export default async function PostarPublicoPage({
@@ -63,6 +65,10 @@ export default async function PostarPublicoPage({
       typeof params.delivery_state === "string" && /^[A-Z]{2}$/.test(params.delivery_state)
         ? params.delivery_state
         : "",
+    guest_email:
+      typeof params.email === "string" && params.email.includes("@") && params.email.length <= 200
+        ? params.email.trim().toLowerCase()
+        : "",
   };
 
   return (
@@ -74,7 +80,7 @@ export default async function PostarPublicoPage({
         </p>
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           <strong>Sem cadastro = 1 publicação.</strong>{" "}
-          <Link href="/cadastro?next=/painel/postar" className="font-semibold text-amber-900 underline">
+          <Link href="/?auth=register" className="font-semibold text-amber-900 underline">
             Crie conta grátis
           </Link>{" "}
           pra publicar mais, gerenciar suas necessidades e ganhar o selo Verificado (compradores
