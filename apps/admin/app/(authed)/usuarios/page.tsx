@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import SuspendUserButton from "./_components/suspend-user-button";
+import SubscriptionButton from "./_components/subscription-button";
 import { normalizeAccountStatus } from "@/lib/account-status";
 
 export const metadata = { title: "Usuarios - Admin" };
@@ -34,12 +35,15 @@ type BuyerRow = {
 };
 
 type SupplierRow = {
+  id: string;
   user_id: string;
   trade_name: string;
   company_name: string;
   cnpj: string | null;
   phone: string | null;
   suspended: boolean;
+  subscription_status: "inactive" | "trialing" | "active" | "expired";
+  subscription_expires_at: string | null;
   created_at: string;
 };
 
@@ -54,6 +58,9 @@ type UserListItem = {
   status: "ativa" | "suspensa";
   profiles: string;
   isSupplier: boolean;
+  supplierId: string | null;
+  subscriptionStatus: SupplierRow["subscription_status"] | null;
+  subscriptionExpiresAt: string | null;
   isSuspended: boolean;
   isAdmin: boolean;
   hasBuyer: boolean;
@@ -93,7 +100,7 @@ export default async function AdminUsuariosPage({ searchParams }: UsersPageProps
     adminClient.from("user_profiles").select("id, role, full_name, created_at"),
     adminClient.from("user_profiles").select("id, status"),
     adminClient.from("buyers").select("user_id, name, email, company_name, company, cnpj, phone, created_at"),
-    adminClient.from("suppliers").select("user_id, trade_name, company_name, cnpj, phone, suspended, created_at"),
+    adminClient.from("suppliers").select("id, user_id, trade_name, company_name, cnpj, phone, suspended, subscription_status, subscription_expires_at, created_at"),
   ]);
 
   const authUsers = (authUsersRes.data?.users ?? []) as AdminAuthUser[];
@@ -158,6 +165,9 @@ export default async function AdminUsuariosPage({ searchParams }: UsersPageProps
       status: accountStatus,
       profiles: profilesLabel,
       isSupplier: hasSupplier,
+      supplierId: supplier?.id ?? null,
+      subscriptionStatus: supplier?.subscription_status ?? null,
+      subscriptionExpiresAt: supplier?.subscription_expires_at ?? null,
       isSuspended: accountStatus === "suspensa",
       isAdmin,
       hasBuyer,
@@ -221,13 +231,14 @@ export default async function AdminUsuariosPage({ searchParams }: UsersPageProps
                   <th className="text-left px-4 py-3">Telefone</th>
                   <th className="text-left px-4 py-3">Cadastro</th>
                   <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">Acao</th>
+                  <th className="text-left px-4 py-3">Assinatura</th>
+                  <th className="text-left px-4 py-3">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {activeRows.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+                    <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                       Nenhum usuario encontrado nesta aba.
                     </td>
                   </tr>
@@ -253,6 +264,17 @@ export default async function AdminUsuariosPage({ searchParams }: UsersPageProps
                       >
                         {row.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.isSupplier && row.supplierId && row.subscriptionStatus ? (
+                        <SubscriptionButton
+                          supplierId={row.supplierId}
+                          status={row.subscriptionStatus}
+                          expiresAt={row.subscriptionExpiresAt}
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <SuspendUserButton

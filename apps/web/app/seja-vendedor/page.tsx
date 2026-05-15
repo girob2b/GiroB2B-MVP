@@ -73,30 +73,28 @@ export default function SejaVendedorPage() {
         </div>
       </section>
 
-      {/* Planos placeholder */}
+      {/* Planos */}
       <section className="space-y-6">
         <header className="space-y-1">
           <h2 className="text-2xl font-bold text-slate-900">Planos</h2>
           <p className="text-sm text-slate-500">
-            Os preços finais estão sendo trancados. Cadastre-se agora — entraremos em contato assim que
-            os planos forem publicados.
+            Comece com o Start. Migre pro Pro quando precisar de volume e benefícios extras.
           </p>
         </header>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <PlanCard tier="Inicial" tagline="Para quem está testando o canal" disabled>
-            <li>Acesso ao feed completo de leads</li>
-            <li>Contato via WhatsApp com mensagem pronta</li>
-            <li>Sem taxa por venda — só assinatura</li>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 max-w-3xl mx-auto">
+          <PlanCard tier="Start" price="R$ 89/mês" tagline="Para quem está validando o canal" disabled>
+            <li>Acesso ao feed de necessidades</li>
+            <li>Contato direto via WhatsApp</li>
+            <li>Filtros por categoria e UF</li>
+            <li>Suporte por email</li>
           </PlanCard>
-          <PlanCard tier="Profissional" tagline="Para quem fecha negócio recorrente" highlight disabled>
-            <li>Tudo do Inicial</li>
-            <li>Filtro avançado por palavra-chave</li>
-            <li>Histórico de contatos próprios</li>
-          </PlanCard>
-          <PlanCard tier="Empresarial" tagline="Para times comerciais maiores" disabled>
-            <li>Tudo do Profissional</li>
-            <li>Múltiplos usuários por conta</li>
-            <li>Suporte direto da equipe</li>
+          <PlanCard tier="Pro" price="R$ 349/mês" tagline="Para quem fecha negócio recorrente" highlight disabled>
+            <li>Tudo do Start</li>
+            <li>Contatos ilimitados</li>
+            <li>Filtros avançados (palavra-chave, busca textual)</li>
+            <li>Selo Verificado GiroB2B</li>
+            <li>Acesso prioritário a leads de compradores verificados</li>
+            <li>Suporte direto via WhatsApp</li>
           </PlanCard>
         </div>
       </section>
@@ -155,12 +153,14 @@ function Step({
 
 function PlanCard({
   tier,
+  price,
   tagline,
   highlight,
   disabled,
   children,
 }: {
   tier: string;
+  price?: string;
   tagline: string;
   highlight?: boolean;
   disabled?: boolean;
@@ -176,7 +176,8 @@ function PlanCard({
     >
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{tier}</p>
-        <h3 className="text-lg font-bold text-slate-900">{tagline}</h3>
+        {price && <p className="text-2xl font-bold text-slate-900">{price}</p>}
+        <h3 className="text-base font-semibold text-slate-700">{tagline}</h3>
       </header>
       <ul className="mt-4 space-y-2 text-sm text-slate-700">
         {children}

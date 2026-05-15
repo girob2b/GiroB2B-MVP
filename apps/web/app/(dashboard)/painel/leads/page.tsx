@@ -23,6 +23,7 @@ interface SearchParams {
   q?: string;
   category?: string;
   state?: string;
+  verified?: string;
   page?: string;
 }
 
@@ -39,6 +40,7 @@ export default async function LeadsPage({
   const query = (params.q ?? "").trim();
   const categorySlug = (params.category ?? "").trim();
   const state = (params.state ?? "").trim().toUpperCase();
+  const onlyVerified = params.verified === "1";
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -71,6 +73,7 @@ export default async function LeadsPage({
     listPublicDemands({
       query: query || null,
       state: state || null,
+      only_verified: onlyVerified,
       limit: PAGE_SIZE,
       offset,
     }),
@@ -89,6 +92,7 @@ export default async function LeadsPage({
       query: query || null,
       category_id: selectedCategory.id,
       state: state || null,
+      only_verified: onlyVerified,
       limit: PAGE_SIZE,
       offset,
     });
@@ -117,44 +121,61 @@ export default async function LeadsPage({
       )}
 
       {/* Filtros */}
-      <form method="get" className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row">
-        <div className="flex-1">
-          <label htmlFor="q" className="sr-only">Buscar</label>
-          <div className="relative">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              id="q"
-              name="q"
-              defaultValue={query}
-              placeholder="Buscar por título ou produto…"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
-            />
+      <form method="get" className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex-1">
+            <label htmlFor="q" className="sr-only">Buscar</label>
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="q"
+                name="q"
+                defaultValue={query}
+                placeholder="Buscar por título ou produto…"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              />
+            </div>
           </div>
+          <select
+            name="category"
+            defaultValue={categorySlug}
+            className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] sm:max-w-[220px]"
+          >
+            <option value="">Todas as categorias</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>{c.name}</option>
+            ))}
+          </select>
+          <select
+            name="state"
+            defaultValue={state}
+            className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] sm:max-w-[120px]"
+          >
+            <option value="">Todos UF</option>
+            {BR_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+          </select>
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-green-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+          >
+            Filtrar
+          </button>
         </div>
-        <select
-          name="category"
-          defaultValue={categorySlug}
-          className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] sm:max-w-[220px]"
-        >
-          <option value="">Todas as categorias</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.slug}>{c.name}</option>
-          ))}
-        </select>
-        <select
-          name="state"
-          defaultValue={state}
-          className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] sm:max-w-[120px]"
-        >
-          <option value="">Todos UF</option>
-          {BR_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
-        </select>
-        <button
-          type="submit"
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-green-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
-        >
-          Filtrar
-        </button>
+        <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+          <input
+            type="checkbox"
+            name="verified"
+            value="1"
+            defaultChecked={onlyVerified}
+            className="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          />
+          <span className="inline-flex items-center gap-1">
+            Apenas compradores
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-[color:var(--brand-green-600)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              ✓ Verificados
+            </span>
+          </span>
+        </label>
       </form>
 
       <p className="text-sm text-slate-500">
@@ -181,7 +202,7 @@ export default async function LeadsPage({
       )}
 
       {totalPages > 1 && (
-        <Pagination current={page} total={totalPages} params={{ q: query, category: categorySlug, state }} />
+        <Pagination current={page} total={totalPages} params={{ q: query, category: categorySlug, state, verified: onlyVerified }} />
       )}
     </div>
   );
@@ -248,13 +269,14 @@ function Pagination({
 }: {
   current: number;
   total: number;
-  params: { q: string; category: string; state: string };
+  params: { q: string; category: string; state: string; verified: boolean };
 }) {
   const buildHref = (p: number) => {
     const u = new URLSearchParams();
     if (params.q) u.set("q", params.q);
     if (params.category) u.set("category", params.category);
     if (params.state) u.set("state", params.state);
+    if (params.verified) u.set("verified", "1");
     u.set("page", String(p));
     return `/painel/leads?${u.toString()}`;
   };

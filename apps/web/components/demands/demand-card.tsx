@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, FileCheck2, MapPin, Package, Eye, MessageCircle } from "lucide-react";
+import { BadgeCheck, CalendarClock, FileCheck2, MapPin, Package, Eye, MessageCircle } from "lucide-react";
 import type { DemandPublic } from "@/lib/services/demands";
 
 interface DemandCardProps {
@@ -21,10 +21,22 @@ export function DemandCard({ demand, categoryName }: DemandCardProps) {
   return (
     <Link
       href={`/necessidade/${demand.slug}`}
-      className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[color:var(--brand-green-300)] hover:shadow-md"
+      className={`group flex flex-col rounded-2xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
+        demand.buyer_is_verified
+          ? "border-[color:var(--brand-green-200)] hover:border-[color:var(--brand-green-400)] ring-1 ring-[color:var(--brand-green-100)]"
+          : "border-slate-200 hover:border-[color:var(--brand-green-300)]"
+      }`}
     >
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-1.5">
+          {demand.buyer_is_verified && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-[color:var(--brand-green-600)] px-2 py-0.5 text-[11px] font-semibold text-white"
+              title="Comprador verificado — CNPJ e razão social confirmados"
+            >
+              <BadgeCheck className="h-3 w-3" /> Verificado
+            </span>
+          )}
           {categoryName && (
             <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-50)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--brand-green-700)]">
               {categoryName}

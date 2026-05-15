@@ -8,11 +8,12 @@ import {
   DEMAND_KINDS,
   DEMAND_STATUSES,
   DemandItemSchema,
+  GuestDemandSchema,
   type DemandItem,
   type DemandKind,
   type DemandStatus,
 } from "@/lib/schemas/demands";
-import { createDemand, deleteDemand, updateDemand } from "@/lib/services/demands";
+import { createDemand, createGuestDemand, deleteDemand, updateDemand } from "@/lib/services/demands";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -188,4 +189,71 @@ export async function deleteDemandAction(
   }
   revalidatePath("/painel/necessidades");
   return { ok: true };
+}
+
+// ─── createGuestDemandAction ─────────────────────────────────────────────────
+// Publicação anônima — comprador sem cadastro pode publicar 1 necessidade
+// (decisão 2026-05-14). Reusa o pipeline de validação Zod; o service força
+// kind=simple porque o form guest não suporta items[].
+
+export async function createGuestDemandAction(
+  _prev: DemandActionState | undefined,
+  formData: FormData
+): Promise<DemandActionState> {
+  // 1) Guest fields (nome+email+whatsapp)
+  const guestRaw = {
+    guest_name: typeof formData.get("guest_name") === "string" ? (formData.get("guest_name") as string).trim() : "",
+    guest_email: typeof formData.get("guest_email") === "string" ? (formData.get("guest_email") as string).trim() : "",
+    guest_whatsapp: typeof formData.get("guest_whatsapp") === "string" ? (formData.get("guest_whatsapp") as string).trim() : "",
+  };
+  const guestParsed = GuestDemandSchema.safeParse(guestRaw);
+  if (!guestParsed.success) {
+    return { errors: guestParsed.error.flatten().fieldErrors };
+  }
+
+  // 2) Conteúdo da demand — sempre kind=simple no fluxo guest
+  const consentRaw = formData.get("lgpd_consent");
+  const titleRaw = formData.get("title");
+  const descRaw = formData.get("description");
+  const raw = {
+    title: typeof titleRaw === "string" ? titleRaw.trim() : "",
+    description: typeof descRaw === "string" ? descRaw.trim() : "",
+    category_id: asNullableString(formData.get("category_id")),
+    subcategory_slug: null,
+    quantity: asOptionalNumber(formData.get("quantity")),
+    unit: asNullableString(formData.get("unit")),
+    budget_max_cents: asBudgetCents(formData.get("budget_max_reais")),
+    deadline: asNullableString(formData.get("deadline")),
+    delivery_city: asNullableString(formData.get("delivery_city")),
+    delivery_state: asNullableString(formData.get("delivery_state")),
+    whatsapp_number: guestParsed.data.guest_whatsapp,
+    photos_urls: parsePhotosJson(formData.get("photos_urls_json")),
+    lgpd_consent: consentRaw === "on" || consentRaw === "true",
+    kind: "simple" as const,
+  };
+  const parsed = CreateDemandSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+  if (parsed.data.kind !== "simple") {
+    return { message: "Formato inválido para publicação anônima." };
+  }
+
+  let slug: string;
+  try {
+    const result = await createGuestDemand(
+      {
+        name: guestParsed.data.guest_name,
+        email: guestParsed.data.guest_email,
+        whatsapp: guestParsed.data.guest_whatsapp,
+      },
+      parsed.data
+    );
+    slug = result.slug;
+  } catch (e) {
+    return { message: e instanceof Error ? e.message : "Erro ao publicar a necessidade." };
+  }
+
+  revalidatePath(`/necessidade/${slug}`);
+  redirect(`/necessidade/${slug}?guest_published=1`);
 }

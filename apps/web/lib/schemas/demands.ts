@@ -35,6 +35,20 @@ export const DemandItemSchema = z.object({
 });
 export type DemandItem = z.infer<typeof DemandItemSchema>;
 
+// ─── Schema do guest (publicação sem cadastro) ──────────────────────────────
+// Visitante anônimo pode publicar 1 demand fornecendo nome+email+whatsapp.
+// Limite "1 por email guest" é validado no Server Action contra o banco.
+export const GuestDemandSchema = z.object({
+  guest_name: z.string().trim().min(2, "Informe seu nome.").max(120),
+  guest_email: z.string().trim().toLowerCase().email("Email inválido."),
+  guest_whatsapp: z
+    .string()
+    .trim()
+    .regex(/^\+?\d{10,14}$/, "WhatsApp inválido. Use apenas números com DDD.")
+    .transform((v) => v.replace(/^\+/, "")),
+});
+export type GuestDemandInput = z.infer<typeof GuestDemandSchema>;
+
 // ─── Base comum ─────────────────────────────────────────────────────────────
 const BaseDemandSchema = z.object({
   title: z

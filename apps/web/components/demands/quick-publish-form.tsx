@@ -33,22 +33,17 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
     if (!title.trim()) return;
     setSubmitting(true);
 
-    // Monta query params para pré-preencher /painel/postar
-    const postarParams = new URLSearchParams();
-    postarParams.set("title", title.trim());
-    if (categoryId) postarParams.set("category_id", categoryId);
-    if (state) postarParams.set("delivery_state", state);
-    const postarUrl = `/painel/postar?${postarParams.toString()}`;
+    // Monta query params para pré-preencher o form (logado vai pra /painel/postar,
+    // anônimo vai pra /postar — guest, limite 1 publicação).
+    const params = new URLSearchParams();
+    params.set("title", title.trim());
+    if (categoryId) params.set("category_id", categoryId);
+    if (state) params.set("delivery_state", state);
 
-    // Se já está logado, vai direto. Senão, manda pro cadastro com next.
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      router.push(postarUrl);
-      return;
-    }
-    const next = encodeURIComponent(postarUrl);
-    router.push(`/cadastro?next=${next}`);
+    const targetPath = session ? "/painel/postar" : "/postar";
+    router.push(`${targetPath}?${params.toString()}`);
   }
 
   return (

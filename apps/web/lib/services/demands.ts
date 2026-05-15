@@ -39,6 +39,8 @@ export interface DemandPublic {
   published_at: string;
   expires_at: string;
   created_at: string;
+  // Comprador verificado (migration 039) — CNPJ + razão social preenchidos.
+  buyer_is_verified: boolean;
 }
 
 export interface DemandWithContact extends DemandPublic {
@@ -46,7 +48,7 @@ export interface DemandWithContact extends DemandPublic {
 }
 
 const DEMAND_PUBLIC_COLUMNS =
-  "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, kind, items, payment_terms, delivery_terms, required_docs, attachment_url, status, views_count, contact_count, published_at, expires_at, created_at";
+  "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, kind, items, payment_terms, delivery_terms, required_docs, attachment_url, status, views_count, contact_count, published_at, expires_at, created_at, buyer_is_verified";
 
 // ─── Slug ─────────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,77 @@ export async function createDemand(buyerUserId: string, input: CreateDemandInput
     delivery_city: input.delivery_city ?? null,
     delivery_state: input.delivery_state ?? null,
     whatsapp_number: input.whatsapp_number,
+    photos_urls: input.photos_urls ?? [],
+    kind: input.kind,
+    lgpd_consent: true,
+    lgpd_consent_at: new Date().toISOString(),
+    lgpd_consent_text_version: LGPD_CONSENT_TEXT_VERSION,
+  };
+
+  if (input.kind === "structured") {
+    payload.items = input.items;
+    payload.payment_terms = input.payment_terms ?? null;
+    payload.delivery_terms = input.delivery_terms ?? null;
+    payload.required_docs = input.required_docs ?? null;
+    payload.attachment_url = input.attachment_url ?? null;
+  }
+
+  const { data, error } = await admin
+    .from("demands")
+    .insert(payload)
+    .select("id, slug")
+    .single<{ id: string; slug: string }>();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Não foi possível publicar a necessidade.");
+  }
+  return data;
+}
+
+// ─── Guest demand (publicação sem cadastro) ──────────────────────────────────
+
+export async function countGuestDemandsByEmail(email: string): Promise<number> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("demands")
+    .select("id", { count: "exact", head: true })
+    .eq("guest_email", email.toLowerCase().trim());
+  return count ?? 0;
+}
+
+export async function createGuestDemand(
+  guest: { name: string; email: string; whatsapp: string },
+  input: Omit<CreateDemandInput, "whatsapp_number" | "lgpd_consent"> & { lgpd_consent: true }
+) {
+  const admin = createAdminClient();
+  const slug = await pickUniqueSlug(input.title);
+  const email = guest.email.toLowerCase().trim();
+
+  // Limite: 1 publicação por email guest. Pra mais, exige cadastro.
+  const existing = await countGuestDemandsByEmail(email);
+  if (existing >= 1) {
+    throw new Error(
+      "Você já publicou uma necessidade como visitante. Crie sua conta gratuita para publicar mais."
+    );
+  }
+
+  const payload: Record<string, unknown> = {
+    buyer_user_id: null,
+    guest_name: guest.name.trim(),
+    guest_email: email,
+    guest_whatsapp: guest.whatsapp,
+    slug,
+    title: input.title.trim(),
+    description: input.description?.trim() ?? null,
+    category_id: input.category_id ?? null,
+    subcategory_slug: input.subcategory_slug ?? null,
+    quantity: input.quantity ?? null,
+    unit: input.unit ?? null,
+    budget_max_cents: input.budget_max_cents ?? null,
+    deadline: input.deadline ?? null,
+    delivery_city: input.delivery_city ?? null,
+    delivery_state: input.delivery_state ?? null,
+    whatsapp_number: guest.whatsapp,
     photos_urls: input.photos_urls ?? [],
     kind: input.kind,
     lgpd_consent: true,
@@ -198,6 +271,8 @@ export interface DemandFeedFilters {
   category_id?: string | null;
   state?: string | null;
   kind?: DemandKind | null;
+  /** True = só compradores verificados (CNPJ + razão social). */
+  only_verified?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -207,12 +282,15 @@ export async function listPublicDemands(filters: DemandFeedFilters = {}) {
   let q = admin
     .from("demands_public")
     .select(DEMAND_PUBLIC_COLUMNS, { count: "exact" })
+    // Verificados antes — destaque visual sem precisar de coluna extra.
+    .order("buyer_is_verified", { ascending: false })
     .order("published_at", { ascending: false });
 
   if (filters.query) q = q.ilike("title", `%${filters.query}%`);
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.state) q = q.eq("delivery_state", filters.state.toUpperCase());
   if (filters.kind) q = q.eq("kind", filters.kind);
+  if (filters.only_verified) q = q.eq("buyer_is_verified", true);
 
   const limit = Math.min(Math.max(filters.limit ?? 20, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);

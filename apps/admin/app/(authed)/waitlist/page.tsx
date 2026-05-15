@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { Card, CardContent } from "@/components/ui/card";
+import WaitlistRowActions from "./_components/waitlist-row-actions";
 
 export const metadata = { title: "Lista de Espera - Admin" };
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ type WaitlistRow = {
   utm_source: string | null;
   utm_medium: string | null;
   utm_campaign: string | null;
+  approved_at: string | null;
   created_at: string;
 };
 
@@ -127,12 +129,13 @@ export default async function AdminWaitlistPage({ searchParams }: WaitlistPagePr
                   <th className="text-left px-4 py-3">Categoria / Mensagem</th>
                   <th className="text-left px-4 py-3">Origem</th>
                   <th className="text-left px-4 py-3">Inscrição</th>
+                  <th className="text-left px-4 py-3">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {activeRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+                    <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
                       Nenhum inscrito encontrado nesta aba.
                     </td>
                   </tr>
@@ -171,6 +174,13 @@ export default async function AdminWaitlistPage({ searchParams }: WaitlistPagePr
                     </td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                       {formatDate(row.created_at)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <WaitlistRowActions
+                        waitlistId={row.id}
+                        email={row.email}
+                        approvedAt={row.approved_at}
+                      />
                     </td>
                   </tr>
                 ))}

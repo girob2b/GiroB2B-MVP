@@ -157,3 +157,105 @@ export async function toggleSuspendUser(
   revalidatePath("/");
   return {};
 }
+
+// ─── Trial 7 dias (decisão de produto 2026-05-14) ────────────────────────────
+
+const TRIAL_DAYS = 7;
+
+export async function activateSupplierTrial(
+  supplierId: string
+): Promise<{ error?: string }> {
+  try {
+    await assertSession();
+    const adminClient = createAdminClient();
+
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
+    const { error } = await adminClient
+      .from("suppliers")
+      .update({
+        subscription_status: "trialing",
+        subscription_started_at: startedAt.toISOString(),
+        subscription_expires_at: expiresAt.toISOString(),
+      })
+      .eq("id", supplierId);
+
+    if (error) return { error: error.message };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro desconhecido." };
+  }
+
+  revalidatePath("/usuarios");
+  return {};
+}
+
+// ─── Waitlist: aprovação manual (decisão 2026-05-14, opção A2) ──────────────
+
+export async function approveWaitlistEntry(
+  waitlistId: string
+): Promise<{ error?: string }> {
+  try {
+    await assertSession();
+    const adminClient = createAdminClient();
+
+    const { error } = await adminClient
+      .from("waitlist")
+      .update({ approved_at: new Date().toISOString() })
+      .eq("id", waitlistId)
+      .is("approved_at", null);
+
+    if (error) return { error: error.message };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro desconhecido." };
+  }
+
+  revalidatePath("/waitlist");
+  return {};
+}
+
+export async function unapproveWaitlistEntry(
+  waitlistId: string
+): Promise<{ error?: string }> {
+  try {
+    await assertSession();
+    const adminClient = createAdminClient();
+
+    const { error } = await adminClient
+      .from("waitlist")
+      .update({ approved_at: null })
+      .eq("id", waitlistId);
+
+    if (error) return { error: error.message };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro desconhecido." };
+  }
+
+  revalidatePath("/waitlist");
+  return {};
+}
+
+export async function deactivateSupplierSubscription(
+  supplierId: string
+): Promise<{ error?: string }> {
+  try {
+    await assertSession();
+    const adminClient = createAdminClient();
+
+    const { error } = await adminClient
+      .from("suppliers")
+      .update({
+        subscription_status: "inactive",
+        subscription_started_at: null,
+        subscription_expires_at: null,
+      })
+      .eq("id", supplierId);
+
+    if (error) return { error: error.message };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erro desconhecido." };
+  }
+
+  revalidatePath("/usuarios");
+  return {};
+}

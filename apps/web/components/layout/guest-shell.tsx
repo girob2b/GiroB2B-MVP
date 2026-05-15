@@ -37,7 +37,7 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
 
           <nav className="flex items-center gap-2 shrink-0">
             <Link
-              href="/cadastro?next=/painel/postar"
+              href="/postar"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
             >
               <Plus className="h-4 w-4" />
@@ -75,7 +75,7 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               Entrar
             </Link>
             <Link
-              href="/cadastro?next=/painel/postar"
+              href="/postar"
               className="inline-flex items-center gap-1 text-sm font-semibold px-3 py-1.5 rounded-lg bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
             >
               <Plus className="h-4 w-4" />
