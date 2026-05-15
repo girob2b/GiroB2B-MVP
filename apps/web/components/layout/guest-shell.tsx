@@ -44,7 +44,8 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               Publicar necessidade
             </Link>
             <Link
-              href="/seja-vendedor"
+              href="?waitlist=supplier"
+              scroll={false}
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
             >
               Sou vendedor
