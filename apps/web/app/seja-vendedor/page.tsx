@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, MessageCircle, Target, Zap } from "lucide-react";
+import SupplierWaitlistForm from "@/components/seja-vendedor/supplier-waitlist-form";
 
 export const metadata: Metadata = {
   title: "Seja vendedor — receba leads B2B qualificados",
@@ -11,32 +12,44 @@ export const metadata: Metadata = {
 export default function SejaVendedorPage() {
   return (
     <div className="space-y-12">
-      {/* Hero */}
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[color:var(--brand-green-50)] to-white p-8 sm:p-12">
-        <div className="max-w-3xl space-y-4">
-          <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-100)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-green-800)]">
-            Para vendedores B2B
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-slate-900">
-            Pare de prospectar no escuro. Receba leads de compradores que já estão pedindo o que você vende.
-          </h1>
-          <p className="text-base leading-relaxed text-slate-600">
-            No GiroB2B, compradores B2B publicam o que precisam comprar. Vendedores assinantes vêem cada
-            necessidade em tempo real e contatam o comprador direto pelo WhatsApp, com a mensagem já pré-formatada.
-          </p>
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-            <Link
-              href="/cadastro?role=supplier"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-6 py-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
-            >
-              Quero vender no GiroB2B <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/buscar"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Ver necessidades publicadas
-            </Link>
+      {/* Hero 2 colunas: pitch à esquerda + waitlist form à direita */}
+      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[color:var(--brand-green-50)] to-white p-6 sm:p-10">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_1fr] lg:items-center">
+          <div className="space-y-4">
+            <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-100)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-green-800)]">
+              Para vendedores B2B
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-slate-900">
+              Pare de prospectar no escuro. Receba leads de compradores que já estão pedindo o que você vende.
+            </h1>
+            <p className="text-base leading-relaxed text-slate-600">
+              No GiroB2B, compradores B2B publicam o que precisam comprar. Vendedores assinantes vêem cada
+              necessidade em tempo real e contatam o comprador direto pelo WhatsApp, com a mensagem já pré-formatada.
+            </p>
+            <p className="text-sm text-slate-500">
+              Estamos abrindo a plataforma pra vendedores aos poucos. Cadastre-se na lista — a equipe vai
+              avaliar e te enviar o acesso quando liberar.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/buscar"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-green-700)] hover:underline"
+              >
+                Ver necessidades publicadas <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="lg:pl-4">
+            <div className="rounded-2xl bg-white shadow-xl shadow-slate-900/5 ring-1 ring-slate-200">
+              <div className="rounded-t-2xl bg-[color:var(--brand-green-600)] px-5 py-3">
+                <p className="text-sm font-bold text-white">Quero vender</p>
+                <p className="text-xs text-[color:var(--brand-green-100)]">Entre na lista de espera</p>
+              </div>
+              <div className="p-5">
+                <SupplierWaitlistForm source="seja_vendedor_hero" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -88,28 +101,26 @@ export default function SejaVendedorPage() {
         </div>
       </section>
 
-      {/* CTA final */}
+      {/* CTA final — segundo waitlist form */}
       <section className="rounded-3xl bg-slate-900 px-8 py-10 text-white sm:px-12">
-        <div className="max-w-2xl space-y-4">
-          <Zap className="h-8 w-8 text-[color:var(--brand-accent-300)]" />
-          <h2 className="text-2xl font-bold">Pronto pra ver leads reais?</h2>
-          <p className="text-slate-300">
-            O cadastro é rápido. Entraremos em contato com você assim que os planos forem publicados —
-            até lá, você pode explorar o feed em modo preview.
-          </p>
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-            <Link
-              href="/cadastro?role=supplier"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
-            >
-              Cadastrar como vendedor <ArrowRight className="h-4 w-4" />
-            </Link>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_1fr] lg:items-center">
+          <div className="space-y-4">
+            <Zap className="h-8 w-8 text-[color:var(--brand-accent-300)]" />
+            <h2 className="text-2xl font-bold">Pronto pra ver leads reais?</h2>
+            <p className="text-slate-300">
+              Cadastre-se na lista de espera — vamos avaliar e enviar o link de acesso pelo seu email.
+              Até lá, você pode explorar o feed em modo preview.
+            </p>
             <Link
               href="/buscar"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white hover:underline"
             >
-              Ver feed em preview
+              Ver feed em preview <ArrowRight className="h-4 w-4" />
             </Link>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 text-slate-900">
+            <SupplierWaitlistForm source="seja_vendedor_cta" />
           </div>
         </div>
       </section>

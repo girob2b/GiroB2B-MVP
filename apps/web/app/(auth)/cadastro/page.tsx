@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import BuyerRegisterForm from "./buyer-register-form";
 
 export const metadata: Metadata = {
@@ -16,7 +17,15 @@ export default async function CadastroPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { next } = await searchParams;
+  const { next, role } = await searchParams;
+
+  // Defesa em camadas (decisão de produto 2026-05-14):
+  // Vendedor anônimo não cria conta direto — vai pra /seja-vendedor (waitlist).
+  // Mesmo se o link com ?role=supplier vazar em algum lugar, redirecionamos.
+  if (role === "supplier" || role === "vendedor" || role === "seller") {
+    redirect("/seja-vendedor");
+  }
+
   // Sanitiza next: aceita só caminhos relativos começando com "/"
   const safeNext = typeof next === "string" && next.startsWith("/") ? next : null;
 

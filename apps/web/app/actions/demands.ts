@@ -70,6 +70,24 @@ function parseItemsJson(value: FormDataEntryValue | null): DemandItem[] | null {
   }
 }
 
+// Aceita só URLs do Supabase Storage (bucket public/product-images) — bloqueia
+// injection de URLs externas que poderiam ser usadas pra tracking/phishing.
+const ALLOWED_PHOTO_HOST_RE = /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/product-images\//i;
+
+function parsePhotosJson(value: FormDataEntryValue | null): string[] {
+  if (typeof value !== "string" || value.trim().length === 0) return [];
+  try {
+    const raw = JSON.parse(value) as unknown;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((u): u is string => typeof u === "string")
+      .filter((u) => ALLOWED_PHOTO_HOST_RE.test(u))
+      .slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
 // ─── createDemandAction ───────────────────────────────────────────────────────
 
 export async function createDemandAction(
@@ -98,7 +116,7 @@ export async function createDemandAction(
     delivery_city: asNullableString(formData.get("delivery_city")),
     delivery_state: asNullableString(formData.get("delivery_state")),
     whatsapp_number: typeof whatsRaw === "string" ? whatsRaw.trim() : "",
-    photos_urls: [] as string[],
+    photos_urls: parsePhotosJson(formData.get("photos_urls_json")),
     lgpd_consent: consentRaw === "on" || consentRaw === "true",
   };
 

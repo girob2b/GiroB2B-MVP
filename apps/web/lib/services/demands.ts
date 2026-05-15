@@ -85,7 +85,7 @@ export async function createDemand(buyerUserId: string, input: CreateDemandInput
     buyer_user_id: buyerUserId,
     slug,
     title: input.title.trim(),
-    description: input.description.trim(),
+    description: input.description?.trim() ?? null,
     category_id: input.category_id ?? null,
     subcategory_slug: input.subcategory_slug ?? null,
     quantity: input.quantity ?? null,
@@ -142,7 +142,7 @@ export async function updateDemand(
 
   const updatePayload: Record<string, unknown> = {};
   if (input.title !== undefined) updatePayload.title = input.title.trim();
-  if (input.description !== undefined) updatePayload.description = input.description.trim();
+  if (input.description !== undefined) updatePayload.description = input.description?.trim() ?? null;
   if (input.category_id !== undefined) updatePayload.category_id = input.category_id;
   if (input.subcategory_slug !== undefined) updatePayload.subcategory_slug = input.subcategory_slug;
   if (input.quantity !== undefined) updatePayload.quantity = input.quantity;

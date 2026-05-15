@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createDemandAction } from "@/app/actions/demands";
 import { createClient } from "@/lib/supabase/client";
 import type { DemandKind } from "@/lib/schemas/demands";
+import DemandPhotosUploader from "./demand-photos-uploader";
 
 const BR_STATES = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA",
@@ -231,11 +232,11 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
         </Field>
 
         <Field
-          label={kind === "structured" ? "Resumo do pedido" : "Descrição"}
+          label={kind === "structured" ? "Resumo do pedido" : "Descrição (opcional)"}
           htmlFor="description"
           help={
             kind === "simple"
-              ? "Especifique produto, qualidade, embalagem, certificações exigidas, etc."
+              ? "Especificação livre. Pode deixar em branco se o título e a foto já dizem tudo."
               : "Visão geral do pedido. Os itens detalhados vão no bloco abaixo."
           }
           error={state?.errors?.description?.[0]}
@@ -243,10 +244,9 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
           <textarea
             id="description"
             name="description"
-            required
-            minLength={20}
+            required={kind === "structured"}
             maxLength={5000}
-            rows={kind === "structured" ? 3 : 6}
+            rows={kind === "structured" ? 3 : 5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detalhes da necessidade — quanto mais claro, melhor a qualidade dos contatos."
@@ -268,6 +268,16 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             ))}
           </select>
         </Field>
+
+        {kind === "simple" && (
+          <Field
+            label="Foto do produto (opcional)"
+            htmlFor="photos_urls_json"
+            help="Até 3 imagens. JPG, PNG ou WebP até 5 MB cada."
+          >
+            <DemandPhotosUploader max={3} />
+          </Field>
+        )}
       </section>
 
       {/* Itens (somente structured) */}

@@ -42,11 +42,15 @@ const BaseDemandSchema = z.object({
     .trim()
     .min(5, "Título muito curto.")
     .max(120, "Título muito longo (máx 120)."),
+  // Descrição opcional (decisão de produto 2026-05-14): proposta simples não
+  // exige descrição rica — título + foto + preço/condições já trazem contexto.
   description: z
     .string()
     .trim()
-    .min(20, "Descreva sua necessidade com pelo menos 20 caracteres.")
-    .max(5000, "Descrição muito longa (máx 5000)."),
+    .max(5000, "Descrição muito longa (máx 5000).")
+    .transform((v) => (v.length === 0 ? null : v))
+    .nullable()
+    .optional(),
   category_id: z.string().uuid("Selecione uma categoria.").nullable().optional(),
   subcategory_slug: z.string().trim().max(80).nullable().optional(),
   quantity: z.number().positive().nullable().optional(),

@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Lista de Espera - Admin" };
 export const dynamic = "force-dynamic";
 
+type WaitlistRole = "buyer" | "supplier" | "enterprise";
+
 type WaitlistRow = {
   id: string;
-  role: "supplier" | "enterprise";
+  role: WaitlistRole;
   email: string;
   name: string | null;
   company: string | null;
@@ -22,24 +24,37 @@ type WaitlistRow = {
   created_at: string;
 };
 
-type Tab = "todos" | "supplier" | "enterprise";
+type Tab = "todos" | "buyer" | "supplier" | "enterprise";
 
 interface WaitlistPageProps {
   searchParams: Promise<{ tab?: string }>;
 }
 
 function normalizeTab(tab: string | undefined): Tab {
-  if (tab === "supplier" || tab === "enterprise") return tab;
+  if (tab === "buyer" || tab === "supplier" || tab === "enterprise") return tab;
   return "todos";
 }
 
 const TAB_LABEL: Record<Tab, string> = {
   todos: "Todos",
-  supplier: "Fornecedores",
+  buyer: "Compradores",
+  supplier: "Vendedores",
   enterprise: "Enterprise",
 };
 
-const TAB_ORDER: Tab[] = ["todos", "supplier", "enterprise"];
+const TAB_ORDER: Tab[] = ["todos", "buyer", "supplier", "enterprise"];
+
+const ROLE_LABEL: Record<WaitlistRole, string> = {
+  buyer: "Comprador",
+  supplier: "Vendedor",
+  enterprise: "Enterprise",
+};
+
+const ROLE_TONE: Record<WaitlistRole, string> = {
+  buyer: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  supplier: "border-teal-200 bg-teal-50 text-teal-700",
+  enterprise: "border-purple-200 bg-purple-50 text-purple-700",
+};
 
 export default async function AdminWaitlistPage({ searchParams }: WaitlistPageProps) {
   const { tab } = await searchParams;
@@ -63,6 +78,7 @@ export default async function AdminWaitlistPage({ searchParams }: WaitlistPagePr
 
   const rowsByTab: Record<Tab, WaitlistRow[]> = {
     todos: rows,
+    buyer: rows.filter((r) => r.role === "buyer"),
     supplier: rows.filter((r) => r.role === "supplier"),
     enterprise: rows.filter((r) => r.role === "enterprise"),
   };
@@ -128,29 +144,27 @@ export default async function AdminWaitlistPage({ searchParams }: WaitlistPagePr
                       <span
                         className={[
                           "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold",
-                          row.role === "supplier"
-                            ? "border-teal-200 bg-teal-50 text-teal-700"
-                            : "border-purple-200 bg-purple-50 text-purple-700",
+                          ROLE_TONE[row.role] ?? "border-slate-200 bg-slate-50 text-slate-700",
                         ].join(" ")}
                       >
-                        {row.role === "supplier" ? "Fornecedor" : "Enterprise"}
+                        {ROLE_LABEL[row.role] ?? row.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-600">{row.email}</td>
                     <td className="px-4 py-3 text-slate-600">
-                      {row.role === "supplier"
-                        ? "-"
-                        : [row.name, row.company].filter(Boolean).join(" · ") || "-"}
+                      {row.role === "enterprise"
+                        ? [row.name, row.company].filter(Boolean).join(" · ") || "-"
+                        : "-"}
                     </td>
                     <td className="px-4 py-3 text-slate-600">
-                      {row.role === "supplier"
-                        ? formatCNPJ(row.cnpj ?? "")
-                        : (row.estimated_volume ?? "-")}
+                      {row.role === "enterprise"
+                        ? (row.estimated_volume ?? "-")
+                        : formatCNPJ(row.cnpj ?? "")}
                     </td>
                     <td className="px-4 py-3 text-slate-600 max-w-xs truncate">
-                      {row.role === "supplier"
-                        ? (row.category ?? "-")
-                        : (row.message ?? "-")}
+                      {row.role === "enterprise"
+                        ? (row.message ?? "-")
+                        : (row.category ?? "-")}
                     </td>
                     <td className="px-4 py-3 text-slate-500">
                       {formatSource(row.source, row.utm_source, row.utm_medium)}
