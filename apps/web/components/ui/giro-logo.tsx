@@ -61,7 +61,12 @@ export function GiroLogo({
 
       {!iconOnly && (
         <span
-          style={{ fontSize: size * 0.56, lineHeight: 1, letterSpacing: "-0.03em", color: palette.text }}
+          style={{
+            fontSize: size * 0.58,
+            lineHeight: `${size}px`,
+            letterSpacing: "-0.03em",
+            color: palette.text,
+          }}
           className="font-bold"
         >
           GiroB2B
