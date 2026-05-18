@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, FileKey, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { Eye, EyeOff, FileKey, Loader2, LockKeyhole, Mail, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { login } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ type LoginFormProps = {
   /** True quando o form está dentro do <AuthDialog>. Faz o link cruzado
    *  trocar pro modal de cadastro em vez de navegar pra rota dedicada. */
   inModal?: boolean;
+  /** Email pré-preenchido (vem da waitlist da landing — comprador recorrente). */
+  defaultEmail?: string;
 };
 
 function GoogleIcon() {
@@ -38,16 +40,24 @@ function GoogleIcon() {
   );
 }
 
-export default function LoginForm({ feedback, inModal = false }: LoginFormProps) {
+export default function LoginForm({ feedback, inModal = false, defaultEmail }: LoginFormProps) {
   const [state, action, pending] = useActionState(login, undefined);
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail ?? "");
   const [rememberMe, setRememberMe] = useState(false);
   const [oauthPending, setOauthPending] = useState(false);
   const [certMode, setCertMode] = useState(false);
   const certInputRef = useRef<HTMLInputElement>(null);
 
+  // Param ?email= (vindo da waitlist da landing) define o link "Continuar sem login"
+  // pra preservar a intenção do user (publicar como guest).
+  const guestPostarHref = defaultEmail
+    ? `/postar?email=${encodeURIComponent(defaultEmail)}`
+    : "/postar";
+
   useEffect(() => {
+    // Email vindo da URL (?email= da waitlist) tem prioridade sobre localStorage.
+    if (defaultEmail) return;
     const savedEmail = window.localStorage.getItem(REMEMBER_EMAIL_KEY);
     if (!savedEmail) return;
     const frame = window.requestAnimationFrame(() => {
@@ -55,7 +65,7 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
       setRememberMe(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, []);
+  }, [defaultEmail]);
 
   // Feedback da server action
   useEffect(() => {
@@ -108,6 +118,36 @@ export default function LoginForm({ feedback, inModal = false }: LoginFormProps)
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
         <p className="text-sm text-muted-foreground">Acesse sua conta GiroB2B.</p>
+      </div>
+
+      {/* CTA chamativo: comprador pode pular login e publicar como guest.
+          Aparece em qualquer modo — o link preserva ?email= quando vem da waitlist. */}
+      <Link
+        href={guestPostarHref}
+        className="group flex items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-green-600)] bg-[color:var(--brand-green-50)] px-4 py-3.5 shadow-sm transition hover:bg-[color:var(--brand-green-100)] hover:shadow-md"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-green-600)] text-white">
+            <Zap className="h-4 w-4" />
+          </span>
+          <div className="leading-tight">
+            <p className="text-sm font-bold text-[color:var(--brand-green-800)]">
+              Continuar sem login
+            </p>
+            <p className="text-xs text-[color:var(--brand-green-700)]">
+              Publique sua necessidade agora — leva 1 minuto.
+            </p>
+          </div>
+        </div>
+        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-green-700)] transition group-hover:translate-x-0.5">
+          →
+        </span>
+      </Link>
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs uppercase tracking-wider text-slate-400">ou entre na conta</span>
+        <span className="h-px flex-1 bg-slate-200" />
       </div>
 
       {/* Cert A1 mode — replaces the form */}

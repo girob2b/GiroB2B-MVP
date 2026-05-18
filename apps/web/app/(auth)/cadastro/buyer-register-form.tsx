@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
   Mail,
   RefreshCw,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,9 +40,38 @@ interface BuyerRegisterFormProps {
   next?: string | null;
 }
 
+const PRESERVED_GUEST_PARAMS = ["email", "title", "category_id", "delivery_state"] as const;
+
 export default function BuyerRegisterForm({ inModal = false, next = null }: BuyerRegisterFormProps = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // "Continuar sem cadastro" — comportamento contextual:
+  //  - no modal (?auth=register): fecha o modal removendo o param, fica na pagina
+  //  - na rota /cadastro: navega pra /postar preservando params guest (email/title/UF)
+  function handleSkip() {
+    if (inModal) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("auth");
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      return;
+    }
+    const qs = new URLSearchParams();
+    for (const key of PRESERVED_GUEST_PARAMS) {
+      const value = searchParams.get(key);
+      if (value) qs.set(key, value);
+    }
+    const tail = qs.toString();
+    router.push(tail ? `/postar?${tail}` : "/postar");
+  }
   const [step, setStep] = useState<Step>("form");
-  const [email, setEmail] = useState("");
+  // Prefill do email vindo da waitlist (?email=). Lê uma vez na montagem.
+  const [email, setEmail] = useState(() => {
+    const fromUrl = searchParams.get("email");
+    return fromUrl && fromUrl.includes("@") ? fromUrl.trim().toLowerCase() : "";
+  });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -230,6 +261,38 @@ export default function BuyerRegisterForm({ inModal = false, next = null }: Buye
         <p className="text-sm text-muted-foreground">
           Preencha os dados abaixo para começar.
         </p>
+      </div>
+
+      {/* CTA chamativo: comprador pode pular cadastro e publicar como guest.
+          No modal (?auth=register), fecha o modal e mantém o user na página atual.
+          Na rota /cadastro, navega pra /postar preservando params guest. */}
+      <button
+        type="button"
+        onClick={handleSkip}
+        className="group flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-green-600)] bg-[color:var(--brand-green-50)] px-4 py-3.5 text-left shadow-sm transition hover:bg-[color:var(--brand-green-100)] hover:shadow-md"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-green-600)] text-white">
+            <Zap className="h-4 w-4" />
+          </span>
+          <span className="leading-tight">
+            <span className="block text-sm font-bold text-[color:var(--brand-green-800)]">
+              Continuar sem cadastro
+            </span>
+            <span className="block text-xs text-[color:var(--brand-green-700)]">
+              Publique sua necessidade agora — leva 1 minuto.
+            </span>
+          </span>
+        </span>
+        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-green-700)] transition group-hover:translate-x-0.5">
+          →
+        </span>
+      </button>
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs uppercase tracking-wider text-slate-400">ou crie conta</span>
+        <span className="h-px flex-1 bg-slate-200" />
       </div>
 
       <form onSubmit={handleRegister} className="space-y-5">

@@ -19,9 +19,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const error = pickParam(params.error);
   const status = pickParam(params.status);
+  const emailParam = pickParam(params.email);
+  const defaultEmail =
+    typeof emailParam === "string" && emailParam.includes("@") && emailParam.length <= 200
+      ? emailParam.trim().toLowerCase()
+      : undefined;
 
-  // Sem mensagem especial → abre modal sobre a página de explorar
-  if (!error && !status) redirect("/explorar?auth=login");
+  // Sem mensagem especial e sem email pra prefill → abre modal sobre /explorar.
+  // Quando vem com ?email= (comprador recorrente da landing), mantém rota dedicada
+  // pra mostrar o card "Continuar sem login" + permitir login + cadastro.
+  if (!error && !status && !defaultEmail) redirect("/explorar?auth=login");
 
   let feedback: { kind: "success" | "error"; message: string } | undefined;
 
@@ -50,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <div className="min-h-dvh bg-surface flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <LoginForm feedback={feedback} />
+        <LoginForm feedback={feedback} defaultEmail={defaultEmail} />
       </div>
     </div>
   );
