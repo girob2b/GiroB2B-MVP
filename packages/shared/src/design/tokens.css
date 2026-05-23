@@ -1,0 +1,338 @@
+/* ───────────────────────────────────────────────────────────────────────
+ * GiroB2B — Design Tokens (fonte de verdade unica)
+ *
+ * Importado pelos 3 apps (apps/web, apps/admin, apps/girob2b-landing-page).
+ * Mudar aqui = mudar nas tres superficies.
+ *
+ * Estrutura:
+ *   1. Primitivos (cor crua, nao-semantica)
+ *   2. Semanticos (surface, ink, border, etc — derivam dos primitivos)
+ *   3. Spacing
+ *   4. Typography
+ *   5. Radius
+ *   6. Shadow
+ *   7. Motion (durations + easings)
+ *   8. Z-index
+ *   9. Breakpoints + containers
+ *
+ * Naming convention:
+ *   --{escopo}-{nome}-{tom}        — primitivos     (ex: --brand-600)
+ *   --{categoria}-{nome}           — semanticos     (ex: --surface, --ink-primary)
+ *   --{categoria}-{tamanho}        — escalas        (ex: --space-4, --radius-lg)
+ *
+ * Referencia: docs/design-system.md (decisoes) + docs/brand/BRIEF_MARCA.md (paleta).
+ * ─────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 1. PRIMITIVOS — paleta crua
+   * Usar diretamente apenas quando o token semantico nao serve.
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Brand — Teal profundo (BRIEF_MARCA 2026-04-17) */
+  --brand-50:  #E6F0F0;
+  --brand-100: #C3DCDC;
+  --brand-200: #9CC5C5;
+  --brand-300: #74AEAE;
+  --brand-400: #4D9797;
+  --brand-500: #2A8080;
+  --brand-600: #0A5C5C;  /* primary */
+  --brand-700: #084B4B;
+  --brand-800: #063A3A;
+  --brand-900: #042929;
+
+  /* Accent — Dourado queimado */
+  --accent-50:  #FBF4E6;
+  --accent-100: #F4E1BD;
+  --accent-200: #EBCB8E;
+  --accent-300: #E2B55F;
+  --accent-400: #D8A040;
+  --accent-500: #C08A2E;  /* default */
+  --accent-600: #A47527;
+  --accent-700: #875F1F;
+  --accent-800: #6B4A18;
+  --accent-900: #4F3611;
+
+  /* Neutral — graphite + off-white (BRIEF_MARCA) */
+  --neutral-0:    #FFFFFF;
+  --neutral-50:   #F8F7F4;
+  --neutral-100:  #F4F1EA;  /* off-white calido */
+  --neutral-200:  #E7E4DD;
+  --neutral-300:  #D1CEC7;
+  --neutral-400:  #A8A5A0;
+  --neutral-500:  #7D7B77;
+  --neutral-600:  #5A5854;
+  --neutral-700:  #3A4040;  /* graphite-soft */
+  --neutral-800:  #2A2F2F;
+  --neutral-900:  #1A1F1F;  /* graphite escuro */
+  --neutral-1000: #0D1010;
+
+  /* Success — emerald */
+  --success-50:  #ECFDF5;
+  --success-100: #D1FAE5;
+  --success-300: #6EE7B7;
+  --success-500: #10B981;
+  --success-600: #059669;
+  --success-700: #047857;
+  --success-900: #064E3B;
+
+  /* Warning — ambar (separado do gold pra nao confundir CTA com aviso) */
+  --warning-50:  #FFFBEB;
+  --warning-100: #FEF3C7;
+  --warning-300: #FCD34D;
+  --warning-500: #F59E0B;
+  --warning-600: #D97706;
+  --warning-700: #B45309;
+  --warning-900: #78350F;
+
+  /* Danger — red */
+  --danger-50:  #FEF2F2;
+  --danger-100: #FEE2E2;
+  --danger-300: #FCA5A5;
+  --danger-500: #EF4444;
+  --danger-600: #DC2626;
+  --danger-700: #B91C1C;
+  --danger-900: #7F1D1D;
+
+  /* Info — sky */
+  --info-50:  #F0F9FF;
+  --info-100: #E0F2FE;
+  --info-300: #7DD3FC;
+  --info-500: #0EA5E9;
+  --info-600: #0284C7;
+  --info-700: #0369A1;
+  --info-900: #0C4A6E;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 2. SEMANTICOS — usar SEMPRE estes em vez dos primitivos.
+   * Mudar aqui muda toda a UI sem precisar editar componentes.
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Surfaces (backgrounds) */
+  --surface:           var(--neutral-50);   /* body / page background */
+  --surface-raised:    var(--neutral-0);    /* cards, popovers, modals */
+  --surface-sunken:    var(--neutral-100);  /* areas internas com hierarquia menor */
+  --surface-inverse:   var(--neutral-900);  /* footers, hero escuro */
+  --surface-brand:     var(--brand-600);    /* CTAs, headers institucionais */
+  --surface-brand-soft: var(--brand-50);    /* highlights claros, callouts brand */
+
+  /* Ink (texto + icones) */
+  --ink-primary:    var(--neutral-900);
+  --ink-secondary:  var(--neutral-700);
+  --ink-muted:      var(--neutral-500);
+  --ink-subtle:     var(--neutral-400);
+  --ink-inverse:    var(--neutral-50);    /* texto sobre surface-brand/inverse */
+  --ink-brand:      var(--brand-700);
+  --ink-accent:     var(--accent-700);
+  --ink-success:    var(--success-700);
+  --ink-warning:    var(--warning-700);
+  --ink-danger:     var(--danger-700);
+  --ink-info:       var(--info-700);
+
+  /* Borders */
+  --border-subtle:   var(--neutral-200);
+  --border-default:  var(--neutral-300);
+  --border-strong:   var(--neutral-400);
+  --border-brand:    var(--brand-600);
+  --border-focus:    var(--brand-500);
+
+  /* Action — CTAs primarios e secundarios */
+  --action-primary-bg:        var(--brand-600);
+  --action-primary-bg-hover:  var(--brand-700);
+  --action-primary-bg-active: var(--brand-800);
+  --action-primary-fg:        var(--neutral-50);
+  --action-accent-bg:         var(--accent-500);
+  --action-accent-bg-hover:   var(--accent-600);
+  --action-accent-fg:         var(--neutral-900);
+  --action-danger-bg:         var(--danger-600);
+  --action-danger-bg-hover:   var(--danger-700);
+  --action-danger-fg:         var(--neutral-0);
+
+  /* Focus ring (acessibilidade) */
+  --ring-color:  var(--brand-500);
+  --ring-width:  2px;
+  --ring-offset: 2px;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 3. SPACING — base 4px (0.25rem). Mesma escala do Tailwind pra reuso.
+   * ═══════════════════════════════════════════════════════════════════════ */
+  --space-0:   0;
+  --space-px:  1px;
+  --space-0_5: 0.125rem;  /*  2px */
+  --space-1:   0.25rem;   /*  4px */
+  --space-1_5: 0.375rem;  /*  6px */
+  --space-2:   0.5rem;    /*  8px */
+  --space-2_5: 0.625rem;  /* 10px */
+  --space-3:   0.75rem;   /* 12px */
+  --space-3_5: 0.875rem;  /* 14px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-7:   1.75rem;   /* 28px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-14:  3.5rem;    /* 56px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+  --space-24:  6rem;      /* 96px */
+  --space-32:  8rem;      /* 128px */
+  --space-40: 10rem;
+  --space-48: 12rem;
+  --space-56: 14rem;
+  --space-64: 16rem;
+
+  /* Padding aliases — usar nos compostos pra padronizar densidade */
+  --padding-compact:     var(--space-2)  var(--space-3);   /*  8 / 12 — botoes pequenos, badges */
+  --padding-default:     var(--space-3)  var(--space-4);   /* 12 / 16 — botoes, inputs */
+  --padding-comfortable: var(--space-4)  var(--space-5);   /* 16 / 20 — cards densos */
+  --padding-spacious:    var(--space-6)  var(--space-8);   /* 24 / 32 — section/page level */
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 4. TYPOGRAPHY
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Families */
+  --font-sans:    "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono:    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Sizes (escala Tailwind) */
+  --font-size-xs:   0.75rem;   /* 12 */
+  --font-size-sm:   0.875rem;  /* 14 */
+  --font-size-base: 1rem;      /* 16 */
+  --font-size-lg:   1.125rem;  /* 18 */
+  --font-size-xl:   1.25rem;   /* 20 */
+  --font-size-2xl:  1.5rem;    /* 24 */
+  --font-size-3xl:  1.875rem;  /* 30 */
+  --font-size-4xl:  2.25rem;   /* 36 */
+  --font-size-5xl:  3rem;      /* 48 */
+  --font-size-6xl:  3.75rem;   /* 60 */
+  --font-size-7xl:  4.5rem;    /* 72 */
+
+  /* Weights */
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* Line heights */
+  --line-height-tight:    1.1;
+  --line-height-snug:     1.25;
+  --line-height-normal:   1.5;
+  --line-height-relaxed:  1.625;
+  --line-height-loose:    2;
+
+  /* Letter spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight:   -0.025em;
+  --letter-spacing-normal:  0;
+  --letter-spacing-wide:    0.025em;
+  --letter-spacing-wider:   0.05em;
+  --letter-spacing-widest:  0.1em;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 5. RADIUS — default = lg (8px). B2B sobrio.
+   * ═══════════════════════════════════════════════════════════════════════ */
+  --radius-none: 0;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;   /* default */
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-3xl:  24px;
+  --radius-full: 9999px;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 6. SHADOW — ladder progressivo
+   * ═══════════════════════════════════════════════════════════════════════ */
+  --shadow-xs:   0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:   0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg:   0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl:   0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-2xl:  0 25px 50px -12px rgb(0 0 0 / 0.18);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Shadow brand (CTA destacado, callouts) */
+  --shadow-brand: 0 8px 24px -8px rgb(10 92 92 / 0.25);
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 7. MOTION
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Durations */
+  --duration-instant: 100ms;
+  --duration-fast:    150ms;
+  --duration-base:    200ms;  /* default */
+  --duration-slow:    300ms;
+  --duration-slower:  500ms;
+
+  /* Easings */
+  --ease-linear:  linear;
+  --ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);    /* default */
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 8. Z-INDEX — 8 layers nomeados
+   * ═══════════════════════════════════════════════════════════════════════ */
+  --z-base:     0;
+  --z-dropdown: 10;
+  --z-sticky:   20;
+  --z-fixed:    30;
+  --z-overlay:  40;
+  --z-modal:    50;
+  --z-popover:  60;
+  --z-toast:    70;
+  --z-tooltip:  80;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * 9. BREAKPOINTS + CONTAINERS
+   * Os media queries usam estes valores via JS quando precisar.
+   * Pra CSS direto, usar @media (min-width: 640px) etc.
+   * ═══════════════════════════════════════════════════════════════════════ */
+  --breakpoint-sm:  640px;
+  --breakpoint-md:  768px;
+  --breakpoint-lg:  1024px;
+  --breakpoint-xl:  1280px;
+  --breakpoint-2xl: 1536px;
+
+  --container-sm:  640px;
+  --container-md:  768px;
+  --container-lg:  1024px;
+  --container-xl:  1280px;
+  --container-2xl: 1400px;  /* app maximo — denso o suficiente, evita line-length excessiva */
+
+  /* Layout heights */
+  --layout-topbar-height: 4rem;        /* 64px */
+  --layout-sidebar-width: 16rem;       /* 256px */
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+ * DARK MODE — preparado, nao exposto via toggle ainda.
+ * Ativa com class="dark" no <html> ou via @media (prefers-color-scheme: dark).
+ * Mudar APENAS semanticos; primitivos ficam iguais.
+ * ═════════════════════════════════════════════════════════════════════════ */
+.dark {
+  --surface:           var(--neutral-900);
+  --surface-raised:    var(--neutral-800);
+  --surface-sunken:    var(--neutral-1000);
+  --surface-inverse:   var(--neutral-50);
+  --surface-brand:     var(--brand-700);
+  --surface-brand-soft: var(--brand-900);
+
+  --ink-primary:    var(--neutral-50);
+  --ink-secondary:  var(--neutral-300);
+  --ink-muted:      var(--neutral-400);
+  --ink-subtle:     var(--neutral-500);
+  --ink-inverse:    var(--neutral-900);
+  --ink-brand:      var(--brand-300);
+  --ink-accent:     var(--accent-300);
+
+  --border-subtle:   var(--neutral-800);
+  --border-default:  var(--neutral-700);
+  --border-strong:   var(--neutral-600);
+}

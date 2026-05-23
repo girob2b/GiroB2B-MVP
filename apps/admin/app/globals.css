@@ -1,3 +1,7 @@
+/* Fonte de verdade unica de tokens (cor/space/type/radius/shadow/motion/z).
+ * Mudar lah = mudar nas 3 superficies. Doc: docs/design-system.md. */
+@import "@girob2b/shared/design/tokens.css";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -107,33 +111,32 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  /* ── Brand primary — Teal profundo (BRIEF_MARCA 2026-04-17) ──────── */
-  --brand-primary:     #0A5C5C;
-  --brand-primary-50:  #F1F7F7;
-  --brand-primary-100: #DCE9E9;
-  --brand-primary-200: #B5CECE;
-  --brand-primary-300: #7FA7A7;
-  --brand-primary-500: #1E7878;
-  --brand-primary-600: #0A5C5C;
-  --brand-primary-700: #084A4A;
-  --brand-primary-800: #063535;
-  --brand-primary-900: #042121;
+  /* ── Brand primary / accent / surface / ink ──────────────────────
+   * Aliases sobre tokens compartilhados. Doc: docs/design-system.md. */
+  --brand-primary:     var(--brand-600);
+  --brand-primary-50:  var(--brand-50);
+  --brand-primary-100: var(--brand-100);
+  --brand-primary-200: var(--brand-200);
+  --brand-primary-300: var(--brand-300);
+  --brand-primary-500: var(--brand-500);
+  --brand-primary-600: var(--brand-600);
+  --brand-primary-700: var(--brand-700);
+  --brand-primary-800: var(--brand-800);
+  --brand-primary-900: var(--brand-900);
 
-  /* ── Brand accent — Dourado queimado ────────────────────────────── */
-  --brand-accent:     #C08A2E;
-  --brand-accent-50:  #FBF6EB;
-  --brand-accent-100: #F5E7C6;
-  --brand-accent-200: #EBD08C;
-  --brand-accent-300: #DDB455;
-  --brand-accent-500: #CC9637;
-  --brand-accent-600: #C08A2E;
-  --brand-accent-700: #9C7025;
-  --brand-accent-800: #76561C;
-  --brand-accent-900: #4E3914;
+  --brand-accent:     var(--accent-500);
+  --brand-accent-50:  var(--accent-50);
+  --brand-accent-100: var(--accent-100);
+  --brand-accent-200: var(--accent-200);
+  --brand-accent-300: var(--accent-300);
+  --brand-accent-500: var(--accent-500);
+  --brand-accent-600: var(--accent-600);
+  --brand-accent-700: var(--accent-700);
+  --brand-accent-800: var(--accent-800);
+  --brand-accent-900: var(--accent-900);
 
-  /* ── Surface & Ink ──────────────────────────────────────────────── */
-  --brand-surface: #F4F1EA;
-  --brand-ink:     #1A1F1F;
+  --brand-surface: var(--neutral-100);
+  --brand-ink:     var(--neutral-900);
 
   /* ── Legacy alias: --brand-green-* aponta para --brand-primary-* ── */
   /* Mantido por compat (142 usages em 20 arquivos). Novas telas devem usar --brand-primary-*. */
