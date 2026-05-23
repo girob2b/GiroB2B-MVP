@@ -5,13 +5,23 @@
   "scripts": {
     "dev": "pnpm --filter @girob2b/web dev",
     "dev:web": "pnpm --filter @girob2b/web dev",
+    "dev:admin": "pnpm --filter @girob2b/admin dev",
+    "dev:ds": "pnpm --filter @girob2b/design-system dev",
     "dev:scraper": "pnpm --filter @girob2b/scraper dev",
     "build": "pnpm --filter @girob2b/web build",
     "build:web": "pnpm --filter @girob2b/web build",
+    "build:admin": "pnpm --filter @girob2b/admin build",
     "lint": "pnpm --filter @girob2b/web lint",
-    "typecheck": "pnpm --filter @girob2b/web exec tsc --noEmit"
+    "lint:admin": "pnpm --filter @girob2b/admin lint",
+    "typecheck": "pnpm --filter @girob2b/web exec tsc --noEmit",
+    "typecheck:admin": "pnpm --filter @girob2b/admin exec tsc --noEmit",
+    "typecheck:ds": "pnpm --filter @girob2b/design-system exec tsc -b",
+    "typecheck:all": "pnpm run typecheck && pnpm run typecheck:admin && pnpm run typecheck:ds",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "9.2.1"
+    "concurrently": "9.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11"
   }
 }

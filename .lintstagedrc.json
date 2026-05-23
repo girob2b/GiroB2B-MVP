@@ -1,0 +1,20 @@
+{
+  "apps/web/**/*.{ts,tsx,js,jsx}": [
+    "bash -c 'cd apps/web && pnpm exec eslint --fix --no-warn-ignored ${@:0}' --"
+  ],
+  "apps/web/**/*.{ts,tsx}": [
+    "bash -c 'cd apps/web && pnpm exec tsc --noEmit'"
+  ],
+  "apps/admin/**/*.{ts,tsx,js,jsx}": [
+    "bash -c 'cd apps/admin && pnpm exec eslint --fix --no-warn-ignored ${@:0}' --"
+  ],
+  "apps/admin/**/*.{ts,tsx}": [
+    "bash -c 'cd apps/admin && pnpm exec tsc --noEmit'"
+  ],
+  "apps/design-system/**/*.{ts,tsx}": [
+    "bash -c 'cd apps/design-system && pnpm exec tsc -b'"
+  ],
+  "packages/shared/**/*.ts": [
+    "bash -c 'cd packages/shared && pnpm exec tsc --noEmit'"
+  ]
+}

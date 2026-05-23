@@ -52,10 +52,60 @@ jobs:
           NEXT_PUBLIC_APP_NAME: GiroB2B
           AUTH_REDIRECT_BASE_URL: http://localhost:3000
 
+  # ─── Admin (Next.js — apps/admin) — type-check + lint ──────────────────────
+  admin:
+    name: Admin (type-check + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm --filter @girob2b/admin exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm --filter @girob2b/admin lint
+
+  # ─── Design System (mini-site local) — só type-check, sem build ────────────
+  # Local-only (docs/release-process.md §2.1) — não tem build de produção.
+  design-system:
+    name: Design System (type-check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm --filter @girob2b/design-system exec tsc -b
+
   # ─── E2E (Playwright) — fluxos críticos ────────────────────────────────────
-  # Os specs que dependem de seed (slugs hardcoded) ainda quebram em CI até
-  # globalSetup com Supabase local + seed estar em pé. Por isso roda só os
-  # specs estáveis (ex: validações client-side puras) via filtro.
+  # Suite começa parcial (só specs sem dependência de seed). Promove a
+  # obrigatória em branch protection quando suite estabilizar (docs/release-
+  # process.md §5.2).
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
@@ -96,9 +146,16 @@ jobs:
           retention-days: 7
 
 # ─── Branch protection (configurar manualmente no GitHub) ───────────────────
+# Documentado em docs/release-process.md §5.3.
+#
 # Settings → Branches → Add rule for `main`:
-#   - Require status checks to pass before merging
-#     - Web (type-check + lint + build)
-#     - E2E (Playwright)
+#   - Require pull request before merging (approvals = 0 enquanto solo dev)
+#   - Require status checks to pass before merging:
+#     - "Web (type-check + lint + build)"
+#     - "Admin (type-check + lint)"
+#     - "Design System (type-check)"
+#     - "E2E (Playwright)"           [promover a obrigatório quando suite estabilizar]
 #   - Require branches to be up to date before merging
+#   - Require conversation resolution before merging
 #   - Do not allow force pushes
+#   - Restrict who can push to matching branches (bloqueia push direto em main)

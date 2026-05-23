@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# GiroB2B — pre-commit gate.
+# Roda lint-staged sobre apenas os arquivos do commit (não o projeto inteiro).
+# Bloqueia o commit se eslint falhar OU se tsc encontrar type error no workspace
+# correspondente. Tipicamente 10-20s.
+#
+# Skip de emergência (use com critério):
+#   git commit --no-verify
+#
+# Documentação completa: docs/release-process.md §5.1
+
+pnpm exec lint-staged

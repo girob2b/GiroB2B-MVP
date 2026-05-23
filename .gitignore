@@ -1,40 +1,58 @@
 # ─── Dependências ────────────────────────────────────────────────────────────
 node_modules/
+**/node_modules/.tmp/
 
 # ─── npm lockfile (projeto usa pnpm — package-lock.json não deve existir) ────
 package-lock.json
+yarn.lock
 
-# ─── Build ────────────────────────────────────────────────────────────────────
-apps/web/.next/
-apps/web/.vercel/
+# ─── Build / cache de framework ──────────────────────────────────────────────
 .next/
+**/.next/
+.vercel/
+**/.vercel/
+**/.turbo/
+dist/
+**/dist/
+build/
+**/build/
 .playwright-mcp/
 
 # ─── Supabase CLI (config local — pode conter pooler-url/project-ref) ────────
 apps/web/supabase/.temp/
 
-# ─── Variáveis de ambiente (NUNCA commitar) ───────────────────────────────────
+# ─── Variáveis de ambiente (NUNCA commitar) ──────────────────────────────────
 .env
 .env.local
 .env.*.local
+**/.env.local
+**/.env.*.local
 apps/web/.env
 apps/web/.env.local
-apps/web/.env.*.local
 
-# ─── Logs ─────────────────────────────────────────────────────────────────────
+# ─── Logs ────────────────────────────────────────────────────────────────────
 *.log
-npm-debug.log*
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
 
-# ─── Sistema operacional ──────────────────────────────────────────────────────
+# ─── Sistema operacional ─────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# ─── TypeScript ───────────────────────────────────────────────────────────────
+# ─── TypeScript ──────────────────────────────────────────────────────────────
 *.tsbuildinfo
+**/*.tsbuildinfo
 
-# ─── IDE ──────────────────────────────────────────────────────────────────────
+# ─── IDE ─────────────────────────────────────────────────────────────────────
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/*.code-snippets
+*.swp
+*.swo
+*~
 
 # ─── Temp / scripts de migração ──────────────────────────────────────────────
 run_migrations.js
@@ -53,26 +71,35 @@ ARCHITECTURE.md
 # ─── Landing page (repo separado, não faz parte do monorepo) ─────────────────
 /apps/girob2b-landing-page/
 
-# ─── Logs de sessão Vex na raiz (organização local) ──────────────────────────
-# Atenção: barra inicial isola a regra à raiz. Sem isso ignoraria docs/_sessions/.
+# ─── Logs de sessão Vex (raiz + docs/_sessions/) ─────────────────────────────
+# Em docs/_sessions/ ficam screenshots de debug + notas de sessão (AGENTS.md).
+# São outputs de teste, não código — não commitamos.
 /_sessions/
+docs/_sessions/
 
-# ─── Screenshots de teste/debug ───────────────────────────────────────────────
-# Devem ficar SEMPRE em docs/_sessions/<data>-<tema>-screenshots/ para terem
-# contexto. PNGs soltos na raiz ou em apps/* são bloqueados pra evitar lixo.
+# ─── Screenshots de teste/debug ──────────────────────────────────────────────
+# Convenção (AGENTS.md): salvar em docs/_sessions/<data>-<tema>-screenshots/
+# que já está ignorado acima. PNGs soltos em outros lugares são bloqueados.
 /*.png
 /*.jpg
 /*.jpeg
 /*.webp
+/*.gif
 apps/web/*.png
 apps/web/*.jpg
 apps/web/*.jpeg
 apps/web/.playwright-mcp/
+**/screenshots/
 
-# ─── Playwright artefacts ─────────────────────────────────────────────────────
+# ─── Test artifacts (Playwright, Vitest, Jest, snapshots transientes) ────────
 playwright-report/
+**/playwright-report/
 test-results/
+**/test-results/
+coverage/
+**/coverage/
+.nyc_output/
+**/.nyc_output/
 
-# ─── Fixtures de contrato (descartáveis — apagar antes de abrir PR) ───────────
+# ─── Fixtures de contrato (descartáveis — apagar antes de abrir PR) ──────────
 apps/web/tests/fixtures/api/*.json
-.vercel
