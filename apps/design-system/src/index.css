@@ -1,0 +1,55 @@
+/* DS mini-site — importa fonte unica de tokens (packages/shared) + Tailwind.
+ * Mudar tokens lah = ver a mudanca refletida aqui imediatamente. */
+@import "@girob2b/shared/design/tokens.css";
+@import "tailwindcss";
+
+@theme inline {
+  /* Mapeia tokens compartilhados pro Tailwind 4 — bg-brand-600, text-ink-primary etc. */
+  --color-brand-50:  var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+
+  --color-accent-50:  var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+html, body {
+  font-family: var(--font-sans);
+  background: var(--surface);
+  color: var(--ink-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
