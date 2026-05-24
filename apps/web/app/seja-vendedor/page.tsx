@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, MessageCircle, Target, Zap } from "lucide-react";
 import SupplierWaitlistForm from "@/components/seja-vendedor/supplier-waitlist-form";
+import { AlreadyApprovedCard } from "@/components/seja-vendedor/already-approved-card";
 
 export const metadata: Metadata = {
   title: "Seja vendedor — receba leads B2B qualificados",
@@ -11,7 +12,12 @@ export const metadata: Metadata = {
 
 export default function SejaVendedorPage() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
+      {/* Path A: já fui aprovado (gate de cadastro pós-waitlist).
+          Decisão Vitor 2026-05-24 — vendedor com email aprovado consegue
+          criar conta agora; quem não está aprovado segue o form abaixo. */}
+      <AlreadyApprovedCard />
+
       {/* Hero 2 colunas: pitch à esquerda + waitlist form à direita */}
       <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[color:var(--brand-green-50)] to-white p-6 sm:p-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_1fr] lg:items-center">
