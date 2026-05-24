@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -105,21 +104,8 @@ export default async function HomePage() {
             Você conversa direto com cada fornecedor. Compara, escolhe e fecha. Sem taxa por venda.
           </Step>
         </ol>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link
-            href="/postar"
-            className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
-          >
-            Publicar necessidade agora
-          </Link>
-          <Link
-            href="?auth=register"
-            scroll={false}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Criar conta de comprador
-          </Link>
-        </div>
+        {/* CTAs duplicados removidos (decisão 2026-05-24): o quick-publish form
+            no hero acima já é o CTA primário. Repetir aqui era redundante. */}
       </section>
     </GuestShell>
   );

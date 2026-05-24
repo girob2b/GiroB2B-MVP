@@ -179,55 +179,59 @@ export default function CookieBanner() {
     );
   }
 
-  // ── Modo padrão — chip compacto bottom-right que não cobre CTAs centrais ──
+  // ── Modo padrão — slim bar full-width no rodapé.
+  // Antes (UX H-3): chip bottom-right cobria parcialmente o campo "Descrição"
+  // do form /postar (form é max-w-3xl centralizado, banner em right-4 caía
+  // sobre a coluna direita). Slim bar fica abaixo de tudo, não compete com
+  // input nenhum. Em mobile vira stack vertical com mesma logic.
   return (
     <aside
       role="region"
       aria-label="Preferências de cookies"
-      className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-xl"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur shadow-[0_-4px_16px_-8px_rgb(0_0_0/0.1)]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold text-slate-900">
-          Cookies e privacidade
-        </p>
-        <button
-          type="button"
-          onClick={acceptOnlyEssential}
-          className="-m-1 p-1 text-slate-400 hover:text-slate-700"
-          aria-label="Fechar (mantém só essenciais)"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500">
-        Usamos cookies para manter sua sessão, lembrar preferências e melhorar a plataforma.{" "}
-        <button
-          type="button"
-          onClick={() => setCustomizing(true)}
-          className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
-        >
-          Personalizar
-        </button>
-        {" · "}
-        <Link
-          href="/privacidade"
-          className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
-        >
-          Política
-        </Link>
-      </p>
-      <div className="mt-3 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 text-xs"
-          onClick={acceptOnlyEssential}
-        >
-          Só essenciais
-        </Button>
-        <Button size="sm" className="btn-primary flex-1 text-xs" onClick={acceptAll}>
-          Aceitar todos
-        </Button>
+      <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
+        <div className="flex items-start justify-between gap-3 md:flex-1">
+          <p className="text-xs leading-relaxed text-slate-600 md:text-sm">
+            <strong className="text-slate-900">Cookies e privacidade:</strong>{" "}
+            usamos cookies para manter sua sessão, lembrar preferências e melhorar a plataforma.{" "}
+            <button
+              type="button"
+              onClick={() => setCustomizing(true)}
+              className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
+            >
+              Personalizar
+            </button>
+            {" · "}
+            <Link
+              href="/privacidade"
+              className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
+            >
+              Política
+            </Link>
+          </p>
+          <button
+            type="button"
+            onClick={acceptOnlyEssential}
+            className="md:hidden -m-1 p-1 text-slate-400 hover:text-slate-700 shrink-0"
+            aria-label="Fechar (mantém só essenciais)"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 md:flex-initial text-xs"
+            onClick={acceptOnlyEssential}
+          >
+            Só essenciais
+          </Button>
+          <Button size="sm" className="btn-primary flex-1 md:flex-initial text-xs" onClick={acceptAll}>
+            Aceitar todos
+          </Button>
+        </div>
       </div>
     </aside>
   );
