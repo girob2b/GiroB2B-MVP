@@ -97,8 +97,8 @@ export default async function PerfilPage() {
     .limit(1)
     .maybeSingle<{
       id: string;
-      current_mode: "buyer" | "supplier" | "both";
-      target_mode: "buyer" | "supplier" | "both";
+      current_mode: "buyer" | "supplier";
+      target_mode: "buyer" | "supplier";
       requested_at: string;
     }>();
   const pendingRoleRequest = pendingRequestRes.data ?? null;
