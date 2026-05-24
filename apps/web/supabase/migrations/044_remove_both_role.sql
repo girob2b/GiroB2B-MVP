@@ -41,7 +41,7 @@ WHERE raw_user_meta_data->>'role' = 'both';
 -- vai mais ser servido. Comentário documenta o motivo.
 UPDATE public.role_change_requests
 SET status = 'rejected',
-    admin_note = COALESCE(admin_note, '') ||
+    admin_notes = COALESCE(admin_notes, '') ||
       E'\n[migration 044, 2026-05-24] Auto-rejeitado: modo "both" removido da plataforma.'
 WHERE (current_mode = 'both' OR target_mode = 'both')
   AND status = 'pending';
