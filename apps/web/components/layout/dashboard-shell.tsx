@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +12,12 @@ import { logout } from "@/app/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GiroLogo } from "@/components/ui/giro-logo";
 import { cn } from "@/lib/utils";
+
+// Tutorial só é baixado quando vai rodar (primeiro login) — driver.js +
+// custom CSS ficam em chunk separado pra não pesar bundle de quem ja viu.
+const TutorialRunner = dynamic(() => import("@/components/tutorial/tutorial-runner"), {
+  ssr: false,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +54,8 @@ interface DashboardShellProps {
   cadastroCompleto?: boolean;
   /** Compatibilidade com chamadas antigas — não tem mais sidebar pra colapsar. */
   initialCollapsed?: boolean;
+  /** True = primeiro login (tutorial nunca foi visto/pulado). Monta o TutorialRunner. */
+  showTutorial?: boolean;
 }
 
 interface NavLink {
@@ -129,7 +138,7 @@ function AccountDropdown({
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={ref} data-tutorial="account-dropdown">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -307,6 +316,7 @@ export default function DashboardShell({
   supplier,
   buyer,
   cadastroCompleto = true,
+  showTutorial = false,
 }: DashboardShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -339,10 +349,19 @@ export default function DashboardShell({
           <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
             {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/painel" && pathname.startsWith(href));
+              // Âncoras pro tutorial primeiro-login: nav-publicar + nav-necessidades
+              // identificam botões-chave do comprador. Vendedor usa supplier-search
+              // (que vem no PR de header-by-role; aqui, fallback é o primeiro link).
+              const tutorialAnchor =
+                href === "/painel/postar"       ? "nav-publicar"     :
+                href === "/painel/necessidades" ? "nav-necessidades" :
+                href === "/painel/leads"        ? "supplier-search"  :
+                undefined;
               return (
                 <Link
                   key={href}
                   href={href}
+                  data-tutorial={tutorialAnchor}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                     active
@@ -405,6 +424,12 @@ export default function DashboardShell({
       <main className="flex-1">
         <div className="mx-auto max-w-7xl p-4 md:p-8">{children}</div>
       </main>
+
+      {/* Tutorial primeiro-login — só monta se nunca foi visto/pulado.
+          Driver.js carrega em chunk separado (dynamic + ssr=false). */}
+      {showTutorial && cadastroCompleto && (
+        <TutorialRunner role={user.role === "supplier" ? "supplier" : "buyer"} />
+      )}
     </div>
   );
 }
