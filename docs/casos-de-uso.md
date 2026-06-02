@@ -4,9 +4,16 @@
 > pro QA (quais fluxos testar end-to-end) e pra produto (onde o usuário pode travar).
 >
 > Fonte: derivado do [MVP_PIVOT_2026-05-07.md](today/MVP_PIVOT_2026-05-07.md) + decisões
-> de produto de 2026-05-14/15/18.
+> de produto até 2026-05-24 (consolida PRs #3-9).
 >
-> Criado: 2026-05-22. Última revisão: 2026-05-22.
+> Criado: 2026-05-22. Atualizado: 2026-05-24 (v2).
+>
+> **Mudanças desde v1:**
+> - `both` removido da plataforma (migration 044 ✅ aplicada)
+> - "Sou vendedor" volta no header da raiz, gateado pela waitlist aprovada
+> - Tutorial primeiro-login com driver.js (3 passos por role)
+> - Approval token na waitlist pra cadastro pós-aprovação (migration 045 ✅ aplicada)
+> - Header autenticado por role: comprador minimalista, vendedor com search dominante
 
 ---
 
@@ -14,318 +21,495 @@
 
 1. **Caminho curto até valor.** Default em UX é reduzir fricção entre intenção e ação.
 2. **Cadastro progressivo.** Comprador publica como guest se quiser; só pede dados quando o valor extra justifica.
-3. **WhatsApp é o canal único.** Sem chat interno, sem pipeline na plataforma. Plataforma orquestra o contato, conversa acontece fora.
-4. **Vendedor é gateado por admin.** Não-vendedor não vê feed. Admin aprova manualmente até o pagamento automatizado entrar.
-5. **Toda transição é reversível.** "Voltar" e "Pular" sempre disponíveis. Sessão não força funil.
+3. **WhatsApp é o canal único.** Sem chat interno, sem pipeline na plataforma.
+4. **Vendedor é gateado por admin.** Não-vendedor não vê feed. Admin aprova manualmente até pagamento automatizado entrar.
+5. **Modo binário** (decisão 2026-05-24). Cada user é comprador OU vendedor — nunca os dois ao mesmo tempo. Troca via fluxo dedicado em `/painel/perfil` (aprovação admin + cooldown 2d).
+6. **Toda transição é reversível.** "Voltar" e "Pular" sempre disponíveis. Tutorial primeiro-login tem skip imediato.
 
 ---
 
 ## 1. Personas
 
-| Persona | Estado inicial | O que quer fazer |
+| Persona | Estado inicial | Onde aparece |
 |---|---|---|
-| **Visitante comprador novo** | Anônimo, sem cadastro | Publicar uma necessidade B2B e receber contato de fornecedor |
-| **Visitante comprador recorrente** | Email já existe na base (waitlist ou cadastro) | Publicar nova necessidade / gerenciar publicadas |
-| **Visitante vendedor novo** | Anônimo, sem CNPJ aprovado | Entrar na lista de espera pra ter acesso ao feed |
-| **Vendedor aprovado** | CNPJ aprovado pelo admin, trial ou assinatura ativa | Filtrar feed, contatar compradores via WhatsApp |
-| **Vendedor aprovado expirado** | Trial/assinatura expirou | Ver preview do feed mas não consegue contatar |
-| **Admin** | Login no `admin.girob2b.com.br` | Aprovar/suspender supplier, ativar trial, ver dashboard |
+| **P1 — Visitante comprador novo** | Anônimo | landing + app/ |
+| **P2 — Visitante comprador recorrente** | Email já publicou guest | app/postar (rejeita) → /login |
+| **P3 — Comprador criando conta** | Vindo do guest, decide cadastrar | modal `?auth=register` sobre /postar |
+| **P4 — Comprador logado recorrente** | Tem conta, volta pra publicar mais | /painel/necessidades |
+| **P5 — Visitante vendedor novo** | Anônimo, sem waitlist | landing externa ou /seja-vendedor |
+| **P6 — Admin** | `is_admin=true` | admin.girob2b.com.br |
+| **P7 — Vendedor aprovado primeiro acesso** | Recebeu email da admin | /seja-vendedor → /cadastro/vendedor |
+| **P8 — Vendedor com trial/assinatura ativa** | `subscription_status` ∈ {trialing, active} | /painel/leads |
+| **P9 — Vendedor expirado** | `subscription_status='expired'` | /painel/leads em modo preview |
+| **P10 — Vendedor recorrente clicando "Já fui aprovado"** | Já criou conta antes | Edge — abortado no signup |
 
 ---
 
-## 2. Fluxos principais
+## 2. Fluxos detalhados
 
-### Fluxo 1 — Comprador novo via landing
+### P1 — Visitante comprador novo
 
-**Persona:** visitante comprador novo
-**Trigger:** abre `girob2b.com.br` (landing), clica "Quero comprar" no hero ou modal
+**Cenário:** Visitante chega no `app.girob2b.com.br/` direto (não via landing).
 
-**Steps:**
+```
+1. /  (GuestShell):
+   Header: [GiroB2B] [Publicar necessidade] [Sou vendedor] [Entrar]
+                                             ↑ só aparece na raiz (PR #7)
+   Hero: "O que você precisa comprar?" + quick form (Título / Categoria / UF)
 
-1. **Landing /** — modal `WaitlistModal` aberto, role default = `buyer`
-2. **Submit** (email + CNPJ + categoria + LGPD) → `submitSupplier()` no Supabase
-   - Backend valida CNPJ válido + email único
-   - Insere linha em `waitlist` com `role='buyer'`
-   - Retorna `{ ok: true, status: 'created' }`
-3. **WaitlistResultModal variant=`buyer_created`** — título "Tudo certo! Vamos te cadastrar", CTA "Continuar →"
-4. **Redirect** → `${APP_URL}/postar?email=<email>&auth=register`
-5. **App /postar** — form de publicação carrega com email pré-preenchido; `AuthModalRoot` lê `?auth=register` e abre modal de cadastro por cima
-6. **Modal de cadastro** — `BuyerRegisterForm` mostra:
-   - Card chamativo "Continuar sem cadastro" no topo (fecha o modal e mantém no /postar)
-   - Form de email + senha + LGPD
-7. **Caminho A (cria conta):** submit → Supabase auth → email de confirmação enviado → tela "Verifique seu email" → user confirma via email → `/auth/callback` → cria sessão → redirect `/painel/postar` (autenticado)
-8. **Caminho B (pula):** clica "Continuar sem cadastro" → modal fecha → preenche o form de `/postar` (guest) → submit publica como guest (1 necessidade/email)
+2. Digita só o título → clica Publicar
+   ↳ PR #5 H-1: botão habilitado sempre; submit vazio mostra hint inline "Comece pelo título"
 
-**Estados de exit:**
-- ✅ Conta criada + necessidade publicada → `/painel`
-- ✅ Publicou como guest → `/postar/sucesso` (com aviso "pra publicar mais, [crie conta]")
-- ❌ Abandonou em qualquer step → sem registro persistente além da linha de waitlist
+3. → /postar?title=<preserved>
+   Header muda: [GiroB2B] [Entrar] [Criar conta]   (PR #3 — sem "Publicar" redundante)
+   Banner amber: "Sem cadastro = 1 publicação. Crie conta grátis pra mais"
 
-**Telemetria mínima:** `waitlist_buyer_submit` → `signup_started` → `signup_completed` OU `guest_publish_started` → `guest_publish_completed`
+4. Form de /postar — todos os required marcados com * vermelho (PR #5 H-2):
+   * Seu nome   * Email   * WhatsApp   * Título   * LGPD
+   Opcionais: Descrição, Categoria, Quantidade, Unidade, Orçamento, Prazo, Cidade, UF
 
-**Acessível por:** público
+5. Submit → server action createGuestDemandAction:
+   - cria demand (kind=simple, guest_email, guest_whatsapp, guest_name)
+   - slug derivado do título
+   - LGPD consent gravado (version + timestamp)
 
----
+6. → /necessidade/<slug>?guest_published=1
+   - PR #4 evita TypeError quando description é null
+   - Vê a própria publicação live + aviso "Pra publicar mais, [crie conta]"
+```
 
-### Fluxo 2 — Comprador recorrente via landing
-
-**Persona:** visitante comprador recorrente (email já existe)
-**Trigger:** mesmo da Fluxo 1 — clica "Quero comprar"
-
-**Steps:**
-
-1. **Landing /** — modal `WaitlistModal` aberto
-2. **Submit** → `submitSupplier()` → Postgres rejeita com `23505` (unique violation)
-3. **WaitlistResultModal variant=`buyer_already_exists`** — título "Você já tem cadastro com a gente", CTA "Fazer login →"
-4. **Redirect** → `${APP_URL}/login?email=<email>`
-5. **App /login** (rota dedicada, NÃO redireciona pra `/explorar` porque tem `?email=`):
-   - Card chamativo "Continuar sem login" no topo (vai pra `/postar?email=<email>`)
-   - Form de login com email pré-preenchido
-6. **Caminhos:**
-   - A) Faz login → `/painel` (suas necessidades, opção de publicar nova)
-   - B) Pula → `/postar?email=<email>` (publica guest se ainda não atingiu limite)
-   - C) Esqueceu senha → `/recuperar-senha`
-
-**Estados de exit:** logado / publicou guest / pediu recover
-
-**Acessível por:** público
+**Estado de saída:** 1 demand publicada, vendedores aprovados podem contatar via `guest_whatsapp`.
 
 ---
 
-### Fluxo 3 — Vendedor novo via landing
+### P2 — Visitante comprador recorrente (email já publicou)
 
-**Persona:** visitante vendedor novo
-**Trigger:** clica "Sou vendedor" no header da landing ou hero CTA secundário
+**Cenário:** Tenta publicar 2ª como guest com mesmo email.
 
-**Steps:**
-
-1. **Landing /** — modal `WaitlistModal` aberto com role pré-selecionado `supplier`
-2. **Submit** (email + CNPJ + categoria + LGPD) → `submitSupplier()` insere `role='supplier'`
-3. **WaitlistResultModal variant=`supplier_created`** — título "Você está na lista de espera", body explica que admin avalia + envia link de acesso por email, CTA "Fechar"
-4. **Aguarda** — não há redirect. User sai da landing.
-
-**O que acontece em background:**
-- Linha em `waitlist` com `role='supplier'`, `status='pending'`
-- Admin recebe no dashboard de waitlist queue
-- Admin aprova manualmente → manda email com link de cadastro (V1 manual; V2 automatizado via Resend)
-
-**Estados de exit:**
-- ✅ Email entrou na waitlist + closed modal
-- ❌ Validação falhou (CNPJ inválido, email duplicado, etc) → toast inline
-
-**SLA atual:** admin avalia em até 48h (manual, sem automação)
-
-**Acessível por:** público
+```
+1-4. Idem P1 até submit
+5. Server rejeita: "Esse email já publicou. Faça login pra gerenciar."
+6. CTA → /login?email=<email>
+7. User segue P4 (login) ou abandona
+```
 
 ---
 
-### Fluxo 4 — Vendedor recorrente (email já existe)
+### P3 — Comprador criando conta (durante /postar)
 
-**Persona:** vendedor que já está na waitlist
-**Trigger:** mesmo do Fluxo 3
+**Cenário:** Decide criar conta antes de finalizar publicação.
 
-**Steps:**
+```
+1. Em /postar, clica "Crie conta grátis" do banner amber
+   → ?auth=register (relativo, PR #5 H-4 — NÃO sai pra /)
+   → AuthDialog modal abre por cima do form
 
-1-2. Idem Fluxo 3 até `submitSupplier()` que falha com `23505`
-3. **WaitlistResultModal variant=`supplier_already_exists`** — título "Você já está na lista de espera", body "estamos avaliando", CTA "Entrar em contato" → `mailto:comercial@girob2b.com.br` (subject + body pré-formatados)
+2. Modal mostra (BuyerRegisterForm):
+   - Card verde topo: "Continuar sem cadastro" (Zap icon)
+   - Form: Email / Senha / Confirmar / LGPD ✓
 
-**Estados de exit:** abriu mailto / closed modal
+3. Caminho A — Cria conta:
+   - signUp → Supabase envia email_confirm
+   - Tela "Verifique seu email"
+   - Clica link no email → /auth/callback → cria sessão
+   - → /painel/postar (form completo)
 
-**Acessível por:** público
+   Caminho B — Pula:
+   - Clica "Continuar sem cadastro"
+   - Modal fecha, mantém em /postar guest
+   - Completa P1 normalmente
 
----
-
-### Fluxo 5 — Vendedor aprovado (primeiro acesso)
-
-**Persona:** vendedor que foi aprovado pelo admin
-**Trigger:** recebe email com link de acesso
-
-**Steps:**
-
-1. **Email** com link `${APP_URL}/seja-vendedor/aprovado?token=<token>` (V1 manual: admin envia email direto)
-2. **/seja-vendedor/aprovado** — confirma identidade, cria senha
-3. **Cadastro completo** → admin (ou trigger) seta `subscription_status='trialing'` com `trial_ends_at = now() + 7 days`
-4. **Redirect** → `/painel/leads`
-5. **/painel/leads** — feed de necessidades com:
-   - Filtros: categoria, UF, kind (simple/structured)
-   - Selo "Verificado" nos compradores com CNPJ verificado
-   - Botão "Contatar via WhatsApp" em cada card (abre `wa.me/<phone>?text=<mensagem-pronta>`)
-6. **Clica contatar** → audit em `demand_contacts` (RPC `register_demand_contact`) → abre WhatsApp em nova aba
-
-**Gates de acesso ao botão de contato:**
-1. Autenticado? ❌ → redirect `/login`
-2. É supplier? ❌ → redirect `/seja-vendedor`
-3. `subscription_status` ∈ {trialing, active}? ❌ → toast "Trial expirado, renovar" + link
-
-**Estados de exit:**
-- ✅ Contatou comprador → WhatsApp aberto, audit gravado
-- ✅ Apenas explorou feed → sessão preservada
-- ❌ Trial expirou durante sessão → bloqueado no próximo click
-
-**Acessível por:** autenticado + role=supplier + assinatura ativa/trial
+4. Logado + redirect /painel → TUTORIAL DISPARA (PR #8):
+   - Step 1: highlight [Publicar] — "👋 Bem-vindo! Este é seu botão principal..."
+   - Step 2: highlight [Necessidades] — "Suas publicações vivem aqui..."
+   - Step 3: highlight avatar — "Configure perfil + selo Verificado"
+   - Pular (X / ESC) grava timestamp; não pergunta de novo
+```
 
 ---
 
-### Fluxo 6 — Vendedor expirado
+### P4 — Comprador logado recorrente
 
-**Persona:** vendedor com `subscription_status='expired'`
-**Trigger:** entra em `/painel/leads` após expiração
+```
+1. /login → digita credenciais → /painel
+2. middleware (PR #6): role=buyer → /painel/necessidades
 
-**Steps:**
+3. Header autenticado (PR #6):
+   [GiroLogo] [Publicar] [Necessidades] [Avatar▾]
+   Avatar dropdown: Meu perfil + Dashboard + Sair
 
-1. **/painel/leads** — feed continua visível (modo preview: títulos, categoria, UF, prazo)
-2. Detalhes obscurecidos: quantidade, orçamento, descrição completa, WhatsApp do comprador → mostra paywall
-3. Botão "Contatar" → bloqueado, abre modal "Trial expirado / Renove sua assinatura"
-4. CTAs: "Renovar agora" (V2: Stripe/MP checkout) ou "Falar com comercial" (mailto)
+4. /painel/necessidades:
+   - Lista das próprias demands (própria empresa, sem feed de outras)
+   - Cada card: Status / Visualizações / Contatos recebidos / Botão Editar
+   - Botão "Publicar nova" no topo
 
-**Estados de exit:** renovou / abandonou / pediu contato comercial
-
-**Acessível por:** autenticado + role=supplier (expirado)
+5. Publicar nova → /painel/postar
+6. Submit → demand criada com buyer_id (não-guest)
+```
 
 ---
 
-### Fluxo 7 — Admin: aprovar supplier da waitlist
+### P5 — Visitante vendedor novo
 
-**Persona:** admin
-**Trigger:** login em `admin.girob2b.com.br` → vê queue de waitlist
+**Cenário:** Maria da ABC quer entrar como vendedora.
 
-**Steps:**
+```
+Origem A — Via landing externa girob2b.com.br
+  Clica "Quero vender" → modal WaitlistModal (role default: supplier)
 
-1. **/admin/login** → autentica (gate adicional: só users com `is_admin=true`)
-2. **/admin/waitlist** — lista de pedidos `status='pending'`, ordenados por created_at
-3. Cada linha: email, CNPJ (link pra BrasilAPI no V2), categoria, source, criada_há_X
-4. **Ações:**
-   - **Aprovar** → admin envia email manual (V1) com link de cadastro; seta `status='approved'`
-   - **Copiar email** → clipboard, pra colar em template manual
-   - **Suspender supplier ativo** → seta `subscription_status='inactive'`
-   - **Ativar trial 7d** → seta `subscription_status='trialing'`, `trial_ends_at = now()+7d`
-5. **Filtros:** role (buyer/supplier), status, categoria, data
+Origem B — Via app.girob2b.com.br/
+  Clica "Sou vendedor" no header (PR #7, só na raiz)
+  → /seja-vendedor (app interno)
 
-**Acessível por:** `is_admin=true` only. Subdomínio separado `admin.girob2b.com.br` (cookie auth separado pra defesa em camadas).
+Em /seja-vendedor (PR #9):
+  [TOPO] Card dourado "Já fui aprovado ✨" + botão "Verificar meu email"
+  [HERO] Pitch à esquerda + SupplierWaitlistForm à direita
+  [SEÇÕES] Como funciona / Planos / CTA final
+
+1. Maria não foi aprovada ainda — preenche SupplierWaitlistForm:
+   Email + CNPJ + Categoria + LGPD + consent_marketing
+2. Submit → INSERT waitlist(role='supplier', status='pending')
+3. Vê: "Você está na lista — vamos avaliar e te enviar acesso por email"
+```
+
+**Sai do fluxo público.** Aguarda admin aprovar.
+
+---
+
+### P6 — Admin aprova supplier
+
+```
+1. admin.girob2b.com.br/login (subdomínio separado, cookie auth próprio)
+2. /admin/waitlist — fila de pedidos status=pending
+   Cada linha: email, CNPJ, categoria, source, age, ações
+
+3. Ações por linha:
+   [Aprovar]            UPDATE waitlist SET status='approved'
+   [Copiar email]       clipboard
+   [Suspender]          (pra suppliers ativos)
+   [Ativar trial 7d]    seta subscription_status='trialing' no cadastro
+
+4. V1 manual: admin manda email pra Maria avisando:
+   "Pode acessar app.girob2b.com.br/seja-vendedor → Já fui aprovado"
+   V2 (futuro): Resend automatizado quando admin clica Aprovar
+```
+
+---
+
+### P7 — Vendedor aprovado, primeiro acesso
+
+```
+1. Abre app.girob2b.com.br/seja-vendedor
+2. Clica "Verificar meu email" no card dourado → modal
+3. Digita maria@abc.com.br → submit
+   → POST /api/waitlist/check (PR #9):
+     - lookup waitlist(email, role='supplier')
+     - valida status='approved' AND não-suspended
+     - gera approval_token (UUID 15min uso único) salvo no row
+
+4. UI verde: "Tudo certo! Você está aprovado." + botão "Continuar pra criar conta"
+   → /cadastro/vendedor?supplier_token=<uuid>
+
+5. /cadastro/vendedor (PR #9, server page):
+   Re-valida token (defesa em profundidade):
+     ✓ existe? ✓ não-expirado? ✓ não-usado? ✓ status='approved'?
+   Se OK, renderiza SupplierSignupForm com:
+     - Email (read-only, vem da waitlist)
+     - CNPJ (read-only)
+     - Categoria (read-only)
+     - Nome (input)
+     - Senha (mínimo 8)
+     - LGPD ✓
+
+   Se NÃO, renderiza <InvalidToken> com motivo específico
+   (6 motivos: missing, malformed, not_found, not_approved, used, expired)
+
+6. Submit → createSupplierFromApprovedWaitlist:
+   - Re-valida token + match de email
+   - admin.auth.createUser (email_confirm=true, segment='supplier')
+   - INSERT suppliers (subscription_status='inactive')
+   - UPDATE waitlist SET approval_token_used_at=now()
+   - Rollback (delete user) se falha tardia
+
+7. → /login?status=cadastro_concluido
+8. Login → /painel → middleware: supplier → /painel/leads
+9. Header autenticado supplier (PR #6):
+   [GiroLogo] [INPUT DE BUSCA DOMINANTE] [Avatar▾]
+                                          ↑ Avatar contém:
+                                            - Material de venda
+                                            - Perfil público
+                                            - Dashboard
+                                            - Feed de necessidades
+
+10. Aviso topo da página: "Assinatura inativa — preview do feed"
+    + CTA "Falar com comercial" (admin libera trial separadamente)
+
+11. TUTORIAL DISPARA (PR #8):
+    Step 1: highlight input busca — "👋 Bem-vindo! Busque por produto/categoria"
+    Step 2: highlight avatar — "Material de venda, perfil público, assinatura"
+    Step 3: tela final — "Pronto! Bora encontrar leads?"
+```
+
+---
+
+### P8 — Vendedor com trial/assinatura ativa
+
+```
+1. Maria volta logada, subscription_status='trialing' (admin ativou)
+2. /painel/leads → feed completo
+
+3. Topbar input — digita "papelão" + Enter
+   → router.replace('/painel/leads?q=papelão', {scroll:false})
+   (mesma rota = só filtra; rota diferente = router.push)
+
+4. Vê DemandCard:
+   - Título, Categoria, Quantidade, UF, Prazo
+   - Selo "Verificado" se buyer_is_verified
+   - Botão "Contatar via WhatsApp"
+
+5. Clica Contatar:
+   Gates server-side: auth → supplier role → subscription ativa
+   RPC register_demand_contact (audit log)
+   window.open(wa.me/<phone>?text=<msg>)
+
+6. Vendedor negocia direto. Fora da plataforma.
+```
+
+---
+
+### P9 — Vendedor expirado
+
+```
+1. trial expirou (após 7d) ou assinatura caiu
+2. /painel/leads continua acessível em modo PREVIEW:
+   - Títulos, categoria, UF visíveis
+   - Quantidade, orçamento, descrição completa borrados/ocultos
+   - Botão "Contatar" disabled
+
+3. Clica Contatar → modal "Trial expirado, renove"
+   V1: mailto:comercial@girob2b.com.br
+   V2: Stripe/MP checkout (decisão aberta)
+```
+
+---
+
+### P10 — Edge: vendedor recorrente abusando "Já fui aprovado"
+
+```
+1. Maria já criou conta antes (approval_token_used_at preenchido)
+2. Volta em /seja-vendedor → digita email aprovado
+3. Backend gera NOVO token (reset OK)
+4. Submit do form em /cadastro/vendedor → server action falha:
+   admin.auth.createUser retorna "already registered"
+5. Erro UI: "Esse email já tem conta. Faça login."
+   → CTA /login
+```
 
 ---
 
 ## 3. Edge cases obrigatórios
 
-### 3.1 Email duplicado entre roles
-- User cadastrou como buyer; agora tenta como supplier com mesmo email
-- Constraint `(email, cnpj)` unique no banco → segundo insert falha com 23505
-- UX: WaitlistResultModal `supplier_already_exists` mostra "Você já está na lista" — não revela se foi como buyer ou supplier (anti-enumeration)
+1. **Email duplicado entre roles** — buyer já existe, tenta supplier com mesmo email.
+   - Constraint `(email, cnpj)` unique no banco → 23505. UX anti-enumeration.
 
-### 3.2 CNPJ inválido
-- Validação client-side: regex 14 dígitos + checksum
-- BrasilAPI desligada no MVP (memory: `project_brasilapi_disabled_in_mvp`) — só valida checksum, não verifica situação cadastral
-- V2: re-validar a cada 90 dias quando BrasilAPI voltar
+2. **CNPJ inválido** — validação client-side checksum. BrasilAPI desligada no MVP.
 
-### 3.3 Guest com email duplicado
-- Comprador anônimo já publicou 1 necessidade como guest com email X
-- Tenta publicar 2ª necessidade com mesmo email → backend rejeita com mensagem "Para publicar mais, crie conta"
-- CTA pra `/?auth=register` com email pré-preenchido
+3. **Guest com email duplicado** — backend rejeita, sugere `/?auth=register&email=<email>`.
 
-### 3.4 Trial expirado durante sessão
-- Supplier logado, trial expira meio da sessão (>7 dias)
-- Próximo click em "Contatar" → backend nega via gate de assinatura → toast + modal "Trial expirado"
-- Feed continua visível em modo preview
+4. **Trial expirou durante sessão** — gate server-side, próximo click em "Contatar" cai em paywall.
 
-### 3.5 Email do callback de auth falhou
-- User clica link de confirmação, callback dá erro (link expirado / já usado)
-- Redirect `/login?error=link_expirado` → mostra mensagem específica + CTA "Reenviar"
+5. **Email callback falhou** — `/login?error=link_expirado` mostra mensagem + CTA reenviar.
 
-### 3.6 Comprador publica + não cria conta + admin precisa contatar
-- Demand existe com `guest_email` + `guest_whatsapp` mas sem `buyer_id`
-- Admin tem acesso a guest_email no painel
-- Vendedor que contatar via WhatsApp usa o `guest_whatsapp` (sem buyer_id na auditoria — registra apenas `demand_id` + `supplier_id`)
+6. **Demand guest sem buyer_id** — admin vê o `guest_email/whatsapp` direto no painel.
 
-### 3.7 LGPD revogação
-- User pede pra deletar dados (LGPD Art. 18)
-- Admin: soft-delete em `buyers`/`suppliers`, hard-delete em `demands` órfãs após 30d
-- Audit log: registra request + timestamp
-- V2: self-service em `/painel/configuracoes/privacidade`
+7. **LGPD revogação** — admin soft-delete buyers/suppliers + hard-delete demands órfãs >30d. V2: self-service.
 
-### 3.8 Pagamento expirado pra renovação
-- Supplier tem trial expirado, abre modal de renovação
-- Tenta pagar, cartão recusado
-- Mantém `subscription_status='expired'`, mostra toast "Pagamento falhou"
-- V2: re-tentar 3x em 7 dias antes de considerar churn
+8. **Pagamento expirado pra renovação** — toast "Falhou", retry 3x em 7d antes de churn (V2).
+
+9. **Token de aprovação expirado** (P7) — 15min de validade. `<InvalidToken reason="expired">` com link pra gerar novo via /seja-vendedor.
+
+10. **Token de aprovação já usado** (P10) — auto-bloqueio na server action de signup; UI redireciona pra /login.
+
+11. **Race condition na aprovação** — admin aprova, depois suspende antes do user criar conta. O server re-valida `status='approved'` no submit; se mudou pra 'rejected'/'suspended', recusa com mensagem clara.
 
 ---
 
-## 4. Telas envolvidas (inventory)
+## 4. Tutorial primeiro-login (PR #8)
 
-| URL | Persona | Tipo |
-|---|---|---|
-| `girob2b.com.br/` (landing) | Visitante | Marketing |
-| `girob2b.com.br/seja-vendedor` (landing) | Visitante vendedor | Marketing |
-| `app.girob2b.com.br/` | Comprador anônimo | App view do comprador |
-| `app.girob2b.com.br/postar` | Anônimo / autenticado | Form de publicação |
-| `app.girob2b.com.br/cadastro` | Anônimo | Auth |
-| `app.girob2b.com.br/login` | Anônimo | Auth |
-| `app.girob2b.com.br/recuperar-senha` | Anônimo | Auth |
-| `app.girob2b.com.br/redefinir-senha` | Anônimo (com token) | Auth |
-| `app.girob2b.com.br/auth/callback` | Confirmando email | Auth |
-| `app.girob2b.com.br/painel` | Autenticado | Dashboard (redireciona por papel) |
-| `app.girob2b.com.br/painel/postar` | Comprador logado | Form completo |
-| `app.girob2b.com.br/painel/necessidades` | Comprador logado | Lista das próprias necessidades |
-| `app.girob2b.com.br/painel/leads` | Vendedor aprovado | Feed de necessidades |
-| `app.girob2b.com.br/necessidade/[slug]` | Público (SSR + JSON-LD) | Detalhe pra SEO |
-| `app.girob2b.com.br/buscar` | Vendedor aprovado | Busca filtrada |
-| `app.girob2b.com.br/categoria/[slug]` | Vendedor aprovado | Feed por categoria |
-| `app.girob2b.com.br/fornecedor/[slug]` | Público | Perfil de vendedor (V2 — desligado no MVP) |
-| `admin.girob2b.com.br/login` | Admin | Auth |
-| `admin.girob2b.com.br/waitlist` | Admin | Queue de aprovação |
-| `admin.girob2b.com.br/necessidades` | Admin | Moderação |
-| `admin.girob2b.com.br/dashboard` | Admin | Métricas |
+### Gatilho
+Server lê `user_metadata.tutorial_completed_at`. Se null → passa `showTutorial=true` ao DashboardShell → monta `<TutorialRunner role="buyer|supplier" />` via dynamic import.
+
+### Comportamento
+- driver.js v1.4 com 3 steps por role
+- Animação suave (smooth scroll + fade ~150ms)
+- Box-shadow accent gold no elemento ativo
+- Overlay 55% brand-primary-800
+- Botão "Pular" sempre disponível (X / ESC)
+- Skip e completo gravam mesmo timestamp via `markTutorialCompleted()` server action — não pergunta de novo
+
+### Steps
+
+**Comprador:**
+1. `[data-tutorial="nav-publicar"]` — "👋 Bem-vindo! Este é seu botão principal..."
+2. `[data-tutorial="nav-necessidades"]` — "Suas publicações vivem aqui..."
+3. `[data-tutorial="account-dropdown"]` — "Complete perfil + selo Verificado..."
+
+**Vendedor:**
+1. `[data-tutorial="supplier-search"]` — "Busque por produto/categoria..."
+2. `[data-tutorial="account-dropdown"]` — "Material de venda, perfil, assinatura..."
+3. Centralizado — "Pronto! Bora encontrar leads?"
+
+### Honra a11y
+- `prefers-reduced-motion: reduce` → sem transform hover
+- ARIA built-in do driver.js
 
 ---
 
-## 5. Métricas-chave por fluxo (Telemetria mínima)
+## 5. Telas envolvidas (inventory)
+
+| URL | Persona | Tipo | PR |
+|---|---|---|---|
+| `girob2b.com.br/` (landing) | Visitante | Marketing externo | — |
+| `girob2b.com.br/seja-vendedor` (landing) | Visitante vendedor | Marketing externo | — |
+| `app.girob2b.com.br/` | Comprador anônimo | App view do comprador | #5, #7 |
+| `app.girob2b.com.br/postar` | Anônimo / autenticado | Form de publicação | #3, #5 |
+| `app.girob2b.com.br/cadastro` | Anônimo | Auth (comprador) | — |
+| `app.girob2b.com.br/cadastro/vendedor` | Anônimo c/ token | Auth (vendedor pós-aprovação) | **#9 novo** |
+| `app.girob2b.com.br/login` | Anônimo | Auth | — |
+| `app.girob2b.com.br/recuperar-senha` | Anônimo | Auth | — |
+| `app.girob2b.com.br/redefinir-senha` | Anônimo (com token) | Auth | — |
+| `app.girob2b.com.br/auth/callback` | Confirmando email | Auth | — |
+| `app.girob2b.com.br/seja-vendedor` | Anônimo / aprovado | Marketing + gate | **#9** |
+| `app.girob2b.com.br/painel` | Autenticado | Redireciona por role | #6 |
+| `app.girob2b.com.br/painel/postar` | Comprador logado | Form completo | — |
+| `app.girob2b.com.br/painel/necessidades` | Comprador logado | Lista próprias | — |
+| `app.girob2b.com.br/painel/leads` | Vendedor aprovado | Feed | #6 |
+| `app.girob2b.com.br/necessidade/[slug]` | Público (SSR + JSON-LD) | Detalhe pra SEO | #4 |
+| `app.girob2b.com.br/buscar` | Vendedor aprovado | Busca filtrada | — |
+| `app.girob2b.com.br/categoria/[slug]` | Vendedor aprovado | Feed por categoria | — |
+| `app.girob2b.com.br/painel/perfil` | Autenticado | Dados empresa + RoleModeCard | #6 |
+| `admin.girob2b.com.br/login` | Admin | Auth | — |
+| `admin.girob2b.com.br/waitlist` | Admin | Fila de aprovação | — |
+| `admin.girob2b.com.br/necessidades` | Admin | Moderação | — |
+| `admin.girob2b.com.br/dashboard` | Admin | Métricas | — |
+
+---
+
+## 6. Telemetria mínima (V1 logs estruturados; V2 tabela `analytics_events`)
 
 | Fluxo | Event | Onde dispara |
 |---|---|---|
-| 1, 2, 3, 4 | `waitlist_submit_attempt` | submitSupplier inicia |
-| 1, 3 | `waitlist_submit_success` | created |
-| 2, 4 | `waitlist_submit_duplicate` | 23505 |
-| 1 | `signup_started` | `?auth=register` abre modal |
-| 1 | `signup_completed` | email confirmado |
-| 1 | `guest_publish_started` | "Continuar sem cadastro" clicado |
-| 1 | `guest_publish_completed` | demand criada com `guest_email` |
-| 2 | `login_started` | submit do login form |
-| 2 | `login_skip_clicked` | "Continuar sem login" clicado |
-| 5 | `lead_contact_clicked` | botão WhatsApp clicado |
-| 5 | `lead_contact_completed` | RPC `register_demand_contact` ok |
-| 7 | `admin_approve_supplier` | admin aprova |
-| 7 | `admin_activate_trial` | admin ativa trial 7d |
-| 7 | `admin_suspend_supplier` | admin suspende |
-
-**Storage:** tabela `analytics_events` (V2 — ainda não criada).
-**V1:** logs estruturados no Vercel + GA4 já existente.
-
----
-
-## 6. Decisões abertas que afetam os fluxos
-
-(rastreadas em [AVISOS.md](../AVISOS.md) — pendentes pra go-live)
-
-1. **Preço da assinatura do vendedor** — landing mostra R$89 Start / R$349 Pro (Fluxo 5/6 depende)
-2. **Gateway de pagamento** — Stripe ou Mercado Pago. Recomendação: MP (PIX nativo BR). Fluxo 6 depende.
-3. **Ativação automatizada de supplier** — hoje admin manda email manual. V2: Resend automatizado quando admin clica "Aprovar". Fluxo 7 depende.
-4. **Filtro geográfico no feed** — default vê tudo. Granularidade futura: estado / cidade. Fluxo 5 depende.
-5. **Revisão jurídica do texto LGPD** — `demand-publish-v1-2026-05-07` ainda sem revisão.
-6. **Rotacionar Supabase Management Token** — pré-go-live.
-7. **Email de confirmação Resend ligado** — hoje Supabase manda email default. V2: template GiroB2B via Resend.
+| P1, P2, P5 | `waitlist_submit_attempt` | submitSupplier inicia |
+| P1, P5 | `waitlist_submit_success` | created |
+| P2, P10 | `waitlist_submit_duplicate` | 23505 |
+| P3 | `signup_started` | `?auth=register` abre modal |
+| P3 | `signup_completed` | email confirmado |
+| P3 | `signup_skipped_to_guest` | "Continuar sem cadastro" |
+| P1 | `guest_publish_started` | submit do quick form |
+| P1 | `guest_publish_completed` | demand criada com `guest_email` |
+| P4 | `login_started` | submit do login form |
+| P4 | `login_skip_clicked` | "Continuar sem login" |
+| P7 | `waitlist_check_attempt` | POST /api/waitlist/check |
+| P7 | `waitlist_check_approved` | status=approved retornado |
+| P7 | `waitlist_check_pending` | status=pending |
+| P7 | `waitlist_check_not_found` | status=not_found |
+| P7 | `supplier_signup_completed` | createSupplierFromApprovedWaitlist OK |
+| P3, P7 | `tutorial_started` | TutorialRunner mount |
+| P3, P7 | `tutorial_completed` | last step → "Bora começar" |
+| P3, P7 | `tutorial_skipped` | X / ESC / close button |
+| P8 | `lead_contact_clicked` | botão WhatsApp |
+| P8 | `lead_contact_completed` | RPC register_demand_contact OK |
+| P6 | `admin_approve_supplier` | admin aprova |
+| P6 | `admin_activate_trial` | trial 7d |
+| P6 | `admin_suspend_supplier` | suspender |
+| P9 | `paywall_shown` | trial expirado modal |
 
 ---
 
-## 7. Components que os fluxos exigem (input pro DS site)
+## 7. Decisões trancadas (não mexer sem PR de justificativa)
 
-> Esta seção é a entrada direta pra Fase 2 do DS. Cada item será coberto no DS mini-site.
+1. **Reverse marketplace** — vitrine = necessidades, não produtos (PIVOT 2026-05-07)
+2. **WhatsApp único canal** — sem chat interno (PIVOT)
+3. **Vendedor gateado por admin** — sem auto-signup (decisão 2026-05-14, refinado 2026-05-24)
+4. **Modo binário** — sem "both" (decisão 2026-05-24)
+5. **Tutorial primeiro-login com skip sempre** (decisão 2026-05-24)
+6. **"Sou vendedor" só na raiz da app interna** (decisão 2026-05-24)
+7. **Approval token 15min uso único** (decisão técnica 2026-05-24, PR #9)
+8. **Sem dependência de Resend pra signup do vendedor** — validação síncrona (decisão 2026-05-24)
 
-### Primitives (já existem em `apps/web/components/ui/`)
+---
+
+## 8. Decisões abertas (precisam ser trancadas pré-go-live)
+
+1. **Preço da assinatura do vendedor** — landing mostra Start R$89 / Pro R$349
+2. **Gateway de pagamento** — Stripe vs MP (rec: MP — PIX nativo)
+3. **Filtro geográfico do feed** — default vê tudo; granularidade futura
+4. **Revisão jurídica LGPD** — `demand-publish-v1-2026-05-07` sem revisão
+5. **Rotação Supabase Management Token** — pré-go-live
+6. **Resend ligado pra emails reais** — hoje fake; T1-17 em AVISOS
+7. **V2: automação aprovação supplier** — Resend automatizado quando admin clica Aprovar
+
+---
+
+## 9. Tabela de cobertura — fluxo × tela × component × PR
+
+| Fluxo | Telas | Components | Status |
+|---|---|---|---|
+| **P1** Buyer novo | landing /, /postar, /cadastro modal, /painel | WaitlistModal, WaitlistResultModal, BuyerRegisterForm, GuestDemandForm, QuickPublishForm | ✅ implementado (PRs #5, #4) |
+| **P2** Buyer recorrente | landing /, /login | WaitlistModal, WaitlistResultModal, LoginForm | ✅ implementado |
+| **P3** Buyer criando conta | /postar modal, /painel | AuthDialog, TutorialRunner | ✅ implementado (PR #8) |
+| **P4** Buyer logado recorrente | /painel/necessidades, /painel/postar | DashboardShell (PR #6) | ✅ implementado |
+| **P5** Supplier novo | landing /, sem retorno | WaitlistModal, WaitlistResultModal, SupplierWaitlistForm | ✅ implementado |
+| **P6** Admin aprova | admin/waitlist | DataTable, ações | ✅ implementado |
+| **P7** Supplier aprovado 1º acesso | /seja-vendedor, /cadastro/vendedor, /painel/leads | AlreadyApprovedCard, SupplierSignupForm, DashboardShell, TutorialRunner | ✅ implementado (PR #9, #8) |
+| **P8** Supplier ativo | /painel/leads | DemandCard, SupplierSearchBar (PR #6), gates | ✅ implementado |
+| **P9** Supplier expirado | /painel/leads preview, paywall | Paywall modal | 🟡 V1: bloqueia botão; V2: modal completo |
+| **P10** Supplier recorrente edge | /cadastro/vendedor | InvalidToken | ✅ tratado server-side |
+
+---
+
+## 10. Estado atual de implementação (snapshot 2026-05-24)
+
+### Banco (Supabase)
+
+- ✅ Migration **044** aplicada — "both" removido + CHECK constraints `buyer|supplier`
+- ✅ Migration **045** aplicada — colunas `approval_token`, `approval_token_expires_at`, `approval_token_used_at` em `waitlist` + index parcial
+
+### PRs abertos (7) — aguardando merge
+
+| # | Branch | O que entra |
+|---|---|---|
+| 3 | `fix/header-postar-context` | Header `/postar`: Publicar→Criar conta |
+| 4 | `hotfix/necessidade-slug-null-description` | TypeError do `/necessidade/[slug]` sem description |
+| 5 | `fix/home-postar-ux-pack` | UX audit findings H-1..H-4 + bonus |
+| 6 | `feat/header-by-role-remove-both` | Header autenticado por role + remove "both" |
+| 7 | `feat/header-sou-vendedor-raiz` | "Sou vendedor" no header da raiz |
+| 8 | `feat/tutorial-primeiro-login` | Tutorial 3 passos driver.js |
+| 9 | `feat/seja-vendedor-approval-gate` | Gate de cadastro vendedor + `/cadastro/vendedor` |
+| 10 | `docs/casos-de-uso-v2` | **Este doc** |
+
+### Bloqueador único
+
+**GitHub Actions secrets** ainda não configurados. Os 7 PRs com CI ficam vermelhos. Configurar no Settings → Secrets and variables → Actions:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Após configurar, todos os 7 ficam verdes pra merge.
+
+---
+
+## 11. Components que os fluxos exigem (input pro DS)
+
+> Esta seção é a entrada direta pra Fase 3 do DS (galeria de primitivos + patterns).
+
+### Primitives (em `apps/web/components/ui/`)
 - `Button` (variants: primary, secondary, accent, ghost, outline, danger; sizes: compact, default, comfortable)
 - `Input`, `Label`, `Textarea`, `Select`, `Checkbox`
 - `Card` (base, hover)
 - `Dialog`, `DialogHeader`, `DialogTitle`, `DialogDescription`
-- `Badge`, `ResoldBadge` (status)
+- `Badge`, `ResoldBadge`
 - `Avatar`
 - `Tabs`, `Separator`
 - `Skeleton`, `PageSkeleton`
@@ -333,52 +517,55 @@
 - `Sonner` (toaster)
 - `GiroLoader`, `GiroLogo`
 
-### Compostos (Fase 3)
-- `WaitlistModal` (landing, separado por stack)
-- `WaitlistResultModal` (landing, 4 variants)
-- `AuthDialog` (web — login/register)
+### Compostos
+- `WaitlistModal` + `WaitlistResultModal` (landing)
+- `AuthDialog` (web — login/register modal)
 - `SupplierWaitlistModal` (web — `?waitlist=supplier`)
+- `AlreadyApprovedCard` (PR #9 — `/seja-vendedor`)
 - `QuickPublishForm` (home)
 - `DemandCard` (feed)
-- `DemandForm` (full + structured)
-- `GuestDemandForm` (sem auth)
+- `DemandForm` / `GuestDemandForm`
 - `BuyerRegisterForm` (com skip embedded)
 - `LoginForm` (com prefill + skip embedded)
 - `SupplierWaitlistForm`
+- `SupplierSignupForm` (PR #9 — pós-aprovação)
+- `RoleModeCard` (PR #6 — modo binário)
+- `TutorialRunner` (PR #8 — driver.js wrapper)
 
-### Patterns (Fase 3)
-- `PageHeader` — h1 + breadcrumb + actions
-- `EmptyState` — quando lista vazia
-- `FormSection` — section + label + help + errors
-- `DataTable` (admin) — sort, filter, paginate
-- `Topbar` — variants por persona (guest, buyer, supplier, admin)
-- `Sidebar` (V2 — hoje topbar-only)
+### Patterns
+- `PageHeader`, `EmptyState`, `FormSection`
+- `DataTable` (admin)
+- `Topbar` por persona (guest / buyer / supplier / admin) — todos no `dashboard-shell.tsx`
+- `SupplierSearchBar` (PR #6 — item dominante do header supplier)
 
 ### Alerts (já em globals.css)
 - `.alert-success`, `.alert-warning`, `.alert-error`, `.alert-info`
 
----
-
-## 8. Tabela de cobertura: fluxo × tela × component
-
-(Resumo do que precisa estar pronto e testado pra MVP funcionar end-to-end)
-
-| Fluxo | Telas | Components críticos | Status |
-|---|---|---|---|
-| 1. Buyer novo | landing /, /postar, /cadastro (modal), /painel | WaitlistModal, WaitlistResultModal, BuyerRegisterForm, GuestDemandForm, QuickPublishForm | ✅ implementado |
-| 2. Buyer recorrente | landing /, /login | WaitlistModal, WaitlistResultModal, LoginForm (com prefill+skip) | ✅ implementado |
-| 3. Supplier novo | landing /, sem retorno | WaitlistModal, WaitlistResultModal | ✅ implementado |
-| 4. Supplier recorrente | landing /, sem retorno | WaitlistModal, WaitlistResultModal (mailto) | ✅ implementado |
-| 5. Supplier aprovado | /painel/leads, /necessidade/[slug] | DemandCard, gates de subscription, contactDemandAction (WhatsApp) | ✅ implementado |
-| 6. Supplier expirado | /painel/leads (preview), modal de paywall | Modal de paywall, gates | 🟡 V1: bloqueia botão; V2: paywall completo |
-| 7. Admin | admin/waitlist, admin/necessidades | DataTable, ações de aprovar/suspender/trial | ✅ implementado |
+### Tutorial (PR #8)
+- `.girob2b-tutorial.driver-popover` + override completo de cores GiroB2B
 
 ---
 
-## 9. Próximos passos
+## 12. Próximos passos
 
-- [ ] Atualizar [AVISOS.md](../AVISOS.md) com decisões abertas da seção 6
-- [ ] DS mini-site (Fase 2): cobrir todos os primitivos + compostos da seção 7
-- [ ] QA: produzir Playwright suite cobrindo os 7 fluxos + 8 edge cases
-- [ ] V1.1: implementar modal de paywall do Fluxo 6 (hoje só bloqueia botão)
-- [ ] V2: automação do Fluxo 7 (email Resend automatizado quando admin aprova)
+### Imediato (destravar)
+- [ ] Configurar 3 GitHub Actions secrets (Vitor, ~5min no Settings)
+- [ ] Mergear PRs na ordem sugerida: #4 → #3 → #5 → #6 → #7 → #9 → #8 → #10
+
+### Curto prazo (pós-merge)
+- [ ] Smoke test E2E dos 10 fluxos (Playwright suite, ainda não escrita)
+- [ ] Atualizar `AVISOS.md` removendo decisões trancadas pela v2 deste doc
+- [ ] Atualizar `decision_*` memories em `~/.claude/projects/.../memory/`
+
+### Médio prazo
+- [ ] V1.1 Paywall completo (P9) com modal próprio
+- [ ] V2 Automação Resend pra aprovar supplier (P6 → P7 sem fricção manual)
+- [ ] V2 Gateway de pagamento (P8 → P9 renovação)
+- [ ] V2 Self-service LGPD revogação
+- [ ] V2 Filtro geográfico do feed
+
+### Backlog técnico
+- [ ] Sitemap.xml + robots.txt (RF-05.06)
+- [ ] JSON-LD em /necessidade/[slug] com items[]
+- [ ] CSP + HSTS no next.config.ts
+- [ ] Smoke tests Fase 2 (migração Fastify→Next)
