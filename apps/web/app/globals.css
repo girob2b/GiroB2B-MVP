@@ -232,6 +232,126 @@
   .giro-loader-spin { animation: none; }
 }
 
+/* ── Tutorial primeiro-login (driver.js custom) ────────────────────────────
+ * Decisão 2026-05-24: visual com cores GiroB2B, animações leves.
+ * Driver.js classe-base: .driver-popover; nosso override via .girob2b-tutorial.
+ */
+.girob2b-tutorial.driver-popover {
+  background: var(--brand-primary-50, #F1F7F7);
+  border: 1px solid var(--brand-primary-200, #B5CECE);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px -8px rgb(10 92 92 / 0.20);
+  font-family: var(--font-sans, inherit);
+  padding: 0;
+}
+
+.girob2b-tutorial .driver-popover-title {
+  color: var(--brand-primary-800, #063535);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.girob2b-tutorial .driver-popover-description {
+  color: var(--brand-ink, #1A1F1F);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  padding: 0 1.25rem 1rem;
+}
+
+.girob2b-tutorial .driver-popover-description p {
+  margin: 0 0 0.5rem 0;
+}
+.girob2b-tutorial .driver-popover-description p:last-child {
+  margin-bottom: 0;
+}
+.girob2b-tutorial .driver-popover-description strong {
+  color: var(--brand-primary-700, #084A4A);
+  font-weight: 700;
+}
+
+.girob2b-tutorial .driver-popover-footer {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--brand-primary-100, #DCE9E9);
+  background: rgb(255 255 255 / 0.5);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.girob2b-tutorial .driver-popover-progress-text {
+  color: var(--brand-primary-700, #084A4A);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.girob2b-tutorial .driver-popover-prev-btn,
+.girob2b-tutorial .driver-popover-next-btn,
+.girob2b-tutorial .driver-popover-close-btn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+  text-shadow: none;
+  border: 0;
+}
+
+.girob2b-tutorial .driver-popover-prev-btn {
+  background: transparent;
+  color: var(--brand-primary-700, #084A4A);
+}
+.girob2b-tutorial .driver-popover-prev-btn:hover {
+  background: var(--brand-primary-100, #DCE9E9);
+}
+
+.girob2b-tutorial .driver-popover-next-btn {
+  background: var(--brand-primary-600, #0A5C5C);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px -2px rgb(10 92 92 / 0.4);
+}
+.girob2b-tutorial .driver-popover-next-btn:hover {
+  background: var(--brand-primary-700, #084A4A);
+  transform: translateY(-1px);
+}
+
+.girob2b-tutorial .driver-popover-close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  color: var(--brand-primary-700, #084A4A);
+  font-weight: 400;
+  padding: 0.25rem;
+  line-height: 1;
+}
+.girob2b-tutorial .driver-popover-close-btn:hover {
+  background: var(--brand-primary-100, #DCE9E9);
+}
+
+.girob2b-tutorial .driver-popover-arrow {
+  border-color: var(--brand-primary-50, #F1F7F7) !important;
+}
+
+/* Overlay com leve blur + tom escuro brand */
+.driver-overlay {
+  fill: rgb(6 53 53 / 0.55) !important; /* brand-primary-800 */
+}
+
+/* Animação default do driver.js já é suave — só ajuste do stage */
+.driver-active-element {
+  box-shadow: 0 0 0 4px var(--brand-accent-500, #C08A2E),
+              0 0 0 8px rgb(192 138 46 / 0.25) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girob2b-tutorial .driver-popover-next-btn:hover {
+    transform: none;
+  }
+}
+
+
 /* ── Button Variants ─────────────────────────────────────────── */
 @layer components {
   .btn-primary {

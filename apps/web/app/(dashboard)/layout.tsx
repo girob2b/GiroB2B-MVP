@@ -99,6 +99,12 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const initialCollapsed = cookieStore.get("girob2b_sidebar")?.value === "1";
 
+  // Tutorial primeiro-login (decisão Vitor 2026-05-24): dispara apenas quando
+  // o user nunca completou nem pulou o tutorial. Skip e completo gravam o
+  // mesmo timestamp via markTutorialCompleted action.
+  const tutorialCompletedAt = (meta.tutorial_completed_at as string | undefined) ?? null;
+  const showTutorial = !tutorialCompletedAt;
+
   return (
     <DashboardShell
       user={{ id: userId, email: userEmail, role, fullName }}
@@ -106,6 +112,7 @@ export default async function DashboardLayout({
       buyer={buyer}
       cadastroCompleto={cadastroCompleto}
       initialCollapsed={initialCollapsed}
+      showTutorial={showTutorial}
     >
       {children}
     </DashboardShell>
