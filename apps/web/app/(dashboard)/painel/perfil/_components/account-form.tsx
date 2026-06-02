@@ -84,7 +84,6 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
   const ROLE_LABELS: Record<string, string> = {
     buyer: "Comprador",
     supplier: "Vendedor",
-    both: "Ambos",
   };
 
   const PLAN_LABELS: Record<string, { label: string; color: string }> = {

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard, Package, Search, Eye, ClipboardList, Plus, Inbox, IdCard,
   Menu, X, LogOut, ChevronDown,
@@ -64,52 +64,105 @@ interface NavLink {
   icon: React.ElementType;
 }
 
-// ─── Nav definitions (PIVOT 2026-05-07) ──────────────────────────────────────
-// Topbar inline. Sem agrupamento por seção — é tudo flat.
-//   - Cadastro incompleto → só Explorar
-//   - buyer-only          → Explorar, Publicar, Necessidades, Dashboard
-//   - supplier-only       → Leads, Material de venda, Perfil público, Dashboard
-//   - both                → Explorar, Publicar, Necessidades, Leads, Material de venda, Perfil público, Dashboard
+// ─── Nav definitions (decisão 2026-05-24 — sem "both") ─────────────────────
+// Topbar contextual por role:
+//   - Cadastro incompleto       → só Necessidades (fica visível, mas convida a completar)
+//   - buyer                     → Publicar + Necessidades (visão da própria empresa)
+//   - supplier                  → input de busca dominante (ação primária) sem nav extra
+//   - both (legado, transição)  → tratado server-side como supplier (ver layout.tsx)
+//
+// Links secundários (Dashboard, Material de venda, Perfil público) saem do
+// topbar — acessíveis via AccountDropdown.
 
 function minimalNav(): NavLink[] {
-  return [{ href: "/painel/explorar", label: "Explorar", icon: Search }];
+  return [{ href: "/painel/necessidades", label: "Necessidades", icon: ClipboardList }];
 }
 
 function buyerNav(): NavLink[] {
   return [
-    { href: "/painel/explorar",     label: "Explorar",     icon: Search },
     { href: "/painel/postar",       label: "Publicar",     icon: Plus },
     { href: "/painel/necessidades", label: "Necessidades", icon: ClipboardList },
-    { href: "/painel/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
   ];
 }
 
+// Supplier não tem nav padrão — o topbar é dominado pelo input de busca
+// (ver SupplierSearchBar abaixo). Retorna [] pra deixar o flex preencher
+// com o search input.
 function supplierNav(): NavLink[] {
+  return [];
+}
+
+// Links de "ferramentas" que viram itens do AccountDropdown (pra não poluir topbar).
+function buyerSecondaryNav(): NavLink[] {
   return [
-    { href: "/painel/leads",          label: "Leads",             icon: Inbox },
-    { href: "/painel/produtos",       label: "Material de venda", icon: Package },
-    { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
-    { href: "/painel/dashboard",      label: "Dashboard",         icon: LayoutDashboard },
+    { href: "/painel/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
 }
 
-function bothNav(): NavLink[] {
+function supplierSecondaryNav(): NavLink[] {
   return [
-    { href: "/painel/explorar",       label: "Explorar",          icon: Search },
-    { href: "/painel/postar",         label: "Publicar",          icon: Plus },
-    { href: "/painel/necessidades",   label: "Necessidades",      icon: ClipboardList },
-    { href: "/painel/leads",          label: "Leads",             icon: Inbox },
-    { href: "/painel/produtos",       label: "Material de venda", icon: Package },
-    { href: "/painel/perfil-publico", label: "Perfil público",    icon: Eye },
-    { href: "/painel/dashboard",      label: "Dashboard",         icon: LayoutDashboard },
+    { href: "/painel/leads",          label: "Feed de necessidades", icon: Inbox },
+    { href: "/painel/produtos",       label: "Material de venda",    icon: Package },
+    { href: "/painel/perfil-publico", label: "Perfil público",       icon: Eye },
+    { href: "/painel/dashboard",      label: "Dashboard",            icon: LayoutDashboard },
   ];
 }
 
 const ROLE_LABELS: Record<string, string> = {
   buyer: "Comprador",
   supplier: "Vendedor",
-  both: "Ambos",
 };
+
+// ─── Supplier search bar ─────────────────────────────────────────────────────
+// Item dominante do topbar quando role=supplier. Submit vai pra /painel/leads?q=
+// (filtra o feed). Se já estiver em /painel/leads, atualiza a query sem trocar
+// a rota — mantém estado da página.
+function SupplierSearchBar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [value, setValue] = useState(() => searchParams.get("q") ?? "");
+
+  // Sincroniza input se a query da URL mudar por navegação externa.
+  useEffect(() => {
+    setValue(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const q = value.trim();
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    const qs = params.toString();
+    const target = `/painel/leads${qs ? `?${qs}` : ""}`;
+    // Mantém na mesma rota: replace pra não inflar history; mudou rota: push.
+    if (pathname?.startsWith("/painel/leads")) router.replace(target, { scroll: false });
+    else router.push(target);
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      data-tutorial="supplier-search"
+      className="flex-1 max-w-2xl mx-2 lg:mx-6"
+    >
+      <label htmlFor="supplier-topbar-search" className="sr-only">
+        Buscar necessidades
+      </label>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          id="supplier-topbar-search"
+          type="search"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Buscar necessidades por produto, categoria ou especificação..."
+          className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-green-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-200)]"
+        />
+      </div>
+    </form>
+  );
+}
 
 // ─── Account dropdown ────────────────────────────────────────────────────────
 
@@ -119,12 +172,15 @@ function AccountDropdown({
   avatarSrc,
   avatarFallback,
   roleLabel,
+  secondaryNav,
 }: {
   user: UserInfo;
   displayName: string;
   avatarSrc?: string;
   avatarFallback: string;
   roleLabel: string;
+  /** Links que não cabem no topbar limpo — entram no dropdown como atalhos. */
+  secondaryNav: NavLink[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -182,6 +238,25 @@ function AccountDropdown({
             Meu perfil
           </Link>
 
+          {/* Secondary nav (Dashboard, Material de venda, etc) — não cabem no
+              topbar limpo. Aparecem aqui pra continuar acessíveis em 2 cliques. */}
+          {secondaryNav.length > 0 && (
+            <>
+              <div className="my-1 border-t border-slate-100" />
+              {secondaryNav.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-slate-400 shrink-0" />
+                  {label}
+                </Link>
+              ))}
+            </>
+          )}
+
           <div className="my-1 border-t border-slate-100" />
 
           <form action={logout}>
@@ -205,6 +280,7 @@ function MobileDrawer({
   open,
   onClose,
   navItems,
+  secondaryNav,
   pathname,
   displayName,
   email,
@@ -215,6 +291,8 @@ function MobileDrawer({
   open: boolean;
   onClose: () => void;
   navItems: NavLink[];
+  /** Atalhos secundários (Dashboard, Material de venda…) que ficam abaixo do nav principal. */
+  secondaryNav: NavLink[];
   pathname: string;
   displayName: string;
   email: string;
@@ -284,6 +362,22 @@ function MobileDrawer({
               </Link>
             );
           })}
+          {secondaryNav.length > 0 && (
+            <>
+              <div className="my-2 border-t border-slate-100" />
+              {secondaryNav.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <Icon className="w-4 h-4 shrink-0 text-slate-400" />
+                  {label}
+                </Link>
+              ))}
+            </>
+          )}
           <div className="my-2 border-t border-slate-100" />
           <Link
             href="/painel/perfil"
@@ -321,24 +415,31 @@ export default function DashboardShell({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Role "both" foi removida — fallback defensivo (caso o servidor ainda
+  // mande "both", tratamos como supplier preservando assinatura).
+  const effectiveRole: "buyer" | "supplier" =
+    user.role === "supplier" ? "supplier" : "buyer";
+
   const navItems: NavLink[] =
     !cadastroCompleto ? minimalNav() :
-    user.role === "both" ? bothNav() :
-    user.role === "supplier" ? supplierNav() :
+    effectiveRole === "supplier" ? supplierNav() :
     buyerNav();
 
+  const secondaryNav: NavLink[] =
+    effectiveRole === "supplier" ? supplierSecondaryNav() : buyerSecondaryNav();
+
   const displayName =
-    user.role === "supplier" ? (supplier?.trade_name ?? user.email) :
-    user.role === "buyer" ? (buyer?.name ?? user.email) :
-    (supplier?.trade_name ?? buyer?.name ?? user.email);
+    effectiveRole === "supplier"
+      ? (supplier?.trade_name ?? user.email)
+      : (buyer?.name ?? user.email);
 
   const avatarSrc = supplier?.logo_url ?? undefined;
   const avatarFallback = displayName.charAt(0).toUpperCase();
-  const roleLabel = ROLE_LABELS[user.role] ?? user.role;
+  const roleLabel = ROLE_LABELS[effectiveRole] ?? effectiveRole;
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      {/* Topbar desktop */}
+      {/* Topbar desktop — supplier vê input dominante; buyer vê 2 nav links */}
       <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
         <div className="mx-auto max-w-7xl h-16 flex items-center gap-4 px-6">
           <Link href="/painel" aria-label="GiroB2B" className="shrink-0 flex items-center gap-2">
@@ -346,35 +447,38 @@ export default function DashboardShell({
             <span className="font-bold text-base text-slate-900 hidden xl:inline">GiroB2B</span>
           </Link>
 
-          <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
-            {navItems.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || (href !== "/painel" && pathname.startsWith(href));
-              // Âncoras pro tutorial primeiro-login: nav-publicar + nav-necessidades
-              // identificam botões-chave do comprador. Vendedor usa supplier-search
-              // (que vem no PR de header-by-role; aqui, fallback é o primeiro link).
-              const tutorialAnchor =
-                href === "/painel/postar"       ? "nav-publicar"     :
-                href === "/painel/necessidades" ? "nav-necessidades" :
-                href === "/painel/leads"        ? "supplier-search"  :
-                undefined;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  data-tutorial={tutorialAnchor}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                    active
-                      ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
-                      : "text-slate-700 hover:bg-slate-100"
-                  )}
-                >
-                  <Icon className="h-4 w-4 text-slate-400" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+          {effectiveRole === "supplier" ? (
+            // Supplier: search bar dominante (PR #6). Tutorial primeiro-login (PR #8)
+            // ancora aqui via data-tutorial="supplier-search" no <form> interno.
+            <SupplierSearchBar />
+          ) : (
+            <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
+              {navItems.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || (href !== "/painel" && pathname.startsWith(href));
+                // Âncoras pro tutorial primeiro-login (PR #8) — buyer route.
+                const tutorialAnchor =
+                  href === "/painel/postar"       ? "nav-publicar"     :
+                  href === "/painel/necessidades" ? "nav-necessidades" :
+                  undefined;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    data-tutorial={tutorialAnchor}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                      active
+                        ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+                        : "text-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 text-slate-400" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           <AccountDropdown
             user={user}
@@ -382,30 +486,39 @@ export default function DashboardShell({
             avatarSrc={avatarSrc}
             avatarFallback={avatarFallback}
             roleLabel={roleLabel}
+            secondaryNav={secondaryNav}
           />
         </div>
       </header>
 
       {/* Topbar mobile */}
       <header className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-30 shrink-0">
-        <div className="mx-auto max-w-7xl h-16 flex items-center px-4 gap-3">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="text-slate-500 hover:text-slate-900 p-1"
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <Link href="/painel" aria-label="GiroB2B" className="mr-auto">
-            <GiroLogo size={28} iconOnly />
-          </Link>
-          <Avatar className="w-8 h-8 border border-slate-200">
-            <AvatarImage src={avatarSrc} alt={displayName} />
-            <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
-              {avatarFallback}
-            </AvatarFallback>
-          </Avatar>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-16 flex items-center px-4 gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="text-slate-500 hover:text-slate-900 p-1"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <Link href="/painel" aria-label="GiroB2B" className="mr-auto">
+              <GiroLogo size={28} iconOnly />
+            </Link>
+            <Avatar className="w-8 h-8 border border-slate-200">
+              <AvatarImage src={avatarSrc} alt={displayName} />
+              <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
+                {avatarFallback}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          {/* Vendedor: input de busca também no mobile (logo abaixo da topbar). */}
+          {effectiveRole === "supplier" && (
+            <div className="px-4 pb-3">
+              <SupplierSearchBar />
+            </div>
+          )}
         </div>
       </header>
 
@@ -413,6 +526,7 @@ export default function DashboardShell({
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         navItems={navItems}
+        secondaryNav={secondaryNav}
         pathname={pathname}
         displayName={displayName}
         email={user.email}
