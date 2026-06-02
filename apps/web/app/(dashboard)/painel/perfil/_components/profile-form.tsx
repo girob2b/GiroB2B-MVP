@@ -1,9 +1,8 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, ShieldCheck, ShoppingBag, Store } from "lucide-react";
+import { Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -107,8 +106,8 @@ const initialHabitsState: UpdateBuyerHabitsState = {};
 
 type PendingRoleRequest = {
   id: string;
-  current_mode: "buyer" | "supplier" | "both";
-  target_mode: "buyer" | "supplier" | "both";
+  current_mode: "buyer" | "supplier";
+  target_mode: "buyer" | "supplier";
   requested_at: string;
 };
 
@@ -268,35 +267,8 @@ function BuyerHabitsForm({ buyer }: { buyer: Buyer }) {
   );
 }
 
-function ViewSwitcher({ view, onChange }: { view: View; onChange: (v: View) => void }) {
-  const options: { value: View; label: string; icon: typeof ShoppingBag }[] = [
-    { value: "buyer",    label: "Perfil como Comprador", icon: ShoppingBag },
-    { value: "supplier", label: "Perfil como Vendedor",  icon: Store },
-  ];
-  return (
-    <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-slate-50 p-1">
-      {options.map(({ value, label, icon: Icon }) => {
-        const active = view === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            onClick={() => onChange(value)}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors",
-              active
-                ? "bg-white text-brand-700 shadow-sm"
-                : "text-slate-500 hover:text-slate-800",
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+// ViewSwitcher removido em 2026-05-24 junto com o modo "both" — single role
+// não precisa de switch.
 
 export default function ProfileForm({
   buyer,
@@ -313,34 +285,18 @@ export default function ProfileForm({
   pendingRoleRequest: PendingRoleRequest | null;
   initialSegmentChosen: boolean;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const hasSupplier = !!supplier;
   // `buyer` aqui pode ser uma row real OU derivada do supplier (em supplier-only).
-  // O ViewSwitcher e BuyerHabitsForm só fazem sentido se houver buyer REAL.
   const hasBuyer = hasRealBuyer;
-  const isBoth = hasSupplier && hasBuyer;
-  const currentMode: "buyer" | "supplier" | "both" =
-    isBoth ? "both" : hasSupplier ? "supplier" : "buyer";
-
-  // View ativa via URL (?view=buyer|supplier). Default = "buyer" pra ambos.
-  const rawView = searchParams.get("view");
-  const view: View = rawView === "supplier" ? "supplier" : "buyer";
-
-  function setView(next: View) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next === "buyer") params.delete("view");
-    else params.set("view", next);
-    const qs = params.toString();
-    router.replace(qs ? `?${qs}` : "?", { scroll: false });
-  }
+  // Modo binário (decisão 2026-05-24, "both" removido). Supplier vence se houver
+  // registro nas duas tabelas (dado legado pré-cleanup).
+  const currentMode: "buyer" | "supplier" = hasSupplier ? "supplier" : "buyer";
 
   const initials = (buyer.name ?? buyer.email).slice(0, 1).toUpperCase();
   const profileComplete = isProfileComplete(buyer);
 
-  // Pra single-role, força a view correspondente (ignora ?view=)
-  const effectiveView: View = isBoth ? view : (hasSupplier ? "supplier" : "buyer");
+  // View segue o role único do user.
+  const effectiveView: View = hasSupplier ? "supplier" : "buyer";
 
   return (
     <div className="space-y-6">
@@ -377,10 +333,7 @@ export default function ProfileForm({
         initialSegmentChosen={initialSegmentChosen}
       />
 
-      {/* 3. Switch de visão (só pra "ambos") */}
-      {isBoth && <ViewSwitcher view={effectiveView} onChange={setView} />}
-
-      {/* 4. Conteúdo da face ativa */}
+      {/* 3. Conteúdo da face única (buyer OU supplier — sem switch de visão) */}
       {effectiveView === "buyer" && hasBuyer && (
         <BuyerHabitsForm buyer={buyer} />
       )}
@@ -388,7 +341,7 @@ export default function ProfileForm({
       {effectiveView === "supplier" && hasSupplier && supplier && (
         <AccountForm
           supplier={supplier}
-          userRole={isBoth ? "both" : "supplier"}
+          userRole="supplier"
         />
       )}
     </div>

@@ -135,10 +135,10 @@ export async function chooseInitialMode(
   formData: FormData
 ): Promise<ChooseInitialModeState> {
   const target = formData.get("target_mode") as string;
-  if (!["buyer", "supplier", "both"].includes(target)) {
+  if (!["buyer", "supplier"].includes(target)) {
     return { error: "Modo inválido." };
   }
-  const targetMode = target as "buyer" | "supplier" | "both";
+  const targetMode = target as "buyer" | "supplier";
 
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
@@ -159,8 +159,9 @@ export async function chooseInitialMode(
 
   const hasBuyer = !!buyerRes.data;
   const hasSupplier = !!supplierRes.data;
-  const wantsBuyer    = targetMode === "buyer"    || targetMode === "both";
-  const wantsSupplier = targetMode === "supplier" || targetMode === "both";
+  // Modo binário (decisão 2026-05-24, "both" removido).
+  const wantsBuyer    = targetMode === "buyer";
+  const wantsSupplier = targetMode === "supplier";
 
   // Garante buyer row (a plataforma é B2B; todo user precisa).
   if (wantsBuyer && !hasBuyer) {
@@ -265,10 +266,10 @@ export async function requestRoleChange(
   formData: FormData
 ): Promise<RequestRoleChangeState> {
   const target = formData.get("target_mode") as string;
-  if (!["buyer", "supplier", "both"].includes(target)) {
+  if (!["buyer", "supplier"].includes(target)) {
     return { error: "Modo inválido." };
   }
-  const targetMode = target as "buyer" | "supplier" | "both";
+  const targetMode = target as "buyer" | "supplier";
 
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
@@ -293,8 +294,8 @@ export async function requestRoleChange(
 
   const hasSupplier = !!supplierRes.data;
   const hasBuyer    = !!buyerRes.data;
-  const currentMode: "buyer" | "supplier" | "both" =
-    hasSupplier && hasBuyer ? "both" : hasSupplier ? "supplier" : "buyer";
+  // Modo binário — supplier vence se houver registro nas duas tabelas (dado legado).
+  const currentMode: "buyer" | "supplier" = hasSupplier ? "supplier" : "buyer";
 
   if (targetMode === currentMode) {
     return { error: "Você já está nesse modo de uso." };

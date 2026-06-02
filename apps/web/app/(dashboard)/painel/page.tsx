@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * /painel → roteia conforme papel do user (PIVOT 2026-05-07):
- *   - supplier sem buyer → /painel/leads
- *   - buyer sem supplier → /painel/necessidades
- *   - both / nenhum → /painel/necessidades (default seguro do reverse marketplace)
+ * /painel → roteia conforme papel do user (PIVOT 2026-05-07; "both" removido em 2026-05-24):
+ *   - supplier → /painel/leads
+ *   - buyer    → /painel/necessidades
+ *   - nenhum   → /painel/necessidades (default seguro do reverse marketplace)
  */
 export default async function PainelPage() {
   const supabase = await createClient();

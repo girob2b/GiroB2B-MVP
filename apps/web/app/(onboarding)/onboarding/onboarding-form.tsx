@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import {
   Building2, CheckCircle2, Hash, Loader2, Phone,
-  ShoppingCart, Store, Users, ArrowLeft,
+  ShoppingCart, Store, ArrowLeft,
 } from "lucide-react";
 import { completeOnboarding, skipOnboarding } from "@/app/actions/onboarding";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,16 @@ import { Label } from "@/components/ui/label";
 import { formatCNPJ, cleanCNPJ } from "@/lib/brasilapi";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Segment   = "buyer" | "supplier" | "both";
+// "both" foi removido em 2026-05-24 — empresa escolhe um único modo (buyer ou
+// supplier). Se precisar trocar depois, há fluxo separado em /painel/perfil.
+type Segment   = "buyer" | "supplier";
 type Step      = 1 | 2 | 3 | 4;
 type Direction = "forward" | "backward";
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 const SEGMENTS: { value: Segment; title: string; description: string; icon: React.ElementType }[] = [
-  { value: "buyer",    title: "Comprar",  description: "Preciso encontrar fornecedores e solicitar cotações para minha empresa.",        icon: ShoppingCart },
-  { value: "supplier", title: "Vender",   description: "Quero receber pedidos de compradores e ampliar minha rede de clientes B2B.",     icon: Building2 },
-  { value: "both",     title: "Ambos",    description: "Compro insumos e também vendo meus produtos ou serviços para outras empresas.", icon: Users },
+  { value: "buyer",    title: "Comprar",  description: "Preciso encontrar fornecedores e solicitar cotações para minha empresa.",    icon: ShoppingCart },
+  { value: "supplier", title: "Vender",   description: "Quero receber pedidos de compradores e ampliar minha rede de clientes B2B.", icon: Building2 },
 ];
 
 const CATEGORIES = [
@@ -151,7 +152,7 @@ export default function OnboardingForm() {
   const [stateUF,     setStateUF]     = useState("");
   const [cnpjError,   setCnpjError]   = useState<string | null>(null);
 
-  const isSupplier = segment === "supplier" || segment === "both";
+  const isSupplier = segment === "supplier";
 
   // ── localStorage restore ────────────────────────────────────────────────────
   const restoredRef = useRef(false);
