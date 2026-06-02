@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import { GiroLogo } from "@/components/ui/giro-logo";
 
 /**
@@ -11,18 +11,24 @@ import { GiroLogo } from "@/components/ui/giro-logo";
  * Decisão de produto 2026-05-18:
  * - Sem busca/categorias no header — feed de necessidades é feature de vendedor
  *   aprovado, não pode ficar à mostra na raiz pra qualquer visitante.
- * - Sem "Sou vendedor" — aquisição de vendedor é função da landing externa.
  * - O app interno é o lado do comprador: publicar + entrar.
  *
- * Decisão 2026-05-23 (UX contextual):
+ * Decisão 2026-05-23 (UX contextual, PR #3):
  * - Em /postar (o user já está postando), esconde "Publicar necessidade" do
  *   header — botão seria redundante. Mostra "Criar conta" + "Entrar" pra
  *   converter quem ainda não tem conta.
- * - Em qualquer outra rota, mostra "Publicar necessidade" + "Entrar".
+ *
+ * Decisão 2026-05-24 (PR #7):
+ * - "Sou vendedor" volta — APENAS na tela raiz (`/`). Em outras rotas (postar,
+ *   cadastro, etc) fica fora pra não distrair do contexto do comprador.
+ *   Click leva pra /seja-vendedor (landing pública que oferece waitlist +
+ *   fluxo de cadastro pra quem foi aprovado pelo admin).
  */
 export default function GuestShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const onPostar = pathname?.startsWith("/postar") ?? false;
+  // Só na raiz. /postar, /cadastro, /login etc não mostram o CTA de vendedor.
+  const onRoot = pathname === "/";
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -60,6 +66,15 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
                   <Plus className="h-4 w-4" />
                   Publicar necessidade
                 </Link>
+                {onRoot && (
+                  <Link
+                    href="/seja-vendedor"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    <Store className="h-4 w-4 text-slate-400" />
+                    Sou vendedor
+                  </Link>
+                )}
                 <Link
                   href="?auth=login"
                   scroll={false}
@@ -99,6 +114,14 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
               </>
             ) : (
               <>
+                {onRoot && (
+                  <Link
+                    href="/seja-vendedor"
+                    className="text-sm font-medium text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    Sou vendedor
+                  </Link>
+                )}
                 <Link
                   href="?auth=login"
                   scroll={false}
