@@ -36,7 +36,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
         <h2 className="text-sm font-semibold text-slate-900">Como vão te contatar</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Field label="Seu nome" htmlFor="guest_name" error={state?.errors?.guest_name?.[0]} className="sm:col-span-1">
+          <Field label="Seu nome" htmlFor="guest_name" required error={state?.errors?.guest_name?.[0]} className="sm:col-span-1">
             <input
               id="guest_name"
               name="guest_name"
@@ -46,7 +46,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
             />
           </Field>
-          <Field label="Email" htmlFor="guest_email" error={state?.errors?.guest_email?.[0]}>
+          <Field label="Email" htmlFor="guest_email" required error={state?.errors?.guest_email?.[0]}>
             <input
               id="guest_email"
               name="guest_email"
@@ -57,7 +57,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
             />
           </Field>
-          <Field label="WhatsApp" htmlFor="guest_whatsapp" help="Apenas números com DDD." error={state?.errors?.guest_whatsapp?.[0]}>
+          <Field label="WhatsApp" htmlFor="guest_whatsapp" required help="Apenas números com DDD." error={state?.errors?.guest_whatsapp?.[0]}>
             <input
               id="guest_whatsapp"
               name="guest_whatsapp"
@@ -75,7 +75,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
         <h2 className="text-sm font-semibold text-slate-900">O que você precisa comprar</h2>
 
-        <Field label="Título" htmlFor="title" error={state?.errors?.title?.[0]}>
+        <Field label="Título" htmlFor="title" required error={state?.errors?.title?.[0]}>
           <input
             id="title"
             name="title"
@@ -83,13 +83,13 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             minLength={5}
             maxLength={120}
             defaultValue={defaults.title}
-            placeholder="Ex.: 1.000 caixas de papelão 30x40 ondulado"
+            placeholder="Ex.: 1.000 caixas de papelão"
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           />
         </Field>
 
         <Field
-          label="Descrição (opcional)"
+          label="Descrição"
           htmlFor="description"
           help="Especificação livre. Pode deixar em branco se o título já diz tudo."
         >
@@ -110,7 +110,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             defaultValue={defaults.category_id}
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           >
-            <option value="">Sem categoria</option>
+            <option value="">Selecionar (opcional)</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -238,6 +238,7 @@ function Field({
   help,
   error,
   className,
+  required,
   children,
 }: {
   label: string;
@@ -245,12 +246,15 @@ function Field({
   help?: string;
   error?: string;
   className?: string;
+  /** Adiciona asterisco no label pra sinalizar obrigatoriedade (UX H-2). */
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className={className}>
       <label htmlFor={htmlFor} className="block text-xs font-semibold text-slate-700 mb-1.5">
         {label}
+        {required && <span className="ml-0.5 text-destructive" aria-hidden="true">*</span>}
       </label>
       {children}
       {help && !error && <p className="mt-1 text-xs text-slate-500">{help}</p>}

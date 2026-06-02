@@ -34,13 +34,16 @@ export async function generateMetadata({
   const { slug } = await params;
   const demand = await getDemandBySlug(slug);
   if (!demand) return { title: "Necessidade não encontrada" };
+  // description é opcional pro publisher guest — fallback pra title evita
+  // TypeError em generateMetadata + mantém OG/meta com info útil pra crawler.
+  const metaDescription = demand.description?.slice(0, 160) ?? demand.title;
   return {
     title: demand.title,
-    description: demand.description.slice(0, 160),
+    description: metaDescription,
     alternates: { canonical: `/necessidade/${slug}` },
     openGraph: {
       title: demand.title,
-      description: demand.description.slice(0, 160),
+      description: metaDescription,
       type: "article",
       url: `/necessidade/${slug}`,
     },
@@ -115,7 +118,8 @@ export default async function NecessidadeDetailPage({
     "@context": "https://schema.org",
     "@type": "BuyAction",
     name: demand.title,
-    description: demand.description,
+    // Sem description, omite a chave (em vez de emitir `description: null` no JSON-LD).
+    description: demand.description ?? undefined,
     object: { "@type": "Product", name: demand.title, category: category?.name },
     location: location ? { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: demand.delivery_city, addressRegion: demand.delivery_state } } : undefined,
     url: `${APP_URL}/necessidade/${slug}`,

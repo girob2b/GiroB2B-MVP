@@ -28,31 +28,29 @@ export default async function DashboardLayout({
     redirect("/suspended");
   }
 
-  // role vem do user_metadata (salvo pelo action de onboarding como "segment")
-  // "both" é um valor válido que não existe na tabela user_profiles
+  // Role binário (decisão 2026-05-24 — "both" removido).
+  // Fonte: user_metadata.segment → fallback pra checagem na tabela suppliers/buyers.
+  // Se user existe nas DUAS tabelas (dado legado), prevalece "supplier"
+  // (preserva assinatura — ver migration 044 + decisão em AVISOS).
   const meta = authData.user.user_metadata ?? {};
-  let role = (meta.segment as string) || (meta.role as string) || "buyer";
+  const metaSegment = (meta.segment as string) || (meta.role as string) || "";
+  let role: "buyer" | "supplier" =
+    metaSegment === "supplier" ? "supplier" : "buyer";
 
-  // Se não for "both" no metadata, vamos verificar se ele existe em ambas as tabelas
-  // para garantir que o perfil reflita a realidade do banco de dados
-  if (role !== "both") {
-    const [supplierCheck, buyerCheck] = await Promise.all([
-      supabase.from("suppliers").select("id").eq("user_id", userId).maybeSingle(),
-      supabase.from("buyers").select("id").eq("user_id", userId).maybeSingle(),
-    ]);
-    
-    if (supplierCheck.data && buyerCheck.data) {
-      role = "both";
-    } else if (supplierCheck.data) {
-      role = "supplier";
-    } else if (buyerCheck.data) {
-      role = "buyer";
-    }
+  // Confirma com o banco — supplier vence se houver registro em ambas as tabelas.
+  const [supplierCheck, buyerCheck] = await Promise.all([
+    supabase.from("suppliers").select("id").eq("user_id", userId).maybeSingle(),
+    supabase.from("buyers").select("id").eq("user_id", userId).maybeSingle(),
+  ]);
+  if (supplierCheck.data) {
+    role = "supplier";
+  } else if (buyerCheck.data) {
+    role = "buyer";
   }
 
   // Buscar dados de supplier (quando aplicável)
   let supplier = null;
-  if (role === "supplier" || role === "both") {
+  if (role === "supplier") {
     const { data } = await supabase
       .from("suppliers")
       .select("id, trade_name, company_name, logo_url, plan, profile_completeness, slug, city, state")
@@ -61,11 +59,10 @@ export default async function DashboardLayout({
     supplier = data;
   }
 
-  // Buscar dados de buyer (quando aplicável). Inclui campos de "cadastro completo"
-  // pra sidebar adaptativa (ver dashboard-shell.tsx).
+  // Buscar dados de buyer (quando aplicável). Inclui campos de "cadastro completo".
   let buyer = null;
   let buyerProfileComplete = false;
-  if (role === "buyer" || role === "both") {
+  if (role === "buyer") {
     const { data } = await supabase
       .from("buyers")
       .select("id, name, phone, cnpj, company_name, city, state, address")
@@ -88,13 +85,12 @@ export default async function DashboardLayout({
   // só por ter dados preenchidos, sem ter escolhido como vai usar a plataforma.
   const initialSegmentChosen = (meta.initial_segment_chosen as boolean | undefined) !== false;
 
-  // "Cadastro completo" — pra sidebar e card de nudge:
+  // "Cadastro completo" pra liberar nav extra:
   //   - supplier sempre é completo (insert exige dados mínimos B2B)
-  //   - buyer-only depende dos campos B2B preenchidos via /painel/perfil
-  //   - nenhum dos casos destrava se o user ainda não escolheu o modo de uso
+  //   - buyer depende dos campos B2B preenchidos via /painel/perfil
+  //   - nenhum destrava se o user ainda não escolheu o modo de uso
   const cadastroCompleto =
-    initialSegmentChosen &&
-    (role === "supplier" || role === "both" || buyerProfileComplete);
+    initialSegmentChosen && (role === "supplier" || buyerProfileComplete);
 
   const fullName =
     (profile?.full_name ?? "").trim() ||

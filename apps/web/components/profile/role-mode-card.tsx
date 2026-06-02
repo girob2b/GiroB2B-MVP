@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { chooseInitialMode, requestRoleChange } from "@/app/actions/user";
 
-type Mode = "buyer" | "supplier" | "both";
+// Modo binário (decisão 2026-05-24 — "both" removido).
+type Mode = "buyer" | "supplier";
 
 type PendingRoleRequest = {
   id: string;
@@ -18,7 +19,7 @@ type PendingRoleRequest = {
 };
 
 interface RoleModeCardProps {
-  /** O que o usuário tem hoje (derivado do servidor): buyer | supplier | both */
+  /** O que o usuário tem hoje (derivado do servidor). */
   currentMode: Mode;
   hasSupplier: boolean;
   /** ISO timestamp da última troca; null = nunca trocou (sem cooldown) */
@@ -39,15 +40,13 @@ function formatRemaining(ms: number) {
 }
 
 const OPTIONS = [
-  { value: "buyer",    label: "Só comprar",       desc: "Encontrar fornecedores e enviar cotações" },
-  { value: "supplier", label: "Só vender",        desc: "Receber cotações e gerenciar produtos" },
-  { value: "both",     label: "Comprar e vender", desc: "Acesso completo a todas as funcionalidades" },
+  { value: "buyer",    label: "Comprar",  desc: "Publicar necessidades e receber contato de fornecedores no WhatsApp" },
+  { value: "supplier", label: "Vender",   desc: "Acessar feed de necessidades e contatar compradores via WhatsApp" },
 ] as const;
 
 const MODE_LABEL: Record<Mode, string> = {
-  buyer: "Só comprar",
-  supplier: "Só vender",
-  both: "Comprar e vender",
+  buyer: "Comprar",
+  supplier: "Vender",
 };
 
 function formatRequestedAt(iso: string) {
@@ -144,7 +143,7 @@ export default function RoleModeCard({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {OPTIONS.map(({ value, label, desc }) => {
             const isActive = selected === value;
             const disabled = pending || (!isFirstChoice && hasPending);

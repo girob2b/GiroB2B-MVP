@@ -80,7 +80,7 @@ export default async function PostarPublicoPage({
         </p>
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           <strong>Sem cadastro = 1 publicação.</strong>{" "}
-          <Link href="/?auth=register" className="font-semibold text-amber-900 underline">
+          <Link href="?auth=register" scroll={false} className="font-semibold text-amber-900 underline">
             Crie conta grátis
           </Link>{" "}
           pra publicar mais, gerenciar suas necessidades e ganhar o selo Verificado (compradores

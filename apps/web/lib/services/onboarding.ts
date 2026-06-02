@@ -36,7 +36,7 @@ export async function completeOnboardingForUser(
   const baseCity = userMetadata.city?.trim() || null;
   const baseState = userMetadata.state?.trim() || null;
 
-  if (segment === "buyer" || segment === "both") {
+  if (segment === "buyer") {
     const { error } = await admin.from("buyers").upsert({
       user_id: userId,
       email: userEmail,
@@ -55,7 +55,7 @@ export async function completeOnboardingForUser(
     }
   }
 
-  if (segment === "supplier" || segment === "both") {
+  if (segment === "supplier") {
     if (!input.trade_name || !input.cnpj || !input.phone) {
       return { errors: { general: ["Dados do fornecedor incompletos."] } };
     }

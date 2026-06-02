@@ -12,7 +12,7 @@ export const metadata = { title: "Explorar" };
  * o explorar de cliente logado vira atalho para o feed que faz mais sentido
  * pro papel do user:
  *   - supplier → /painel/leads (com paywall)
- *   - buyer ou both → /buscar (feed público)
+ *   - buyer → /buscar (feed público)
  *
  * Componentes legados (explorer-search.tsx, catalog-suppliers-section.tsx,
  * complete-cadastro-card.tsx, web-search-panel.tsx, needs-dialog.tsx,
