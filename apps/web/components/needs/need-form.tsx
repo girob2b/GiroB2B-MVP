@@ -45,7 +45,7 @@ export async function submitNeedRequest(values: NeedFormValues) {
 export default function NeedForm({
   initialProductName = "",
   initialDescription = "",
-  submitLabel = "Enviar necessidade",
+  submitLabel = "Enviar demanda",
   submittingLabel = "Enviando...",
   cancelLabel = "Cancelar",
   showCancel = false,
@@ -97,7 +97,7 @@ export default function NeedForm({
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Nao foi possivel enviar sua necessidade. Tente novamente."
+          : "Nao foi possivel enviar sua demanda. Tente novamente."
       );
     } finally {
       setSubmitting(false);

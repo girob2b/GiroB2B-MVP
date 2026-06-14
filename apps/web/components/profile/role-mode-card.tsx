@@ -40,8 +40,8 @@ function formatRemaining(ms: number) {
 }
 
 const OPTIONS = [
-  { value: "buyer",    label: "Comprar",  desc: "Publicar necessidades e receber contato de fornecedores no WhatsApp" },
-  { value: "supplier", label: "Vender",   desc: "Acessar feed de necessidades e contatar compradores via WhatsApp" },
+  { value: "buyer",    label: "Comprar",  desc: "Publicar demandas e receber contato de fornecedores no WhatsApp" },
+  { value: "supplier", label: "Vender",   desc: "Acessar feed de demandas e contatar compradores via WhatsApp" },
 ] as const;
 
 const MODE_LABEL: Record<Mode, string> = {

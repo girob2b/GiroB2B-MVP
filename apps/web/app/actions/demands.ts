@@ -144,7 +144,7 @@ export async function createDemandAction(
     const result = await createDemand(authData.user.id, parsed.data);
     slug = result.slug;
   } catch (e) {
-    return { message: e instanceof Error ? e.message : "Erro ao publicar a necessidade." };
+    return { message: e instanceof Error ? e.message : "Erro ao publicar a demanda." };
   }
 
   revalidatePath("/painel/necessidades");
@@ -251,7 +251,7 @@ export async function createGuestDemandAction(
     );
     slug = result.slug;
   } catch (e) {
-    return { message: e instanceof Error ? e.message : "Erro ao publicar a necessidade." };
+    return { message: e instanceof Error ? e.message : "Erro ao publicar a demanda." };
   }
 
   revalidatePath(`/necessidade/${slug}`);

@@ -44,7 +44,7 @@ const BUYER_STEPS: DriveStep[] = [
   {
     element: '[data-tutorial="nav-necessidades"]',
     popover: {
-      title: "Suas necessidades vivem aqui",
+      title: "Suas demandas vivem aqui",
       description:
         "<p>Tudo que você publicou em um só lugar — quantas pessoas viram, quantas te chamaram no WhatsApp, e o status de cada uma.</p>",
       side: "bottom",
@@ -58,7 +58,7 @@ const BUYER_STEPS: DriveStep[] = [
     popover: {
       title: "Suas configurações ficam aqui",
       description:
-        "<p>Quando quiser, complete seu perfil (CNPJ, telefone, endereço) e ganhe o <strong>selo Verificado</strong> — suas necessidades aparecem em destaque no feed dos vendedores.</p>",
+        "<p>Quando quiser, complete seu perfil (CNPJ, telefone, endereço) e ganhe o <strong>selo Verificado</strong> — suas demandas aparecem em destaque no feed dos vendedores.</p>",
       side: "bottom",
       align: "end",
       doneBtnText: COMMON_DONE,
@@ -74,7 +74,7 @@ const SUPPLIER_STEPS: DriveStep[] = [
     popover: {
       title: "👋 Bem-vindo à GiroB2B!",
       description:
-        "<p>Este é seu motor principal — <strong>busque por produto, categoria ou especificação</strong> e veja todas as necessidades publicadas pelos compradores.</p>",
+        "<p>Este é seu motor principal — <strong>busque por produto, categoria ou especificação</strong> e veja todas as demandas publicadas pelos compradores.</p>",
       side: "bottom",
       align: "center",
       nextBtnText: COMMON_NEXT,
@@ -98,7 +98,7 @@ const SUPPLIER_STEPS: DriveStep[] = [
     popover: {
       title: "Pronto! Bora encontrar leads?",
       description:
-        "<p>Comece pelas categorias que você atende. Quando achar uma necessidade interessante, é um clique pra contatar o comprador no WhatsApp — sem fricção.</p>",
+        "<p>Comece pelas categorias que você atende. Quando achar uma demanda interessante, é um clique pra contatar o comprador no WhatsApp — sem fricção.</p>",
       side: "over",
       align: "center",
       doneBtnText: COMMON_DONE,

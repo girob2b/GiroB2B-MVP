@@ -64,7 +64,7 @@ export default function GuestShell({ children }: { children: React.ReactNode }) 
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[color:var(--brand-green-600)] text-white hover:bg-[color:var(--brand-green-700)] transition-colors"
                 >
                   <Plus className="h-4 w-4" />
-                  Publicar necessidade
+                  Publicar demanda
                 </Link>
                 {onRoot && (
                   <Link

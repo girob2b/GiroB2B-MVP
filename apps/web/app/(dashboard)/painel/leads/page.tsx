@@ -8,7 +8,7 @@ import { listPublicDemands } from "@/lib/services/demands";
 import { DemandCard } from "@/components/demands/demand-card";
 import ContactButton from "./_components/contact-button";
 
-export const metadata: Metadata = { title: "Leads — necessidades disponíveis" };
+export const metadata: Metadata = { title: "Leads — demandas disponíveis" };
 export const dynamic = "force-dynamic";
 
 const BR_STATES = [
@@ -107,7 +107,7 @@ export default async function LeadsPage({
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Leads</h1>
         <p className="text-sm text-slate-500">
-          Necessidades publicadas por compradores. Contate via WhatsApp para fechar negócio.
+          Demandas publicadas por compradores. Contate via WhatsApp para fechar negócio.
         </p>
       </header>
 

@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import GuestDemandForm from "./_components/guest-demand-form";
 
 export const metadata: Metadata = {
-  title: "Publicar necessidade — GiroB2B",
+  title: "Publicar demanda — GiroB2B",
   description: "Publique o que sua empresa precisa comprar. Vendedores qualificados te contatam pelo WhatsApp.",
 };
 
@@ -74,7 +74,7 @@ export default async function PostarPublicoPage({
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <header className="mb-6 space-y-2">
-        <h1 className="text-2xl font-bold text-slate-900">Publicar necessidade</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Publicar demanda</h1>
         <p className="text-sm text-slate-500">
           Publique grátis, sem criar conta. Vendedores te contatam direto pelo WhatsApp.
         </p>
@@ -83,7 +83,7 @@ export default async function PostarPublicoPage({
           <Link href="?auth=register" scroll={false} className="font-semibold text-amber-900 underline">
             Crie conta grátis
           </Link>{" "}
-          pra publicar mais, gerenciar suas necessidades e ganhar o selo Verificado (compradores
+          pra publicar mais, gerenciar suas demandas e ganhar o selo Verificado (compradores
           verificados têm prioridade no feed dos vendedores).
         </div>
       </header>

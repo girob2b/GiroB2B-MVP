@@ -27,7 +27,7 @@ export default function TermosPage() {
       <h2>1. Sobre a plataforma</h2>
       <p>
         O GiroB2B é um <strong>marketplace de conexão entre empresas</strong> (B2B):
-        compradores publicam necessidades, fornecedores cadastram produtos e respondem cotações.
+        compradores publicam demandas, fornecedores cadastram produtos e respondem cotações.
         A plataforma <strong>não é parte das transações comerciais</strong> entre comprador e fornecedor —
         atuamos apenas como facilitador da conexão.
       </p>

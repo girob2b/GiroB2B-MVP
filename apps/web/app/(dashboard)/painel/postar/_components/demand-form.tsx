@@ -190,7 +190,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Necessidade simples
+            Demanda simples
           </button>
           <button
             type="button"
@@ -208,7 +208,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
         </div>
         <p className="px-2 py-2 text-xs text-slate-500">
           {kind === "simple"
-            ? "Necessidade descritiva — ideal para cotação rápida ou tirar dúvida com fornecedor."
+            ? "Demanda descritiva — ideal para cotação rápida ou tirar dúvida com fornecedor."
             : "Pedido formal tipo PO: lista de itens, condições de pagamento/entrega e PDF do pedido (estilo GOV.BR)."}
         </p>
       </section>
@@ -249,7 +249,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             rows={kind === "structured" ? 3 : 5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Detalhes da necessidade — quanto mais claro, melhor a qualidade dos contatos."
+            placeholder="Detalhes da demanda — quanto mais claro, melhor a qualidade dos contatos."
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           />
         </Field>
@@ -600,7 +600,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
           />
           <span className="leading-relaxed">
-            Autorizo a publicação desta necessidade no GiroB2B e a exibição do meu WhatsApp para
+            Autorizo a publicação desta demanda no GiroB2B e a exibição do meu WhatsApp para
             fornecedores assinantes da plataforma entrarem em contato. Li e aceito a{" "}
             <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
               Política de Privacidade
@@ -634,7 +634,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               <Loader2 className="h-4 w-4 animate-spin" /> Publicando…
             </span>
           ) : (
-            "Publicar necessidade"
+            "Publicar demanda"
           )}
         </button>
       </div>
