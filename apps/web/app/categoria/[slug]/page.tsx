@@ -25,8 +25,8 @@ export async function generateMetadata({
     .maybeSingle<{ name: string }>();
   if (!data) return { title: "Categoria não encontrada" };
   return {
-    title: `Necessidades em ${data.name}`,
-    description: `Compradores B2B publicando necessidades na categoria ${data.name} no GiroB2B.`,
+    title: `Demandas em ${data.name}`,
+    description: `Compradores B2B publicando demandas na categoria ${data.name} no GiroB2B.`,
     alternates: { canonical: `/categoria/${slug}` },
   };
 }
@@ -62,14 +62,14 @@ export default async function CategoriaPage({
   return (
     <div className="space-y-6">
       <nav className="text-xs text-slate-500">
-        <Link href="/buscar" className="hover:underline">Necessidades</Link>
+        <Link href="/buscar" className="hover:underline">Demandas</Link>
         <span className="mx-1.5">›</span>
         <span className="text-slate-700">{category.name}</span>
       </nav>
 
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Necessidades em {category.name}
+          Demandas em {category.name}
         </h1>
         <p className="text-sm text-slate-500">
           {total} compradore{total === 1 ? "" : "s"} publicaram nesta categoria.
@@ -79,7 +79,7 @@ export default async function CategoriaPage({
       {rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
           <p className="text-base font-semibold text-slate-900">
-            Nenhuma necessidade aberta nesta categoria
+            Nenhuma demanda aberta nesta categoria
           </p>
           <p className="mt-2 text-sm text-slate-500">
             Volte em alguns dias ou{" "}

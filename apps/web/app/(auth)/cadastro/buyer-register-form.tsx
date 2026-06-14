@@ -280,7 +280,7 @@ export default function BuyerRegisterForm({ inModal = false, next = null }: Buye
               Continuar sem cadastro
             </span>
             <span className="block text-xs text-[color:var(--brand-green-700)]">
-              Publique sua necessidade agora — leva 1 minuto.
+              Publique sua demanda agora — leva 1 minuto.
             </span>
           </span>
         </span>

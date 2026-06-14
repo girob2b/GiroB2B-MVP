@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { listMyDemands } from "@/lib/services/demands";
 import DemandActions from "./_components/demand-actions";
 
-export const metadata: Metadata = { title: "Minhas necessidades" };
+export const metadata: Metadata = { title: "Minhas demandas" };
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -77,7 +77,7 @@ export default async function NecessidadesPage({
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-slate-900">Minhas necessidades</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Minhas demandas</h1>
           <p className="text-sm text-slate-500">
             Acompanhe quem está vendo e contatando suas publicações.
           </p>
@@ -86,13 +86,13 @@ export default async function NecessidadesPage({
           href="/painel/postar"
           className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
         >
-          <Plus className="h-4 w-4" /> Publicar necessidade
+          <Plus className="h-4 w-4" /> Publicar demanda
         </Link>
       </header>
 
       {justPublished && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          Necessidade publicada. Agora é só esperar — fornecedores assinantes vão te contatar pelo
+          Demanda publicada. Agora é só esperar — fornecedores assinantes vão te contatar pelo
           WhatsApp.
         </div>
       )}
@@ -108,7 +108,7 @@ export default async function NecessidadesPage({
           <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)] flex items-start gap-3">
             <BadgeCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-green-700)]" />
             <p>
-              <strong>Comprador Verificado.</strong> Suas necessidades aparecem em destaque para os
+              <strong>Comprador Verificado.</strong> Suas demandas aparecem em destaque para os
               vendedores assinantes.
             </p>
           </div>
@@ -119,7 +119,7 @@ export default async function NecessidadesPage({
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
           <p className="text-base font-semibold text-slate-900">Você ainda não publicou nada</p>
           <p className="mt-2 text-sm text-slate-500">
-            Publique sua primeira necessidade e receba contato direto de fornecedores qualificados.
+            Publique sua primeira demanda e receba contato direto de fornecedores qualificados.
           </p>
           <Link
             href="/painel/postar"
@@ -210,7 +210,7 @@ function ProfileNudge({
         <p className="font-semibold text-amber-900">
           {isVerified
             ? "Quase lá — complete seu perfil"
-            : "Aumente a visibilidade das suas necessidades"}
+            : "Aumente a visibilidade das suas demandas"}
         </p>
         <p className="text-amber-800">
           Compradores verificados (CNPJ + empresa) aparecem em destaque pros vendedores

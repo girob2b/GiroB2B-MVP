@@ -83,7 +83,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
         />
         {showEmptyHint && (
           <p id="qp-title-error" className="mt-1.5 text-xs font-medium text-destructive">
-            Comece pelo título da sua necessidade.
+            Comece pelo título da sua demanda.
           </p>
         )}
       </div>
@@ -134,7 +134,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <>
-            Publicar necessidade <ArrowRight className="h-4 w-4" />
+            Publicar demanda <ArrowRight className="h-4 w-4" />
           </>
         )}
       </button>

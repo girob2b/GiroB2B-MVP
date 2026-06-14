@@ -130,7 +130,7 @@ export default async function HomePage() {
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat
             value="247"
-            label="necessidades esta semana"
+            label="demandas esta semana"
             icon={<Sparkles className="h-4 w-4 text-[color:var(--brand-accent-300)]" />}
           />
           <Stat
@@ -195,7 +195,7 @@ export default async function HomePage() {
               Empresas como a sua já estão recebendo propostas
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Necessidades publicadas recentemente. Você pode ser a próxima.
+              Demandas publicadas recentemente. Você pode ser a próxima.
             </p>
           </div>
           <Link
@@ -253,11 +253,11 @@ export default async function HomePage() {
           <p className="text-sm text-slate-500">Sem leilão. Sem carrinho. Sem pipeline. Sem taxa por venda.</p>
         </header>
         <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Step number={1} title="Publique sua necessidade">
+          <Step number={1} title="Publique sua demanda">
             Diz o que precisa comprar — título, quantidade, prazo, cidade. Em menos de 1 minuto.
           </Step>
           <Step number={2} title="Receba contato no WhatsApp">
-            Vendedores qualificados veem sua necessidade e te chamam direto pelo WhatsApp.
+            Vendedores qualificados veem sua demanda e te chamam direto pelo WhatsApp.
           </Step>
           <Step number={3} title="Negocie e feche fora">
             Você conversa direto com cada fornecedor. Compara, escolhe, fecha. Sem taxa por venda.

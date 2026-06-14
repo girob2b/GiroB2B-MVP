@@ -30,7 +30,7 @@ export default function SejaVendedorPage() {
             </h1>
             <p className="text-base leading-relaxed text-slate-600">
               No GiroB2B, compradores B2B publicam o que precisam comprar. Vendedores assinantes vêem cada
-              necessidade em tempo real e contatam o comprador direto pelo WhatsApp, com a mensagem já pré-formatada.
+              demanda em tempo real e contatam o comprador direto pelo WhatsApp, com a mensagem já pré-formatada.
             </p>
             <p className="text-sm text-slate-500">
               Estamos abrindo a plataforma pra vendedores aos poucos. Cadastre-se na lista — a equipe vai
@@ -41,7 +41,7 @@ export default function SejaVendedorPage() {
                 href="/buscar"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-green-700)] hover:underline"
               >
-                Ver necessidades publicadas <ArrowRight className="h-4 w-4" />
+                Ver demandas publicadas <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function SejaVendedorPage() {
           <p className="text-sm text-slate-500">3 passos. Sem CRM, sem pipeline interno, sem complicação.</p>
         </header>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Step icon={<Target className="h-5 w-5" />} number={1} title="Encontre necessidades">
+          <Step icon={<Target className="h-5 w-5" />} number={1} title="Encontre demandas">
             Filtra por categoria, estado e termo. Vê título, quantidade, prazo e orçamento estimado.
           </Step>
           <Step icon={<MessageCircle className="h-5 w-5" />} number={2} title="Contate via WhatsApp">
@@ -89,7 +89,7 @@ export default function SejaVendedorPage() {
         </header>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 max-w-3xl mx-auto">
           <PlanCard tier="Start" price="R$ 89/mês" tagline="Para quem está validando o canal" disabled>
-            <li>Acesso ao feed de necessidades</li>
+            <li>Acesso ao feed de demandas</li>
             <li>Contato direto via WhatsApp</li>
             <li>Filtros por categoria e UF</li>
             <li>Suporte por email</li>

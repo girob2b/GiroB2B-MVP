@@ -39,7 +39,7 @@ const CATEGORIES = [
 ];
 
 const FREQUENCIES = [
-  { value: "daily",        label: "Toda semana",   sub: "Tenho necessidades frequentes e recorrentes" },
+  { value: "daily",        label: "Toda semana",   sub: "Tenho demandas frequentes e recorrentes" },
   { value: "monthly",      label: "Todo mês",      sub: "Faço pedidos regulares com certa periodicidade" },
   { value: "occasionally", label: "Eventualmente", sub: "Compro por projeto ou demanda pontual" },
 ];

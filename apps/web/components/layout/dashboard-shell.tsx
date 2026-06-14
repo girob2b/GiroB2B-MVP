@@ -75,13 +75,13 @@ interface NavLink {
 // topbar — acessíveis via AccountDropdown.
 
 function minimalNav(): NavLink[] {
-  return [{ href: "/painel/necessidades", label: "Necessidades", icon: ClipboardList }];
+  return [{ href: "/painel/necessidades", label: "Demandas", icon: ClipboardList }];
 }
 
 function buyerNav(): NavLink[] {
   return [
     { href: "/painel/postar",       label: "Publicar",     icon: Plus },
-    { href: "/painel/necessidades", label: "Necessidades", icon: ClipboardList },
+    { href: "/painel/necessidades", label: "Demandas", icon: ClipboardList },
   ];
 }
 
@@ -101,7 +101,7 @@ function buyerSecondaryNav(): NavLink[] {
 
 function supplierSecondaryNav(): NavLink[] {
   return [
-    { href: "/painel/leads",          label: "Feed de necessidades", icon: Inbox },
+    { href: "/painel/leads",          label: "Feed de demandas", icon: Inbox },
     { href: "/painel/produtos",       label: "Material de venda",    icon: Package },
     { href: "/painel/perfil-publico", label: "Perfil público",       icon: Eye },
     { href: "/painel/dashboard",      label: "Dashboard",            icon: LayoutDashboard },
@@ -147,7 +147,7 @@ function SupplierSearchBar() {
       className="flex-1 max-w-2xl mx-2 lg:mx-6"
     >
       <label htmlFor="supplier-topbar-search" className="sr-only">
-        Buscar necessidades
+        Buscar demandas
       </label>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -156,7 +156,7 @@ function SupplierSearchBar() {
           type="search"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Buscar necessidades por produto, categoria ou especificação..."
+          placeholder="Buscar demandas por produto, categoria ou especificação..."
           className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-green-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-200)]"
         />
       </div>

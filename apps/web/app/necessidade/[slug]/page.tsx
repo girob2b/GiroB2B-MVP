@@ -33,7 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const demand = await getDemandBySlug(slug);
-  if (!demand) return { title: "Necessidade não encontrada" };
+  if (!demand) return { title: "Demanda não encontrada" };
   // description é opcional pro publisher guest — fallback pra title evita
   // TypeError em generateMetadata + mantém OG/meta com info útil pra crawler.
   const metaDescription = demand.description?.slice(0, 160) ?? demand.title;
@@ -137,7 +137,7 @@ export default async function NecessidadeDetailPage({
         href="/buscar"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar às necessidades
+        <ArrowLeft className="h-4 w-4" /> Voltar às demandas
       </Link>
 
       <header className="space-y-3">
@@ -290,7 +290,7 @@ export default async function NecessidadeDetailPage({
               Sou vendedor
             </p>
             <h3 className="mt-2 text-lg font-bold text-slate-900">
-              Atende essa necessidade?
+              Atende essa demanda?
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               Vendedores assinantes contatam o comprador direto pelo WhatsApp, com a mensagem já
@@ -324,7 +324,7 @@ export default async function NecessidadeDetailPage({
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-xs text-slate-500">
             <p>
               <strong className="text-slate-700">Publicação válida</strong> até{" "}
-              {formatDate(demand.expires_at)}. Após essa data, a necessidade some do feed
+              {formatDate(demand.expires_at)}. Após essa data, a demanda some do feed
               automaticamente.
             </p>
           </div>

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import DemandForm from "./_components/demand-form";
 
-export const metadata: Metadata = { title: "Publicar necessidade" };
+export const metadata: Metadata = { title: "Publicar demanda" };
 export const dynamic = "force-dynamic";
 
 interface CategoryRow {
@@ -88,7 +88,7 @@ export default async function PostarNecessidadePage({
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <header className="mb-6 space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Publicar necessidade</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Publicar demanda</h1>
         <p className="text-sm text-slate-500">
           Conte o que você precisa comprar — fornecedores qualificados entram em contato pelo WhatsApp.
         </p>

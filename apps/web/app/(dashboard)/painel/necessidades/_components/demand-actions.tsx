@@ -22,20 +22,20 @@ export default function DemandActions({ demandId, status }: Props) {
         toast.error(result.error);
         return;
       }
-      toast.success(target === "fulfilled" ? "Marcada como resolvida." : "Necessidade cancelada.");
+      toast.success(target === "fulfilled" ? "Marcada como resolvida." : "Demanda cancelada.");
       router.refresh();
     });
   }
 
   function remove() {
-    if (!window.confirm("Excluir essa necessidade? Essa ação não pode ser desfeita.")) return;
+    if (!window.confirm("Excluir essa demanda? Essa ação não pode ser desfeita.")) return;
     startTransition(async () => {
       const result = await deleteDemandAction(demandId);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
-      toast.success("Necessidade excluída.");
+      toast.success("Demanda excluída.");
       router.refresh();
     });
   }

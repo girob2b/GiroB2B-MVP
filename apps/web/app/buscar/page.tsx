@@ -7,8 +7,8 @@ import { DEMAND_KINDS, type DemandKind } from "@/lib/schemas/demands";
 import { DemandCard } from "@/components/demands/demand-card";
 
 export const metadata: Metadata = {
-  title: "Buscar necessidades",
-  description: "Encontre necessidades publicadas por compradores B2B no GiroB2B.",
+  title: "Buscar demandas",
+  description: "Encontre demandas publicadas por compradores B2B no GiroB2B.",
 };
 export const dynamic = "force-dynamic";
 
@@ -71,7 +71,7 @@ export default async function BuscarPage({
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Necessidades publicadas</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Demandas publicadas</h1>
         <p className="text-sm text-slate-500">
           Compradores B2B publicaram aqui o que precisam comprar. Vendedores assinantes podem
           contatá-los direto pelo WhatsApp.
@@ -128,7 +128,7 @@ export default async function BuscarPage({
       </form>
 
       <p className="text-sm text-slate-500">
-        {total} necessidade{total === 1 ? "" : "s"} encontrada{total === 1 ? "" : "s"}.
+        {total} demanda{total === 1 ? "" : "s"} encontrada{total === 1 ? "" : "s"}.
       </p>
 
       {rows.length === 0 ? (

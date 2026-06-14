@@ -135,7 +135,7 @@ export default function LoginForm({ feedback, inModal = false, defaultEmail }: L
               Continuar sem login
             </p>
             <p className="text-xs text-[color:var(--brand-green-700)]">
-              Publique sua necessidade agora — leva 1 minuto.
+              Publique sua demanda agora — leva 1 minuto.
             </p>
           </div>
         </div>
