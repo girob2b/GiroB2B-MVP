@@ -58,9 +58,9 @@ export default async function CadastroVendedorPage({
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md space-y-5">
-        <div className="rounded-2xl border-2 border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-4">
+        <div className="rounded-2xl border-2 border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)] p-4">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-green-700)] mt-0.5" />
+            <ShieldCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-primary-700)] mt-0.5" />
             <div>
               <p className="text-sm font-bold text-slate-900">
                 Acesso liberado ✨
@@ -111,7 +111,7 @@ function InvalidToken({ reason }: { reason: "missing" | "malformed" | "not_found
         <div className="flex flex-col gap-2">
           <Link
             href="/seja-vendedor"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)]"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar pra lista de espera

@@ -80,9 +80,9 @@ export default function SupplierWaitlistForm({ source }: Props) {
 
   if (result?.ok) {
     return (
-      <div className="rounded-2xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-6">
+      <div className="rounded-2xl border border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)] p-6">
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="h-6 w-6 shrink-0 text-[color:var(--brand-green-700)]" />
+          <CheckCircle2 className="h-6 w-6 shrink-0 text-[color:var(--brand-primary-700)]" />
           <div>
             <h3 className="text-lg font-bold text-slate-900">Você está na lista</h3>
             <p className="mt-1 text-sm text-slate-700">
@@ -108,7 +108,7 @@ export default function SupplierWaitlistForm({ source }: Props) {
           onChange={(e) => setEmail(e.target.value)}
           required
           placeholder="seu@empresa.com.br"
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
       </div>
@@ -126,7 +126,7 @@ export default function SupplierWaitlistForm({ source }: Props) {
           inputMode="numeric"
           autoComplete="off"
           required
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         {errors.cnpj && <p className="mt-1 text-xs text-destructive">{errors.cnpj}</p>}
       </div>
@@ -143,7 +143,7 @@ export default function SupplierWaitlistForm({ source }: Props) {
           required
           maxLength={120}
           placeholder="Ex.: Embalagens plásticas, Equipamentos industriais..."
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         {errors.category && <p className="mt-1 text-xs text-destructive">{errors.category}</p>}
       </div>
@@ -153,7 +153,7 @@ export default function SupplierWaitlistForm({ source }: Props) {
           type="checkbox"
           checked={consent}
           onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-primary-600)] focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         <span className="leading-relaxed">
           Quero receber emails sobre o lançamento e novidades da GiroB2B. Posso cancelar a qualquer momento.
@@ -169,7 +169,7 @@ export default function SupplierWaitlistForm({ source }: Props) {
       <button
         type="submit"
         disabled={submitting}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-6 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-6 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
       >
         {submitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

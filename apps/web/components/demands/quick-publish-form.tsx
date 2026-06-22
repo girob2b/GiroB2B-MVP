@@ -78,7 +78,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
           className={`h-12 w-full rounded-xl border bg-white px-4 text-sm focus:outline-none focus:ring-2 ${
             showEmptyHint
               ? "border-destructive focus:ring-destructive/30"
-              : "border-slate-200 focus:ring-[color:var(--brand-green-500)]"
+              : "border-slate-200 focus:ring-[color:var(--brand-primary-500)]"
           }`}
         />
         {showEmptyHint && (
@@ -98,7 +98,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
             name="category_id"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           >
             <option value="">Selecionar (opcional)</option>
             {categories.map((c) => (
@@ -115,7 +115,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
             name="state"
             value={state}
             onChange={(e) => setState(e.target.value)}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           >
             <option value="">Selecionar UF (opcional)</option>
             {BR_STATES.map((uf) => (
@@ -128,7 +128,7 @@ export function QuickPublishForm({ categories }: QuickPublishFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-6 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-6 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
       >
         {submitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

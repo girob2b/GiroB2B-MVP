@@ -59,14 +59,14 @@ export async function POST(request: Request) {
   // (anti-enumeration leve: se buyer existir com mesmo email, ignora)
   const { data: row, error } = await admin
     .from("waitlist")
-    .select("id, status, approval_token, approval_token_expires_at, approval_token_used_at")
+    .select("id, approved_at, approval_token, approval_token_expires_at, approval_token_used_at")
     .eq("email", email)
     .eq("role", "supplier")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<{
       id: string;
-      status: string;
+      approved_at: string | null;
       approval_token: string | null;
       approval_token_expires_at: string | null;
       approval_token_used_at: string | null;
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   }
 
   // Não aprovado ainda
-  if (row.status !== "approved") {
+  if (!row.approved_at) {
     return NextResponse.json<CheckResult>({ status: "pending", email });
   }
 

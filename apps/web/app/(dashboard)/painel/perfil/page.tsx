@@ -81,6 +81,25 @@ export default async function PerfilPage() {
     ? { ...buyerBase, is_company_verified: isCompanyVerified }
     : null;
 
+  // Estado do opt-in de perfil público (migration 050). Em query isolada e
+  // tolerante: se as colunas ainda não existem (migration não aplicada), o
+  // toggle simplesmente não renderiza — não quebra a página.
+  let publicProfileOptIn = false;
+  let publicProfileSlug: string | null = null;
+  let publicProfileAvailable = false;
+  if (buyer) {
+    const optInRes = await supabase
+      .from("buyers")
+      .select("public_profile_opt_in, slug")
+      .eq("user_id", userId)
+      .maybeSingle<{ public_profile_opt_in: boolean | null; slug: string | null }>();
+    if (!optInRes.error && optInRes.data) {
+      publicProfileAvailable = true;
+      publicProfileOptIn = optInRes.data.public_profile_opt_in ?? false;
+      publicProfileSlug = optInRes.data.slug ?? null;
+    }
+  }
+
   const profileRes = await supabase
     .from("user_profiles")
     .select("last_role_change_at")
@@ -149,6 +168,11 @@ export default async function PerfilPage() {
           lastRoleChangeAt={lastRoleChangeAt}
           pendingRoleRequest={pendingRoleRequest}
           initialSegmentChosen={initialSegmentChosen}
+          publicProfile={
+            publicProfileAvailable
+              ? { optIn: publicProfileOptIn, slug: publicProfileSlug }
+              : null
+          }
         />
       </Suspense>
     </div>

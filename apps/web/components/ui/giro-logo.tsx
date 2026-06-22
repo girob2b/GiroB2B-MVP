@@ -5,8 +5,13 @@ interface GiroLogoProps {
   className?: string;
   /** Se true, mostra só o ícone sem o texto "GiroB2B" */
   iconOnly?: boolean;
-  /** Variante de contraste: "dark" = anel dourado sobre teal; "light" = anel dourado sobre off-white; "mono" = grafite. */
-  variant?: "dark" | "light" | "mono";
+  /** Variante de contraste:
+   *  "dark"     = anel dourado + fundo teal + texto teal (uso: sobre branco/claro)
+   *  "light"    = anel dourado + fundo off-white + texto teal (uso: sobre escuro)
+   *  "mono"     = tudo grafite, sem fundo (uso: escala de cinza)
+   *  "on-brand" = anel dourado + fundo teal + texto branco (uso: sobre header verde)
+   */
+  variant?: "dark" | "light" | "mono" | "on-brand";
 }
 
 /**
@@ -25,6 +30,8 @@ export function GiroLogo({
       ? { bg: "#F4F1EA", ring: "#C08A2E", text: "#0A5C5C" }
       : variant === "mono"
       ? { bg: "transparent", ring: "#1A1F1F", text: "#1A1F1F" }
+      : variant === "on-brand"
+      ? { bg: "#0A5C5C", ring: "#C08A2E", text: "#FFFFFF" }
       : { bg: "#0A5C5C", ring: "#C08A2E", text: "#0A5C5C" };
 
   return (

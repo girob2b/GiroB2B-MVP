@@ -11,7 +11,7 @@ export default function RecuperarSenhaPage() {
         <RecuperarSenhaForm />
       </div>
 
-      <div className="hidden md:flex items-center justify-center bg-[linear-gradient(155deg,var(--brand-green-600)_0%,var(--brand-green-700)_48%,var(--brand-green-800)_100%)] text-white px-12">
+      <div className="hidden md:flex items-center justify-center bg-[linear-gradient(155deg,var(--brand-primary-600)_0%,var(--brand-primary-700)_48%,var(--brand-primary-800)_100%)] text-white px-12">
         <div className="max-w-md space-y-6">
           <GiroLogo variant="light" iconOnly size={64} />
           <p className="text-sm font-semibold tracking-widest uppercase opacity-80">

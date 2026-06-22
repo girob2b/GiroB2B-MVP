@@ -156,20 +156,20 @@ export default function CatalogoUploader({ supplierId, files, hasProducts }: Pro
       <div className={cn(
         "flex items-start gap-3 rounded-2xl border px-5 py-4",
         hasPresence
-          ? "border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)]"
+          ? "border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)]"
           : "border-amber-200 bg-amber-50"
       )}>
         {hasPresence
-          ? <CheckCircle2 className="w-5 h-5 text-[color:var(--brand-green-600)] shrink-0 mt-0.5" />
+          ? <CheckCircle2 className="w-5 h-5 text-[color:var(--brand-primary-600)] shrink-0 mt-0.5" />
           : <AlertCircle   className="w-5 h-5 text-foreground shrink-0 mt-0.5" />
         }
         <div>
-          <p className={cn("text-sm font-semibold", hasPresence ? "text-[color:var(--brand-green-900)]" : "text-amber-900")}>
+          <p className={cn("text-sm font-semibold", hasPresence ? "text-[color:var(--brand-primary-900)]" : "text-amber-900")}>
             {hasPresence
               ? "Sua empresa está visível para compradores"
               : "Você ainda não aparece nas buscas"}
           </p>
-          <p className={cn("text-xs mt-0.5", hasPresence ? "text-[color:var(--brand-green-800)]" : "text-amber-800")}>
+          <p className={cn("text-xs mt-0.5", hasPresence ? "text-[color:var(--brand-primary-800)]" : "text-amber-800")}>
             {hasPresence
               ? "Compradores podem encontrar seu perfil e solicitar cotações."
               : "Adicione um catálogo ou pelo menos um produto para aparecer na plataforma."}
@@ -187,21 +187,21 @@ export default function CatalogoUploader({ supplierId, files, hasProducts }: Pro
           className={cn(
             "flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition-colors cursor-pointer",
             dragOver
-              ? "border-[color:var(--brand-green-400)] bg-[color:var(--brand-green-50)]"
+              ? "border-[color:var(--brand-primary-400)] bg-[color:var(--brand-primary-50)]"
               : uploading
                 ? "border-slate-200 bg-slate-50 cursor-not-allowed"
-                : "border-slate-200 hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)/50]"
+                : "border-slate-200 hover:border-[color:var(--brand-primary-300)] hover:bg-[color:var(--brand-primary-50)/50]"
           )}
         >
           {uploading ? (
             <>
-              <Loader2 className="w-8 h-8 text-[color:var(--brand-green-500)] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[color:var(--brand-primary-500)] animate-spin" />
               <p className="text-sm font-medium text-slate-600">Enviando arquivo...</p>
             </>
           ) : (
             <>
-              <div className="w-12 h-12 rounded-2xl bg-[color:var(--brand-green-100)] flex items-center justify-center">
-                <Upload className="w-6 h-6 text-[color:var(--brand-green-600)]" />
+              <div className="w-12 h-12 rounded-2xl bg-[color:var(--brand-primary-100)] flex items-center justify-center">
+                <Upload className="w-6 h-6 text-[color:var(--brand-primary-600)]" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-slate-800">
@@ -263,12 +263,12 @@ export default function CatalogoUploader({ supplierId, files, hasProducts }: Pro
                           if (e.key === "Enter") commitEdit(file.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
-                        className="flex-1 h-7 rounded-lg border border-[color:var(--brand-green-400)] bg-[color:var(--brand-green-50)] px-2 text-sm outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                        className="flex-1 h-7 rounded-lg border border-[color:var(--brand-primary-400)] bg-[color:var(--brand-primary-50)] px-2 text-sm outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                       />
                       <button
                         onClick={() => commitEdit(file.id)}
                         disabled={savingTitle}
-                        className="p-1 text-[color:var(--brand-green-600)] hover:text-[color:var(--brand-green-800)]"
+                        className="p-1 text-[color:var(--brand-primary-600)] hover:text-[color:var(--brand-primary-800)]"
                       >
                         {savingTitle ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       </button>
@@ -304,7 +304,7 @@ export default function CatalogoUploader({ supplierId, files, hasProducts }: Pro
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Ver / Baixar"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-50)] transition-colors"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-[color:var(--brand-primary-600)] hover:bg-[color:var(--brand-primary-50)] transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>

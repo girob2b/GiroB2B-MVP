@@ -180,7 +180,7 @@ export default async function FornecedorPublicoPage({
 
   const header = (
     <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--brand-green-50),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--brand-primary-50),transparent_60%)]" />
       <div className="relative p-8 flex flex-col md:flex-row md:items-center gap-6">
         <div className="flex items-center gap-4 min-w-0">
           <div className="w-20 h-20 rounded-2xl border border-slate-200 bg-white shadow-sm flex items-center justify-center overflow-hidden">
@@ -206,7 +206,7 @@ export default async function FornecedorPublicoPage({
                 <MapPin className="w-3 h-3" /> {locationLabel}
               </Badge>
               {supplier.is_verified && (
-                <Badge className="rounded-xl bg-[color:var(--brand-green-600)] text-white">
+                <Badge className="rounded-xl bg-[color:var(--brand-primary-600)] text-white">
                   Verificado
                 </Badge>
               )}
@@ -286,7 +286,7 @@ export default async function FornecedorPublicoPage({
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             {categories.map((id) => (
-              <Badge key={id} variant="outline" className="rounded-xl border-[color:var(--brand-green-200)] text-[color:var(--brand-green-700)] bg-[color:var(--brand-green-50)]">
+              <Badge key={id} variant="outline" className="rounded-xl border-[color:var(--brand-primary-200)] text-[color:var(--brand-primary-700)] bg-[color:var(--brand-primary-50)]">
                 {categoryNameById.get(id) ?? id}
               </Badge>
             ))}
@@ -434,7 +434,7 @@ export default async function FornecedorPublicoPage({
                 href={f.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)] transition-colors group"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 hover:border-[color:var(--brand-primary-300)] hover:bg-[color:var(--brand-primary-50)] transition-colors group"
               >
                 {f.file_type === "pdf"
                   ? <FileText className="w-5 h-5 text-foreground shrink-0" />
@@ -449,7 +449,7 @@ export default async function FornecedorPublicoPage({
                     {f.file_size ? ` · ${formatFileSize(f.file_size)}` : ""}
                   </p>
                 </div>
-                <Download className="w-4 h-4 text-slate-400 group-hover:text-[color:var(--brand-green-600)] shrink-0 transition-colors" />
+                <Download className="w-4 h-4 text-slate-400 group-hover:text-[color:var(--brand-primary-600)] shrink-0 transition-colors" />
               </a>
             ))}
           </div>

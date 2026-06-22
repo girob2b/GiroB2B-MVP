@@ -157,7 +157,7 @@ function SupplierSearchBar() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Buscar demandas por produto, categoria ou especificação..."
-          className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-green-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-200)]"
+          className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:bg-white focus:border-[color:var(--brand-primary-400)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-200)]"
         />
       </div>
     </form>
@@ -202,7 +202,7 @@ function AccountDropdown({
       >
         <Avatar className="w-8 h-8 border border-slate-200">
           <AvatarImage src={avatarSrc} alt={displayName} />
-          <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
+          <AvatarFallback className="bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] text-xs font-bold">
             {avatarFallback}
           </AvatarFallback>
         </Avatar>
@@ -215,13 +215,13 @@ function AccountDropdown({
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 shrink-0 border border-slate-100">
                 <AvatarImage src={avatarSrc} alt={displayName} />
-                <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] font-bold text-sm">
+                <AvatarFallback className="bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] font-bold text-sm">
                   {avatarFallback}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-900 truncate">{displayName}</p>
-                <p className="text-[10px] font-bold text-[color:var(--brand-green-600)] uppercase tracking-wider truncate mb-0.5">
+                <p className="text-[10px] font-bold text-[color:var(--brand-primary-600)] uppercase tracking-wider truncate mb-0.5">
                   {roleLabel}
                 </p>
                 <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
@@ -328,13 +328,13 @@ function MobileDrawer({
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10 shrink-0 border border-slate-100">
               <AvatarImage src={avatarSrc} alt={displayName} />
-              <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] font-bold text-sm">
+              <AvatarFallback className="bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] font-bold text-sm">
                 {avatarFallback}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="text-sm font-bold text-slate-900 truncate">{displayName}</p>
-              <p className="text-[10px] font-bold text-[color:var(--brand-green-600)] uppercase tracking-wider truncate">
+              <p className="text-[10px] font-bold text-[color:var(--brand-primary-600)] uppercase tracking-wider truncate">
                 {roleLabel}
               </p>
               <p className="text-[11px] text-slate-400 truncate">{email}</p>
@@ -353,7 +353,7 @@ function MobileDrawer({
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   active
-                    ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+                    ? "bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)]"
                     : "text-slate-700 hover:bg-slate-50"
                 )}
               >
@@ -468,7 +468,7 @@ export default function DashboardShell({
                     className={cn(
                       "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                       active
-                        ? "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]"
+                        ? "bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)]"
                         : "text-slate-700 hover:bg-slate-100"
                     )}
                   >
@@ -508,7 +508,7 @@ export default function DashboardShell({
             </Link>
             <Avatar className="w-8 h-8 border border-slate-200">
               <AvatarImage src={avatarSrc} alt={displayName} />
-              <AvatarFallback className="bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] text-xs font-bold">
+              <AvatarFallback className="bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] text-xs font-bold">
                 {avatarFallback}
               </AvatarFallback>
             </Avatar>

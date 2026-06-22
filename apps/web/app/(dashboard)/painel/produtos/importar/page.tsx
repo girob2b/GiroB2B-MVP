@@ -86,12 +86,12 @@ export default async function ImportarProdutosPage({
             name="q"
             defaultValue={q}
             placeholder="Buscar por nome do produto..."
-            className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent"
+            className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)] focus:border-transparent"
           />
         </div>
         <button
           type="submit"
-          className="h-11 px-6 rounded-xl bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] text-white font-semibold text-sm"
+          className="h-11 px-6 rounded-xl bg-[color:var(--brand-primary-600)] hover:bg-[color:var(--brand-primary-700)] text-white font-semibold text-sm"
         >
           Buscar
         </button>

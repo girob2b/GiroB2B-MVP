@@ -178,7 +178,7 @@ export default function RegisterModal({
       >
         <header className="flex items-start justify-between gap-3 border-b border-slate-100 p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] text-sm font-bold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--brand-primary-700)_0%,var(--brand-primary-800)_100%)] text-sm font-bold text-white">
               G
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function RegisterModal({
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   required
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                   placeholder="você@empresa.com"
                 />
               </div>
@@ -238,7 +238,7 @@ export default function RegisterModal({
                     autoComplete="new-password"
                     required
                     minLength={8}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                     placeholder="Mínimo 8 caracteres"
                   />
                   <button
@@ -262,7 +262,7 @@ export default function RegisterModal({
                     autoComplete="new-password"
                     required
                     minLength={8}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                     placeholder="Repita a senha"
                   />
                   <button
@@ -276,15 +276,15 @@ export default function RegisterModal({
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 rounded-lg border border-[color:var(--brand-green-100)] bg-[color:var(--brand-green-50)] p-2.5 text-[11px] text-[color:var(--brand-green-900)]">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--brand-green-700)]" />
+              <div className="flex items-start gap-2 rounded-lg border border-[color:var(--brand-primary-100)] bg-[color:var(--brand-primary-50)] p-2.5 text-[11px] text-[color:var(--brand-primary-900)]">
+                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--brand-primary-700)]" />
                 <p>Enviaremos um código de confirmação para validar seu email.</p>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[linear-gradient(135deg,var(--brand-primary-700)_0%,var(--brand-primary-800)_100%)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {submitting ? "Criando conta..." : "Enviar código"}
@@ -321,7 +321,7 @@ export default function RegisterModal({
                     autoComplete={i === 0 ? "one-time-code" : "off"}
                     maxLength={1}
                     aria-label={`Dígito ${i + 1} de 6`}
-                    className="h-11 rounded-lg border border-slate-200 bg-white text-center text-base font-semibold text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                    className="h-11 rounded-lg border border-slate-200 bg-white text-center text-base font-semibold text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                   />
                 ))}
               </div>
@@ -329,7 +329,7 @@ export default function RegisterModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[linear-gradient(135deg,var(--brand-green-700)_0%,var(--brand-green-800)_100%)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[linear-gradient(135deg,var(--brand-primary-700)_0%,var(--brand-primary-800)_100%)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {submitting ? "Validando..." : "Confirmar código"}
@@ -340,7 +340,7 @@ export default function RegisterModal({
                   type="button"
                   onClick={handleResend}
                   disabled={resending}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[color:var(--brand-green-200)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)] disabled:opacity-60"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[color:var(--brand-primary-200)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--brand-primary-700)] hover:bg-[color:var(--brand-primary-50)] disabled:opacity-60"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${resending ? "animate-spin" : ""}`} />
                   {resending ? "Reenviando..." : "Reenviar"}
@@ -363,7 +363,7 @@ export default function RegisterModal({
 
           {step === "success" && (
             <div className="py-4 text-center">
-              <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-[color:var(--brand-green-600)]" />
+              <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-[color:var(--brand-primary-600)]" />
               <p className="text-sm font-semibold text-slate-900">Tudo certo por aqui.</p>
               <p className="mt-1 text-xs text-slate-600">Seu acesso está pronto.</p>
               <button
@@ -371,7 +371,7 @@ export default function RegisterModal({
                 onClick={() => {
                   void onSuccess?.();
                 }}
-                className="mt-4 w-full rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+                className="mt-4 w-full rounded-lg bg-[color:var(--brand-primary-600)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)]"
               >
                 Continuar
               </button>

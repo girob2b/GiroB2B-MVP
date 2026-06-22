@@ -72,7 +72,7 @@ export default function SupplierSignupForm({
           required
           maxLength={120}
           placeholder="Ex.: João Silva"
-          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         {state?.errors?.full_name && (
           <p className="text-xs text-destructive">{state.errors.full_name[0]}</p>
@@ -93,7 +93,7 @@ export default function SupplierSignupForm({
             minLength={8}
             placeholder="Mínimo de 8 caracteres"
             autoComplete="new-password"
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
           <button
             type="button"
@@ -114,15 +114,15 @@ export default function SupplierSignupForm({
           type="checkbox"
           name="lgpd_consent"
           required
-          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-[color:var(--brand-primary-600)] focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
         />
         <span className="text-xs leading-relaxed text-slate-700">
           Li e aceito os{" "}
-          <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+          <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
             Termos de Uso
           </Link>{" "}
           e a{" "}
-          <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+          <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
             Política de Privacidade
           </Link>
           , autorizando o tratamento dos meus dados conforme a LGPD.
@@ -135,7 +135,7 @@ export default function SupplierSignupForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-6 py-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-6 py-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
       >
         {pending ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Criando conta…</>
@@ -146,7 +146,7 @@ export default function SupplierSignupForm({
 
       <p className="text-center text-xs text-slate-500">
         Já tem conta?{" "}
-        <Link href="/login" className="font-semibold text-[color:var(--brand-green-700)] hover:underline">
+        <Link href="/login" className="font-semibold text-[color:var(--brand-primary-700)] hover:underline">
           <Mail className="inline h-3 w-3" /> Fazer login
         </Link>
       </p>

@@ -115,7 +115,7 @@ export default function LoginModal({
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
               placeholder="empresa@dominio.com"
             />
           </div>
@@ -132,7 +132,7 @@ export default function LoginModal({
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
                 placeholder="Digite sua senha"
               />
               <button
@@ -147,7 +147,7 @@ export default function LoginModal({
             <div className="mt-1 text-right">
               <Link
                 href="/recuperar-senha"
-                className="text-[11px] font-semibold text-[color:var(--brand-green-700)] hover:text-[color:var(--brand-green-600)]"
+                className="text-[11px] font-semibold text-[color:var(--brand-primary-700)] hover:text-[color:var(--brand-primary-600)]"
               >
                 Esqueceu sua senha?
               </Link>
@@ -159,7 +159,7 @@ export default function LoginModal({
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--brand-primary-600)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? "Entrando..." : "Entrar"}
@@ -178,7 +178,7 @@ export default function LoginModal({
               <button
                 type="button"
                 onClick={onSwitchToRegister}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[color:var(--brand-green-200)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)]"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[color:var(--brand-primary-200)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-primary-700)] hover:bg-[color:var(--brand-primary-50)]"
               >
                 <UserPlus className="h-4 w-4" /> Criar cadastro grátis
               </button>

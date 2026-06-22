@@ -12,6 +12,7 @@ const dmSans = DM_Sans({
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

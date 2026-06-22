@@ -27,7 +27,7 @@ export function GiroLoader({
   const spinnerSize = size ?? (variant === "overlay" ? 64 : 48);
 
   const content = (
-    <div className={cn("flex flex-col items-center gap-4 text-[color:var(--brand-green-700)]", className)}>
+    <div className={cn("flex flex-col items-center gap-4 text-[color:var(--brand-primary-700)]", className)}>
       <GiroSpinner size={spinnerSize} />
       {label && (
         <p className="text-sm font-medium text-slate-600">{label}</p>

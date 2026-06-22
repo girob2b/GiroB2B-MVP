@@ -113,7 +113,7 @@ export default function NeedForm({
         <input
           value={productName}
           onChange={(event) => setProductName(event.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
           placeholder="Ex.: Filme stretch, parafuso M8, tecido oxford"
         />
       </div>
@@ -126,7 +126,7 @@ export default function NeedForm({
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           rows={4}
-          className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-green-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-100)]"
+          className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[color:var(--brand-primary-500)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-100)]"
           placeholder="Descreva detalhes, aplicacao, certificacoes ou observacoes relevantes."
         />
       </div>
@@ -146,7 +146,7 @@ export default function NeedForm({
         <button
           onClick={() => void handleSubmit()}
           disabled={submitting}
-          className="flex items-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-[color:var(--brand-primary-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
         >
           {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {submitting ? submittingLabel : submitLabel}

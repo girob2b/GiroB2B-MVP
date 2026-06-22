@@ -5,13 +5,26 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildWhatsappLink, registerContact } from "@/lib/services/demands";
 import { APP_URL } from "@/lib/email";
+import { OfferSchema } from "@/lib/schemas/leads";
+import type { OfferInput } from "@/lib/schemas/leads";
 
 export type ContactDemandResult =
   | { ok: true; whatsappLink: string }
-  | { ok: false; reason: "unauthenticated" | "no_supplier" | "no_subscription" | "demand_not_found" | "internal"; message: string };
+  | {
+      ok: false;
+      reason:
+        | "unauthenticated"
+        | "no_supplier"
+        | "no_subscription"
+        | "demand_not_found"
+        | "invalid_offer"
+        | "internal";
+      message: string;
+    };
 
 export async function contactDemandAction(
-  demandId: string
+  demandId: string,
+  offer?: OfferInput
 ): Promise<ContactDemandResult> {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
@@ -52,6 +65,17 @@ export async function contactDemandAction(
     };
   }
 
+  // Valida a oferta (se fornecida) antes de qualquer I/O adicional.
+  let parsedOffer: OfferInput | undefined;
+  if (offer !== undefined) {
+    const parsed = OfferSchema.safeParse(offer);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Dados da oferta inválidos.";
+      return { ok: false, reason: "invalid_offer", message: firstError };
+    }
+    parsedOffer = parsed.data;
+  }
+
   // Carrega a demand inteira (com whatsapp) — somente porque já validamos assinatura.
   const { data: demand } = await admin
     .from("demands")
@@ -70,7 +94,7 @@ export async function contactDemandAction(
     return { ok: false, reason: "demand_not_found", message: "Necessidade indisponível." };
   }
 
-  // Auditoria: registra o click + bumpa contact_count
+  // Auditoria: registra o click + bumpa contact_count (inclui campos de oferta se presentes).
   try {
     const reqHeaders = await headers();
     const ip =
@@ -78,7 +102,11 @@ export async function contactDemandAction(
       reqHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       null;
     const ua = reqHeaders.get("user-agent");
-    await registerContact(demand.id, supplier.id, authData.user.id, { ip, user_agent: ua });
+    await registerContact(demand.id, supplier.id, authData.user.id, {
+      ip,
+      user_agent: ua,
+      offer: parsedOffer,
+    });
   } catch (e) {
     return {
       ok: false,
@@ -92,6 +120,7 @@ export async function contactDemandAction(
     demandTitle: demand.title,
     demandSlug: demand.slug,
     appUrl: APP_URL,
+    offer: parsedOffer,
   });
 
   return { ok: true, whatsappLink };

@@ -19,10 +19,10 @@ export default function SejaVendedorPage() {
       <AlreadyApprovedCard />
 
       {/* Hero 2 colunas: pitch à esquerda + waitlist form à direita */}
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[color:var(--brand-green-50)] to-white p-6 sm:p-10">
+      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-[color:var(--brand-primary-50)] to-white p-6 sm:p-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_1fr] lg:items-center">
           <div className="space-y-4">
-            <span className="inline-flex items-center rounded-full bg-[color:var(--brand-green-100)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-green-800)]">
+            <span className="inline-flex items-center rounded-full bg-[color:var(--brand-primary-100)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-primary-800)]">
               Para vendedores B2B
             </span>
             <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-slate-900">
@@ -39,7 +39,7 @@ export default function SejaVendedorPage() {
             <div className="pt-2">
               <Link
                 href="/buscar"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-green-700)] hover:underline"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-primary-700)] hover:underline"
               >
                 Ver demandas publicadas <ArrowRight className="h-4 w-4" />
               </Link>
@@ -48,9 +48,9 @@ export default function SejaVendedorPage() {
 
           <div className="lg:pl-4">
             <div className="rounded-2xl bg-white shadow-xl shadow-slate-900/5 ring-1 ring-slate-200">
-              <div className="rounded-t-2xl bg-[color:var(--brand-green-600)] px-5 py-3">
+              <div className="rounded-t-2xl bg-[color:var(--brand-primary-600)] px-5 py-3">
                 <p className="text-sm font-bold text-white">Quero vender</p>
-                <p className="text-xs text-[color:var(--brand-green-100)]">Entre na lista de espera</p>
+                <p className="text-xs text-[color:var(--brand-primary-100)]">Entre na lista de espera</p>
               </div>
               <div className="p-5">
                 <SupplierWaitlistForm source="seja_vendedor_hero" />
@@ -146,7 +146,7 @@ function Step({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)]">
           {icon}
         </div>
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Passo {number}</span>
@@ -176,7 +176,7 @@ function PlanCard({
     <article
       className={`rounded-2xl border p-6 ${
         highlight
-          ? "border-[color:var(--brand-green-300)] bg-[color:var(--brand-green-50)] ring-2 ring-[color:var(--brand-green-200)]"
+          ? "border-[color:var(--brand-primary-300)] bg-[color:var(--brand-primary-50)] ring-2 ring-[color:var(--brand-primary-200)]"
           : "border-slate-200 bg-white"
       }`}
     >

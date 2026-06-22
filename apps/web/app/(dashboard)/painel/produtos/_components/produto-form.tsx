@@ -130,7 +130,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-28 h-28 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)] hover:text-[color:var(--brand-green-700)] transition-all flex flex-col items-center justify-center gap-1.5 group"
+              className="w-28 h-28 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 hover:border-[color:var(--brand-primary-300)] hover:bg-[color:var(--brand-primary-50)] hover:text-[color:var(--brand-primary-700)] transition-all flex flex-col items-center justify-center gap-1.5 group"
             >
               {uploading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -150,7 +150,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
             className="hidden"
             onChange={handleImagesChange}
           />
-          <div className="flex items-center gap-2 bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] p-3 rounded-xl border border-[color:var(--brand-green-200)] text-xs font-medium">
+          <div className="flex items-center gap-2 bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)] p-3 rounded-xl border border-[color:var(--brand-primary-200)] text-xs font-medium">
             <Package className="w-4 h-4 shrink-0" />
             A primeira foto será a capa do seu produto no catálogo.
           </div>
@@ -170,7 +170,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
               name="name"
               placeholder="Ex: Embalagem Plástica 1L Transparente"
               defaultValue={defaultValues?.name ?? ""}
-              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
               required
             />
           </div>
@@ -183,7 +183,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
               placeholder="Descreva o produto: material, dimensões, aplicações, diferenciais..."
               rows={5}
               defaultValue={defaultValues?.description ?? ""}
-              className="border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
             />
           </div>
 
@@ -194,7 +194,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 id="category_id"
                 name="category_id"
                 defaultValue={defaultValues?.category_id ?? ""}
-                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-green-500)]"
+                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-primary-500)]"
               >
                 <option value="">Selecione...</option>
                 {rootCats.map((root) => {
@@ -218,7 +218,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 id="unit"
                 name="unit"
                 defaultValue={defaultValues?.unit ?? ""}
-                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-green-500)]"
+                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-primary-500)]"
               >
                 <option value="">Selecione...</option>
                 {UNIT_OPTIONS.map((u) => (
@@ -238,7 +238,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 min={1}
                 placeholder="Ex: 100"
                 defaultValue={defaultValues?.min_order ?? ""}
-                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
               />
             </div>
             <div className="space-y-2">
@@ -251,7 +251,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 step="0.01"
                 placeholder="0,00"
                 defaultValue={defaultValues?.price_min_cents != null ? (defaultValues.price_min_cents / 100).toFixed(2) : ""}
-                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
               />
             </div>
             <div className="space-y-2">
@@ -264,7 +264,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 step="0.01"
                 placeholder="0,00"
                 defaultValue={defaultValues?.price_max_cents != null ? (defaultValues.price_max_cents / 100).toFixed(2) : ""}
-                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+                className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
               />
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
               name="tags"
               placeholder="Ex: embalagem, plástico, transparente, 1 litro"
               defaultValue={defaultValues?.tags?.join(", ") ?? ""}
-              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="h-11 border-slate-200 focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
             />
             <p className="text-xs text-muted-foreground ml-1">Separe por vírgula. Ex: embalagem, atacado, plástico.</p>
           </div>
@@ -288,7 +288,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 id="status"
                 name="status"
                 defaultValue={defaultValues.status}
-                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-green-500)]"
+                className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--brand-primary-500)]"
               >
                 <option value="active">Ativo (visível no catálogo)</option>
                 <option value="paused">Pausado (oculto)</option>
@@ -325,7 +325,7 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 className={[
                   "flex gap-3 items-start rounded-xl border-2 p-4 cursor-pointer transition-colors",
                   visibility === value
-                    ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)]"
+                    ? "border-[color:var(--brand-primary-500)] bg-[color:var(--brand-primary-50)]"
                     : "border-border hover:border-slate-300 bg-white",
                 ].join(" ")}
               >
@@ -340,13 +340,13 @@ export default function ProdutoForm({ action, supplierId, categories, defaultVal
                 <div className={[
                   "mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
                   visibility === value
-                    ? "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)]"
+                    ? "bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)]"
                     : "bg-slate-100 text-slate-500",
                 ].join(" ")}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className={["text-sm font-semibold", visibility === value ? "text-[color:var(--brand-green-900)]" : "text-slate-800"].join(" ")}>
+                  <p className={["text-sm font-semibold", visibility === value ? "text-[color:var(--brand-primary-900)]" : "text-slate-800"].join(" ")}>
                     {label}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5 leading-snug">{desc}</p>

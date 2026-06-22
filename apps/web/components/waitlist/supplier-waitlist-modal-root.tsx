@@ -45,9 +45,9 @@ function SupplierWaitlistModalController() {
         className="sm:max-w-md p-0 overflow-hidden"
         overlayClassName="bg-black/30 supports-backdrop-filter:backdrop-blur-md"
       >
-        <DialogHeader className="bg-[color:var(--brand-green-600)] px-5 py-3">
+        <DialogHeader className="bg-[color:var(--brand-primary-600)] px-5 py-3">
           <DialogTitle className="text-sm font-bold text-white">Quero vender</DialogTitle>
-          <DialogDescription className="text-xs text-[color:var(--brand-green-100)]">
+          <DialogDescription className="text-xs text-[color:var(--brand-primary-100)]">
             Entre na lista de espera
           </DialogDescription>
         </DialogHeader>

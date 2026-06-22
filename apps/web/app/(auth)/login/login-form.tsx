@@ -124,22 +124,22 @@ export default function LoginForm({ feedback, inModal = false, defaultEmail }: L
           Aparece em qualquer modo — o link preserva ?email= quando vem da waitlist. */}
       <Link
         href={guestPostarHref}
-        className="group flex items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-green-600)] bg-[color:var(--brand-green-50)] px-4 py-3.5 shadow-sm transition hover:bg-[color:var(--brand-green-100)] hover:shadow-md"
+        className="group flex items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-primary-600)] bg-[color:var(--brand-primary-50)] px-4 py-3.5 shadow-sm transition hover:bg-[color:var(--brand-primary-100)] hover:shadow-md"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-green-600)] text-white">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-primary-600)] text-white">
             <Zap className="h-4 w-4" />
           </span>
           <div className="leading-tight">
-            <p className="text-sm font-bold text-[color:var(--brand-green-800)]">
+            <p className="text-sm font-bold text-[color:var(--brand-primary-800)]">
               Continuar sem login
             </p>
-            <p className="text-xs text-[color:var(--brand-green-700)]">
+            <p className="text-xs text-[color:var(--brand-primary-700)]">
               Publique sua demanda agora — leva 1 minuto.
             </p>
           </div>
         </div>
-        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-green-700)] transition group-hover:translate-x-0.5">
+        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-primary-700)] transition group-hover:translate-x-0.5">
           →
         </span>
       </Link>
@@ -172,7 +172,7 @@ export default function LoginForm({ feedback, inModal = false, defaultEmail }: L
             type="email"
             placeholder="empresa@dominio.com"
             autoComplete="email"
-            className="h-12 rounded-2xl border-slate-200 bg-white px-4 text-base shadow-none focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+            className="h-12 rounded-2xl border-slate-200 bg-white px-4 text-base shadow-none focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -196,7 +196,7 @@ export default function LoginForm({ feedback, inModal = false, defaultEmail }: L
               type={showPassword ? "text" : "password"}
               placeholder="Digite sua senha"
               autoComplete="current-password"
-              className="h-12 rounded-2xl border-slate-200 bg-white px-4 pr-12 text-base shadow-none focus-visible:border-[color:var(--brand-green-500)] focus-visible:ring-[color:var(--brand-green-100)]"
+              className="h-12 rounded-2xl border-slate-200 bg-white px-4 pr-12 text-base shadow-none focus-visible:border-[color:var(--brand-primary-500)] focus-visible:ring-[color:var(--brand-primary-100)]"
               required
             />
             <button
@@ -224,7 +224,7 @@ export default function LoginForm({ feedback, inModal = false, defaultEmail }: L
           </label>
           <Link
             href="/recuperar-senha"
-            className="text-sm font-medium text-[color:var(--brand-green-700)] transition-colors hover:text-[color:var(--brand-green-600)]"
+            className="text-sm font-medium text-[color:var(--brand-primary-700)] transition-colors hover:text-[color:var(--brand-primary-600)]"
           >
             Esqueceu sua senha?
           </Link>

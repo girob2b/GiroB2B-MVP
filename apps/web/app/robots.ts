@@ -2,7 +2,11 @@ import type { MetadataRoute } from "next";
 
 /**
  * Robots policy.
- * Permite páginas públicas indexáveis (Explorar pública, /produto/[slug], /fornecedor/[slug]).
+ * Indexáveis no modelo pós-pivot (2026-05-07): feed de demandas (/buscar),
+ * detalhe da demanda (/necessidade/[slug]), categorias (/categoria/[slug])
+ * e perfil do fornecedor (/fornecedor/[slug]).
+ * /explorar e /produto/ são rotas legadas que hoje redirecionam — mantidas no
+ * allow porque o redirect é inofensivo (e a suíte SEO ainda checa /produto/).
  * Bloqueia áreas autenticadas, callbacks de auth e endpoints internos.
  */
 export default function robots(): MetadataRoute.Robots {
@@ -13,7 +17,18 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/explorar", "/produto/", "/fornecedor/", "/termos", "/privacidade", "/faq"],
+        allow: [
+          "/",
+          "/buscar",
+          "/necessidade/",
+          "/categoria/",
+          "/fornecedor/",
+          "/explorar",
+          "/produto/",
+          "/termos",
+          "/privacidade",
+          "/faq",
+        ],
         disallow: [
           "/painel/",
           "/admin/",

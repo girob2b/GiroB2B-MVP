@@ -146,9 +146,9 @@ export default function RedefinirSenhaForm() {
 
   if (status === "checking") {
     return (
-      <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-green-100)]">
+      <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-primary-100)]">
         <CardContent className="pt-10 pb-8 text-center space-y-4">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[color:var(--brand-green-600)]" />
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[color:var(--brand-primary-600)]" />
           <p className="text-sm text-muted-foreground">Validando seu link de recuperação…</p>
         </CardContent>
       </Card>
@@ -182,10 +182,10 @@ export default function RedefinirSenhaForm() {
 
   if (status === "done") {
     return (
-      <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-green-100)]">
+      <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-primary-100)]">
         <CardContent className="pt-10 pb-8 text-center space-y-5">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--brand-green-100)]">
-            <ShieldCheck className="h-8 w-8 text-[color:var(--brand-green-600)]" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--brand-primary-100)]">
+            <ShieldCheck className="h-8 w-8 text-[color:var(--brand-primary-600)]" />
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-bold">Senha atualizada!</h2>
@@ -203,7 +203,7 @@ export default function RedefinirSenhaForm() {
 
   // ── Formulário (ready | submitting | error) ───────────────────────────────
   return (
-    <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-green-100)]">
+    <Card className="w-full max-w-md shadow-xl border border-[color:var(--brand-primary-100)]">
       <CardHeader className="space-y-2">
         <CardTitle className="text-2xl font-bold">Definir nova senha</CardTitle>
         <CardDescription>
@@ -254,7 +254,7 @@ export default function RedefinirSenhaForm() {
                           ? level <= 1 ? "bg-red-400"
                             : level <= 2 ? "bg-amber-400"
                             : level <= 3 ? "bg-yellow-400"
-                            : "bg-[color:var(--brand-green-500)]"
+                            : "bg-[color:var(--brand-primary-500)]"
                           : "bg-slate-200"
                       }`}
                     />
@@ -296,7 +296,7 @@ export default function RedefinirSenhaForm() {
               </button>
               {/* Inline match indicator */}
               {confirmPassword.length >= 8 && confirmPassword === password && (
-                <CheckCircle2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--brand-green-500)]" />
+                <CheckCircle2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--brand-primary-500)]" />
               )}
             </div>
             {confirmPassword && confirmPassword !== password && (
@@ -310,7 +310,7 @@ export default function RedefinirSenhaForm() {
 
           <Button
             type="submit"
-            className="w-full h-12 bg-[linear-gradient(135deg,var(--brand-green-600)_0%,var(--brand-green-700)_100%)] text-white hover:opacity-90"
+            className="w-full h-12 bg-[linear-gradient(135deg,var(--brand-primary-600)_0%,var(--brand-primary-700)_100%)] text-white hover:opacity-90"
             disabled={status === "submitting" || (confirmPassword.length > 0 && confirmPassword !== password)}
           >
             {status === "submitting" ? (
