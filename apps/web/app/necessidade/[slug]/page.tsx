@@ -12,13 +12,23 @@ import {
   MapPin,
   MessageCircle,
   Package,
+  Shield,
   Truck,
+  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { bumpViews, getDemandBySlug } from "@/lib/services/demands";
+import { bumpViews, getDemandBySlug, listPublicDemands } from "@/lib/services/demands";
 import { APP_URL } from "@/lib/email";
 import ContactButton from "@/app/(dashboard)/painel/leads/_components/contact-button";
+import { DemandCard } from "@/components/demands/demand-card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +44,6 @@ export async function generateMetadata({
   const { slug } = await params;
   const demand = await getDemandBySlug(slug);
   if (!demand) return { title: "Demanda não encontrada" };
-  // description é opcional pro publisher guest — fallback pra title evita
-  // TypeError em generateMetadata + mantém OG/meta com info útil pra crawler.
   const metaDescription = demand.description?.slice(0, 160) ?? demand.title;
   return {
     title: demand.title,
@@ -91,16 +99,29 @@ export default async function NecessidadeDetailPage({
     }
   }
 
-  const { data: category } = demand.category_id
-    ? await admin
-        .from("categories")
-        .select("name, slug")
-        .eq("id", demand.category_id)
-        .maybeSingle<{ name: string; slug: string }>()
-    : { data: null };
+  // Fetch de categoria e demandas relacionadas em paralelo (#19)
+  const [categoryResult, relatedResult] = await Promise.all([
+    demand.category_id
+      ? admin
+          .from("categories")
+          .select("name, slug")
+          .eq("id", demand.category_id)
+          .maybeSingle<{ name: string; slug: string }>()
+      : Promise.resolve({ data: null }),
+    demand.category_id
+      ? listPublicDemands({
+          category_id: demand.category_id,
+          exclude_id: demand.id,
+          sort: "recent",
+          limit: 3,
+        }).catch(() => ({ rows: [], total: 0 }))
+      : Promise.resolve({ rows: [], total: 0 }),
+  ]);
+
+  const category = categoryResult.data;
+  const relatedDemands = relatedResult.rows;
 
   // attachment_url armazena só o object_path (SecRev C1 — 2026-05-14).
-  // URL pública é construída server-side aqui. RLS no Storage gate-keeps o acesso real.
   const attachmentPublicUrl =
     demand.kind === "structured" && demand.attachment_url
       ? admin.storage.from("demand-attachments").getPublicUrl(demand.attachment_url).data.publicUrl
@@ -114,14 +135,25 @@ export default async function NecessidadeDetailPage({
       ? `${demand.quantity.toLocaleString("pt-BR")}${demand.unit ? ` ${demand.unit}` : ""}`
       : null;
 
+  // Badge de urgência — lado vendedor (rec #13 urgencia-prova-social-lado-vendedor)
+  const isNew = isNewDemand(demand.published_at);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BuyAction",
     name: demand.title,
-    // Sem description, omite a chave (em vez de emitir `description: null` no JSON-LD).
     description: demand.description ?? undefined,
     object: { "@type": "Product", name: demand.title, category: category?.name },
-    location: location ? { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: demand.delivery_city, addressRegion: demand.delivery_state } } : undefined,
+    location: location
+      ? {
+          "@type": "Place",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: demand.delivery_city,
+            addressRegion: demand.delivery_state,
+          },
+        }
+      : undefined,
     url: `${APP_URL}/necessidade/${slug}`,
     datePublished: demand.published_at,
   };
@@ -133,93 +165,141 @@ export default async function NecessidadeDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Navegação de retorno */}
       <Link
         href="/buscar"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar às demandas
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Voltar às demandas
       </Link>
 
+      {/* Cabeçalho da demanda */}
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {category && (
-            <Link
-              href={`/categoria/${category.slug}`}
-              className="inline-flex items-center rounded-full bg-[color:var(--brand-green-50)] px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-100)]"
+            <Badge
+              variant="secondary"
+              render={
+                <Link href={`/categoria/${category.slug}`} className="hover:opacity-80" />
+              }
             >
               {category.name}
-            </Link>
+            </Badge>
           )}
           {demand.kind === "structured" && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--brand-green-300)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-green-700)]">
-              <FileCheck2 className="h-3.5 w-3.5" /> Proposta estruturada
-            </span>
+            <Badge variant="outline" className="gap-1 border-brand-300 text-brand-700">
+              <FileCheck2 className="h-3 w-3" aria-hidden="true" />
+              Proposta estruturada
+            </Badge>
+          )}
+          {/* Badge de recência — visível pra todos; urgência do lado do vendedor */}
+          {isNew && (
+            <Badge className="gap-1 bg-brand-600 text-white">
+              Nova
+            </Badge>
+          )}
+          {/* Trust badge comprador */}
+          {demand.buyer_is_verified && (
+            <Badge variant="outline" className="gap-1 border-brand-300 text-brand-700">
+              <Shield className="h-3 w-3" aria-hidden="true" />
+              Comprador verificado
+            </Badge>
           )}
         </div>
+
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900">
           {demand.title}
         </h1>
-        <p className="text-sm text-slate-500">
-          {formatRelative(demand.published_at)} ·{" "}
-          <span className="inline-flex items-center gap-1">
-            <Eye className="h-3.5 w-3.5" /> {demand.views_count}
-          </span>{" "}
-          ·{" "}
-          <span className="inline-flex items-center gap-1">
-            <MessageCircle className="h-3.5 w-3.5" /> {demand.contact_count} contatos
+
+        {/* Metadados de atividade — urgência pro vendedor */}
+        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+          <span>{formatRelative(demand.published_at)}</span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center gap-1" title="Visualizações">
+            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+            {demand.views_count}
           </span>
-        </p>
+          <span aria-hidden="true">·</span>
+          {/* contact_count como badge de peso — urgência do vendedor (#13) */}
+          {demand.contact_count > 0 ? (
+            <span className="inline-flex items-center gap-1 font-semibold text-brand-700" title="Vendedores que já contataram">
+              <Users className="h-3.5 w-3.5" aria-hidden="true" />
+              {demand.contact_count} vendedor{demand.contact_count === 1 ? "" : "es"} já contatou
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1" title="Nenhum contato ainda">
+              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              Nenhum contato ainda
+            </span>
+          )}
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+      {/* Layout principal — coluna larga + aside sticky */}
+      {/* Breakpoint md (768px) — aside sobe junto com o conteúdo em tablets */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_300px]">
         {/* Coluna principal */}
-        <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Descrição
-            </h2>
-            <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-slate-700">
-              {demand.description}
-            </p>
-          </section>
-
-          {demand.kind === "structured" && demand.items && demand.items.length > 0 && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                <ListChecks className="h-4 w-4" /> Itens do pedido
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="pb-2 pr-3 w-10">#</th>
-                      <th className="pb-2 pr-3">Descrição</th>
-                      <th className="pb-2 pr-3">Qtd</th>
-                      <th className="pb-2">Especificações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {demand.items.map((it, i) => (
-                      <tr key={i} className="border-b border-slate-100 last:border-0 align-top">
-                        <td className="py-3 pr-3 text-xs font-semibold text-slate-400">{i + 1}</td>
-                        <td className="py-3 pr-3 font-medium text-slate-800">{it.description}</td>
-                        <td className="py-3 pr-3 whitespace-nowrap text-slate-700">
-                          {it.quantity.toLocaleString("pt-BR")} {it.unit}
-                        </td>
-                        <td className="py-3 text-slate-600 whitespace-pre-line">
-                          {it.specs || <span className="text-slate-400">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+        <div className="space-y-4">
+          {/* Descrição */}
+          {demand.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Descrição
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                  {demand.description}
+                </p>
+              </CardContent>
+            </Card>
           )}
 
+          {/* Itens do pedido (kind=structured) */}
+          {demand.kind === "structured" && demand.items && demand.items.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <ListChecks className="h-4 w-4" aria-hidden="true" />
+                  Itens do pedido
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th className="pb-2 pr-3 w-10">#</th>
+                        <th className="pb-2 pr-3">Descrição</th>
+                        <th className="pb-2 pr-3">Qtd</th>
+                        <th className="pb-2">Especificações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {demand.items.map((it, i) => (
+                        <tr key={i} className="border-b border-slate-100 last:border-0 align-top">
+                          <td className="py-3 pr-3 text-xs font-semibold text-slate-400">{i + 1}</td>
+                          <td className="py-3 pr-3 font-medium text-slate-800">{it.description}</td>
+                          <td className="py-3 pr-3 whitespace-nowrap text-slate-700">
+                            {it.quantity.toLocaleString("pt-BR")} {it.unit}
+                          </td>
+                          <td className="py-3 text-slate-600 whitespace-pre-line">
+                            {it.specs || <span className="text-slate-400">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Condições (structured) */}
           {demand.kind === "structured" &&
             (demand.payment_terms || demand.delivery_terms || demand.required_docs) && (
-              <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 {demand.payment_terms && (
                   <ConditionCard
                     icon={<CreditCard className="h-4 w-4" />}
@@ -241,98 +321,158 @@ export default async function NecessidadeDetailPage({
                     value={demand.required_docs}
                   />
                 )}
-              </section>
+              </div>
             )}
 
+          {/* Pedido formal PDF */}
           {attachmentPublicUrl && (
-            <section className="rounded-2xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-5">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[color:var(--brand-green-700)]">
-                Pedido formal (PDF)
-              </h2>
-              <a
-                href={attachmentPublicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-green-700)] border border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-100)]"
-              >
-                <FileText className="h-4 w-4" /> Baixar PDF
-              </a>
-            </section>
+            <Card className="border-brand-200 bg-brand-50">
+              <CardHeader>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                  Pedido formal (PDF)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <a
+                  href={attachmentPublicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
+                >
+                  <FileText className="h-4 w-4" aria-hidden="true" />
+                  Baixar PDF
+                </a>
+              </CardContent>
+            </Card>
           )}
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Detalhes
-            </h2>
-            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {demand.kind === "simple" && (
-                <Detail icon={<Package className="h-4 w-4" />} label="Quantidade">
-                  {quantity ?? "—"}
+          {/* Detalhes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Detalhes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {demand.kind === "simple" && (
+                  <Detail icon={<Package className="h-4 w-4" />} label="Quantidade">
+                    {quantity ?? "—"}
+                  </Detail>
+                )}
+                <Detail icon={<CalendarClock className="h-4 w-4" />} label="Prazo desejado">
+                  {deadline ?? "Sem prazo informado"}
                 </Detail>
-              )}
-              <Detail icon={<CalendarClock className="h-4 w-4" />} label="Prazo desejado">
-                {deadline ?? "Sem prazo informado"}
-              </Detail>
-              <Detail icon={<MapPin className="h-4 w-4" />} label="Local de entrega">
-                {location ?? "—"}
-              </Detail>
-              <Detail icon={<span className="font-bold text-slate-400">R$</span>} label="Orçamento máximo">
-                {budget ? `até ${budget}` : "Sem orçamento informado"}
-              </Detail>
-            </dl>
-          </section>
+                <Detail icon={<MapPin className="h-4 w-4" />} label="Local de entrega">
+                  {location ?? "—"}
+                </Detail>
+                <Detail
+                  icon={<span className="font-bold text-slate-400 text-sm">R$</span>}
+                  label="Orçamento máximo"
+                >
+                  {budget ? `até ${budget}` : "Sem orçamento informado"}
+                </Detail>
+              </dl>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Coluna lateral — CTA WhatsApp */}
+        {/* Coluna lateral — CTA WhatsApp (sticky) */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-6 sticky top-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--brand-green-700)]">
-              Sou vendedor
-            </p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">
-              Atende essa demanda?
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Vendedores assinantes contatam o comprador direto pelo WhatsApp, com a mensagem já
-              pré-formatada.
-            </p>
+          <div className="sticky top-6 space-y-4">
+            {/* Card CTA principal */}
+            <Card className="border-brand-200 bg-brand-50">
+              <CardHeader>
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                  Sou vendedor
+                </p>
+                <CardTitle className="text-lg font-bold text-slate-900">
+                  Atende essa demanda?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-slate-600">
+                  Assinantes contatam o comprador pelo WhatsApp. Agora você pode incluir
+                  preço, prazo e uma mensagem curta na proposta.
+                </p>
 
-            <div className="mt-4">
-              <ContactButton
-                demandId={demand.id}
-                canContact={viewerSupplier?.canContact ?? false}
-                hasSupplier={!!viewerSupplier}
-              />
-            </div>
+                <ContactButton
+                  demandId={demand.id}
+                  canContact={viewerSupplier?.canContact ?? false}
+                  hasSupplier={!!viewerSupplier}
+                />
 
-            {!viewerSupplier?.canContact && (
-              <p className="mt-3 text-xs text-slate-500">
-                Disponível para vendedores com assinatura ativa.
-              </p>
-            )}
+                {!viewerSupplier?.canContact && (
+                  <p className="text-xs text-slate-500">
+                    Disponível para vendedores com assinatura ativa.
+                  </p>
+                )}
 
-            {!viewerSupplier && (
-              <Link
-                href="/seja-vendedor"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--brand-green-300)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--brand-green-700)] hover:bg-[color:var(--brand-green-50)]"
-              >
-                Ver planos de vendedor
-              </Link>
-            )}
-          </div>
+                {!viewerSupplier && (
+                  <Link
+                    href="/seja-vendedor"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 transition-colors"
+                  >
+                    Ver planos de vendedor
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-xs text-slate-500">
-            <p>
-              <strong className="text-slate-700">Publicação válida</strong> até{" "}
-              {formatDate(demand.expires_at)}. Após essa data, a demanda some do feed
-              automaticamente.
-            </p>
+            {/* Validade da demanda */}
+            <Card size="sm">
+              <CardContent>
+                <p className="text-xs text-slate-500">
+                  <strong className="text-slate-700">Publicação válida</strong> até{" "}
+                  {formatDate(demand.expires_at)}. Após essa data, a demanda some do feed
+                  automaticamente.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </aside>
       </div>
+
+      {/* ── #19 Demandas relacionadas ────────────────────────────────────────────
+          Só renderiza quando há relacionadas (estado vazio = bloco ausente).
+          Grid sm:2 / lg:3. Categoria da demanda atual como eixo.
+      ──────────────────────────────────────────────────────────────────────── */}
+      {relatedDemands.length > 0 && category && (
+        <section className="space-y-4 pt-2" aria-label="Demandas relacionadas">
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="text-lg font-bold text-slate-900">
+              Outras demandas em{" "}
+              <Link
+                href={`/categoria/${category.slug}`}
+                className="text-brand-600 hover:underline"
+              >
+                {category.name}
+              </Link>
+            </h2>
+            <Link
+              href={`/categoria/${category.slug}`}
+              className="shrink-0 text-sm font-semibold text-brand-600 hover:underline"
+            >
+              Ver todas →
+            </Link>
+          </div>
+          <ul
+            role="list"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {relatedDemands.map((d) => (
+              <li key={d.id}>
+                <DemandCard demand={d} categoryName={category.name} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }
+
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function Detail({
   icon,
@@ -345,7 +485,7 @@ function Detail({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-slate-400">{icon}</span>
+      <span className="mt-0.5 text-slate-400" aria-hidden="true">{icon}</span>
       <div className="min-w-0">
         <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
         <dd className="mt-0.5 text-sm font-medium text-slate-800">{children}</dd>
@@ -364,22 +504,36 @@ function ConditionCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <span className="text-slate-400">{icon}</span>
-        {label}
-      </div>
-      <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{value}</p>
-    </div>
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <span className="text-slate-400" aria-hidden="true">{icon}</span>
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="whitespace-pre-line text-sm text-slate-700">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 
+// ─── Utilitários ──────────────────────────────────────────────────────────────
+
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return new Date(value).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  });
 }
 
 function formatRelative(value: string) {
@@ -388,6 +542,13 @@ function formatRelative(value: string) {
   if (days <= 0) return "Publicado hoje";
   if (days === 1) return "Publicado ontem";
   if (days < 7) return `Publicado há ${days} dias`;
-  if (days < 30) return `Publicado há ${Math.floor(days / 7)} semana${Math.floor(days / 7) > 1 ? "s" : ""}`;
+  if (days < 30)
+    return `Publicado há ${Math.floor(days / 7)} semana${Math.floor(days / 7) > 1 ? "s" : ""}`;
   return `Publicado em ${formatDate(value)}`;
+}
+
+/** Demanda publicada nas últimas 48h = "Nova" (badge de urgência pro vendedor). */
+function isNewDemand(publishedAt: string): boolean {
+  const ms = Date.now() - new Date(publishedAt).getTime();
+  return ms < 48 * 60 * 60 * 1000;
 }

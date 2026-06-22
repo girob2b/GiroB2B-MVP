@@ -113,7 +113,7 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, []);
 
   // ── Importar ──────────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-100 shrink-0">
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-[color:var(--brand-green-600)]" />
+            <FileSpreadsheet className="w-5 h-5 text-[color:var(--brand-primary-600)]" />
             Importar Produtos via Planilha
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -157,9 +157,9 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                   step === s
-                    ? "bg-[color:var(--brand-green-600)] text-white"
+                    ? "bg-[color:var(--brand-primary-600)] text-white"
                     : i < (["upload", "preview", "result"] as Step[]).indexOf(step)
-                    ? "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)]"
+                    ? "bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)]"
                     : "bg-slate-100 text-slate-400"
                 }`}>
                   {i + 1}
@@ -203,12 +203,12 @@ export default function ImportModal({ open, onOpenChange }: ImportModalProps) {
                   parsing
                     ? "border-slate-200 bg-slate-50 cursor-wait"
                     : isDragging
-                    ? "border-[color:var(--brand-green-500)] bg-[color:var(--brand-green-50)] cursor-copy"
-                    : "border-slate-200 bg-slate-50 hover:border-[color:var(--brand-green-400)] hover:bg-[color:var(--brand-green-50)]/40 cursor-pointer"
+                    ? "border-[color:var(--brand-primary-500)] bg-[color:var(--brand-primary-50)] cursor-copy"
+                    : "border-slate-200 bg-slate-50 hover:border-[color:var(--brand-primary-400)] hover:bg-[color:var(--brand-primary-50)]/40 cursor-pointer"
                 }`}
               >
                 {parsing ? (
-                  <Loader2 className="w-8 h-8 text-[color:var(--brand-green-500)] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[color:var(--brand-primary-500)] animate-spin" />
                 ) : (
                   <Upload className="w-8 h-8 text-slate-400" />
                 )}

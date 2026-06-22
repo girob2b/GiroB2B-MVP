@@ -86,33 +86,23 @@ test.describe("/explorar — estado público", () => {
   });
 });
 
-test.describe("/produto/[slug] — página pública", () => {
-  // Slug do banco de teste — se quebrar, atualizar manualmente
+test.describe("/produto/[slug] — rota legada (redirect pós-pivot)", () => {
+  // O catálogo de produto foi removido no pivot 2026-05-07. A rota agora é
+  // redirect 308: → /fornecedor/<slug> se o produto existir, senão → /buscar.
+  // Specs seed-resilientes: não dependem de um slug específico do banco.
   const SLUG = "parafuso-m8-inox-25mm-sextavado";
 
-  test("renderiza nome do produto e CTAs", async ({ page }) => {
+  test("nunca renderiza a página de produto — sempre redireciona pra fora de /produto", async ({ page }) => {
     await page.goto(`/produto/${SLUG}`);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Pedir cota[çc][ãa]o/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Ver fornecedor/i })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/produto\//);
+    await expect(page).toHaveURL(/\/(fornecedor|buscar)/);
+    // a CTA pré-pivot não pode mais existir em lugar nenhum
+    await expect(page.getByRole("button", { name: /Pedir cota[çc][ãa]o/i })).toHaveCount(0);
   });
 
-  test("breadcrumb tem link de volta para /explorar", async ({ page }) => {
-    await page.goto(`/produto/${SLUG}`);
-    await expect(page.getByRole("link", { name: /^Explorar$/ })).toBeVisible();
-  });
-
-  test("emite JSON-LD com schema Product (RF-05.08)", async ({ page }) => {
-    await page.goto(`/produto/${SLUG}`);
-    const ldScripts = page.locator('script[type="application/ld+json"]');
-    await expect(ldScripts.first()).toBeAttached();
-    const payload = await ldScripts.first().textContent();
-    expect(payload).toBeTruthy();
-    const json = JSON.parse(payload!);
-    const items = Array.isArray(json["@graph"]) ? json["@graph"] : [json];
-    const types = items.map((i: { "@type"?: string }) => i["@type"]);
-    expect(types).toContain("Product");
-    expect(types).toContain("BreadcrumbList");
+  test("slug inexistente cai em /buscar", async ({ page }) => {
+    await page.goto(`/produto/slug-que-definitivamente-nao-existe-${Date.now()}`);
+    await expect(page).toHaveURL(/\/buscar/);
   });
 });
 

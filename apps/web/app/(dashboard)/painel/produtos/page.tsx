@@ -66,7 +66,7 @@ export default async function ProdutosPage() {
   const STATUS_LABELS: Record<string, { label: string; className: string }> = {
     active: {
       label: "Ativo",
-      className: "bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]"
+      className: "bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)] border-[color:var(--brand-primary-200)]"
     },
     paused: {
       label: "Pausado",
@@ -119,7 +119,7 @@ export default async function ProdutosPage() {
         <Card className="border-dashed border-2 bg-slate-50/50">
           <CardContent className="py-20 text-center space-y-6">
             <div className="w-20 h-20 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto">
-              <Package className="w-10 h-10 text-[color:var(--brand-green-600)]" />
+              <Package className="w-10 h-10 text-[color:var(--brand-primary-600)]" />
             </div>
             <div className="max-w-xs mx-auto">
               <p className="font-bold text-xl text-slate-900">Nenhum produto ainda</p>
@@ -163,7 +163,7 @@ export default async function ProdutosPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-bold text-slate-900 text-lg group-hover:text-[color:var(--brand-green-700)] transition-colors truncate">
+                            <p className="font-bold text-slate-900 text-lg group-hover:text-[color:var(--brand-primary-700)] transition-colors truncate">
                               {product.name}
                             </p>
                           </div>
@@ -208,7 +208,7 @@ export default async function ProdutosPage() {
                         className="flex-1 flex items-center justify-center px-6 hover:bg-slate-50 transition-colors group/edit"
                         title="Editar produto"
                       >
-                        <Pencil className="w-4 h-4 text-slate-400 group-hover/edit:text-[color:var(--brand-green-600)]" />
+                        <Pencil className="w-4 h-4 text-slate-400 group-hover/edit:text-[color:var(--brand-primary-600)]" />
                       </Link>
                       <DeleteProductButton productId={product.id} productName={product.name} />
                     </div>

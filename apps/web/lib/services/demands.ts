@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatPriceBRL as _formatPriceBRL } from "@/lib/format-price";
 import type {
   CreateDemandInput,
   DemandItem,
@@ -9,6 +10,7 @@ import type {
   UpdateDemandInput,
 } from "@/lib/schemas/demands";
 import { LGPD_CONSENT_TEXT_VERSION } from "@/lib/schemas/demands";
+import type { OfferInput } from "@/lib/schemas/leads";
 
 // ─── Tipos de saída ──────────────────────────────────────────────────────────
 
@@ -41,12 +43,20 @@ export interface DemandPublic {
   created_at: string;
   // Comprador verificado (migration 039) — CNPJ + razão social preenchidos.
   buyer_is_verified: boolean;
+  // Data de cadastro do comprador (migration 047). Null para guests ou buyers sem cadastro.
+  // Usado para exibir "membro desde {ano}" no trust badge.
+  // Campo disponível APÓS aplicação manual de 047_bloco3_search_and_hub.sql.
+  buyer_member_since?: string | null;
 }
 
 export interface DemandWithContact extends DemandPublic {
   whatsapp_number: string;
 }
 
+// Colunas base — disponíveis desde a migration 039.
+// buyer_member_since é adicionado pela migration 047 e não consta aqui para que
+// o build e a aplicação não quebrem antes da aplicação manual da migration.
+// Após aplicar 047_bloco3_search_and_hub.sql, adicionar buyer_member_since aqui.
 const DEMAND_PUBLIC_COLUMNS =
   "id, slug, title, description, category_id, subcategory_slug, quantity, unit, budget_max_cents, deadline, delivery_city, delivery_state, photos_urls, kind, items, payment_terms, delivery_terms, required_docs, attachment_url, status, views_count, contact_count, published_at, expires_at, created_at, buyer_is_verified";
 
@@ -273,24 +283,96 @@ export interface DemandFeedFilters {
   kind?: DemandKind | null;
   /** True = só compradores verificados (CNPJ + razão social). */
   only_verified?: boolean;
+  /**
+   * #11 feed-vendedor-nao-contatadas — quando fornecido, exclui do feed as
+   * demands que este supplier já contatou (via demand_contacts).
+   * Valor = suppliers.id (UUID) do supplier logado.
+   */
+  exclude_contacted_by_supplier_id?: string | null;
+  /**
+   * #3 demandas-novas-desde-ultima-visita — quando fornecido, retorna apenas
+   * demands criadas após este timestamp.
+   * Valor = suppliers.last_feed_view_at (ISO string).
+   */
+  only_since?: string | null;
+  /**
+   * #19 demandas-relacionadas — exclui uma demand específica do resultado.
+   * Usado em /necessidade/[slug] para não exibir a própria demand como relacionada.
+   */
+  exclude_id?: string | null;
+  /**
+   * #7 busca-facetada-decente — ordenação escolhível.
+   * - 'recent'   (default): buyer_is_verified DESC, published_at DESC
+   * - 'contacts': contact_count DESC, published_at DESC
+   * - 'deadline': deadline ASC NULLS LAST, published_at DESC
+   */
+  sort?: "recent" | "contacts" | "deadline" | null;
   limit?: number;
   offset?: number;
 }
 
 export async function listPublicDemands(filters: DemandFeedFilters = {}) {
   const admin = createAdminClient();
+
+  // #7 busca-facetada-decente — ordenação escolhível.
+  // Default: verificados primeiro, depois mais recentes.
+  const sort = filters.sort ?? "recent";
   let q = admin
     .from("demands_public")
-    .select(DEMAND_PUBLIC_COLUMNS, { count: "exact" })
-    // Verificados antes — destaque visual sem precisar de coluna extra.
-    .order("buyer_is_verified", { ascending: false })
-    .order("published_at", { ascending: false });
+    .select(DEMAND_PUBLIC_COLUMNS, { count: "exact" });
 
-  if (filters.query) q = q.ilike("title", `%${filters.query}%`);
+  if (sort === "contacts") {
+    q = q
+      .order("contact_count", { ascending: false })
+      .order("published_at", { ascending: false });
+  } else if (sort === "deadline") {
+    q = q
+      .order("deadline", { ascending: true, nullsFirst: false })
+      .order("published_at", { ascending: false });
+  } else {
+    // 'recent' (default) — verificados antes, depois publicação mais recente.
+    q = q
+      .order("buyer_is_verified", { ascending: false })
+      .order("published_at", { ascending: false });
+  }
+
+  // #7 — query expandida: title OU description (antes: só title).
+  if (filters.query) {
+    const escaped = filters.query.replace(/%/g, "\\%").replace(/_/g, "\\_");
+    q = q.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+  }
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.state) q = q.eq("delivery_state", filters.state.toUpperCase());
   if (filters.kind) q = q.eq("kind", filters.kind);
   if (filters.only_verified) q = q.eq("buyer_is_verified", true);
+
+  // #3 — só demands criadas após o último acesso ao feed do supplier.
+  if (filters.only_since) {
+    q = q.gt("created_at", filters.only_since);
+  }
+
+  // #11 — exclui demands já contatadas por este supplier.
+  // Busca o conjunto de demand_ids contatados e aplica NOT IN.
+  // Limite conservador de 1000 IDs (praticamente impossível de atingir no MVP).
+  if (filters.exclude_contacted_by_supplier_id) {
+    const { data: contacted } = await admin
+      .from("demand_contacts")
+      .select("demand_id")
+      .eq("supplier_id", filters.exclude_contacted_by_supplier_id)
+      .limit(1000);
+
+    const contactedIds = (contacted ?? []).map((r) => r.demand_id as string);
+    // Se não há contatadas, o filtro é no-op (evita NOT IN com lista vazia).
+    if (contactedIds.length > 0) {
+      // supabase-js .not('col', 'in', '(uuid1,uuid2)') — UUIDs sem aspas.
+      q = q.not("id", "in", `(${contactedIds.join(",")})`);
+    }
+  }
+
+  // #19 demandas-relacionadas — exclui a demand atual do resultado.
+  if (filters.exclude_id) {
+    q = q.neq("id", filters.exclude_id);
+  }
 
   const limit = Math.min(Math.max(filters.limit ?? 20, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);
@@ -299,6 +381,47 @@ export async function listPublicDemands(filters: DemandFeedFilters = {}) {
   const { data, error, count } = await q;
   if (error) throw new Error(error.message);
   return { rows: (data ?? []) as DemandPublic[], total: count ?? 0 };
+}
+
+// ─── #3 Contador de demandas novas desde última visita ───────────────────────
+
+export interface NewDemandsCountResult {
+  count: number;
+  /** ISO timestamp da última visita (null = nunca visitou). */
+  since: string | null;
+}
+
+/**
+ * Conta demands abertas criadas após `lastFeedViewAt` do supplier.
+ *
+ * Se `lastFeedViewAt` for null (nunca visitou), retorna o total de demands
+ * abertas (todas são "novas" pra ele).
+ *
+ * Opcionalmente filtra pela categoria do supplier (category_ids).
+ * Não expõe PII — usa demands_public (sem whatsapp_number).
+ */
+export async function countNewDemandsForSupplier(
+  lastFeedViewAt: string | null,
+  options: { category_ids?: string[] } = {}
+): Promise<NewDemandsCountResult> {
+  const admin = createAdminClient();
+
+  let q = admin
+    .from("demands_public")
+    .select("id", { count: "exact", head: true });
+
+  if (lastFeedViewAt) {
+    q = q.gt("created_at", lastFeedViewAt);
+  }
+
+  if (options.category_ids && options.category_ids.length > 0) {
+    q = q.in("category_id", options.category_ids);
+  }
+
+  const { count, error } = await q;
+  if (error) throw new Error(error.message);
+
+  return { count: count ?? 0, since: lastFeedViewAt };
 }
 
 export async function getDemandBySlug(slug: string): Promise<DemandPublic | null> {
@@ -339,7 +462,11 @@ export async function registerContact(
   demandId: string,
   supplierId: string,
   supplierUserId: string,
-  meta: { ip?: string | null; user_agent?: string | null } = {}
+  meta: {
+    ip?: string | null;
+    user_agent?: string | null;
+    offer?: OfferInput;
+  } = {}
 ) {
   const admin = createAdminClient();
   const { error } = await admin.rpc("register_demand_contact", {
@@ -348,6 +475,9 @@ export async function registerContact(
     p_supplier_user_id: supplierUserId,
     p_ip: meta.ip ?? null,
     p_user_agent: meta.user_agent ?? null,
+    p_offer_price_cents: meta.offer?.price ?? null,
+    p_offer_deadline: meta.offer?.deadline ?? null,
+    p_offer_message: meta.offer?.message ?? null,
   });
   if (error) throw new Error(error.message);
 }
@@ -368,22 +498,135 @@ export async function bumpViews(demandId: string) {
     .eq("id", demandId);
 }
 
+// ─── #9 Hub de categorias com contagem real de demandas abertas ──────────────
+
+export interface CategoryWithCount {
+  id: string;
+  name: string;
+  slug: string;
+  /** Emoji ou slug de ícone definido no banco. Frontend mapeia para lucide. */
+  icon: string | null;
+  /** Quantidade de demandas abertas e não expiradas nesta categoria. */
+  demand_count: number;
+}
+
+/**
+ * Retorna categorias raiz ativas com a contagem real de demandas abertas.
+ *
+ * Uma query agregada — sem N+1. Usa embedded count do supabase-js:
+ *   categories → demands!category_id(count)
+ * com filtro "only demands já expostos em demands_public" (status=open, não expiradas).
+ *
+ * Resultado ordenado por demand_count DESC (categorias mais ativas primeiro).
+ * Cache recomendado: revalidate=3600 na página que consome.
+ */
+export async function listCategoriesWithDemandCount(): Promise<CategoryWithCount[]> {
+  const admin = createAdminClient();
+
+  // Busca categorias ativas raiz com embedded count de demands abertas.
+  // O filtro status + expires_at é necessário para contar só as demands
+  // que aparecem no feed público (equivalente ao WHERE da view demands_public).
+  const { data, error } = await admin
+    .from("categories")
+    .select(
+      `id, name, slug, icon,
+       demands!category_id(count)`,
+      { count: "exact" }
+    )
+    .eq("active", true)
+    .is("parent_id", null)
+    .eq("demands.status", "open")
+    .gt("demands.expires_at", new Date().toISOString())
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  type RawCategory = {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string | null;
+    demands: { count: number }[];
+  };
+
+  const rows = (data ?? []) as RawCategory[];
+
+  const result: CategoryWithCount[] = rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    icon: row.icon,
+    demand_count: row.demands?.[0]?.count ?? 0,
+  }));
+
+  // Ordena por demand_count DESC, mantendo alfabético como desempate.
+  result.sort((a, b) => b.demand_count - a.demand_count || a.name.localeCompare(b.name, "pt-BR"));
+
+  return result;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Formata centavos como "R$ 1.250,00" (locale pt-BR).
+ * Implementação em lib/format-price.ts (client-safe); reexportada aqui para
+ * compatibilidade com importadores server-side existentes.
+ */
+export const formatPriceBRL = _formatPriceBRL;
+
+/**
+ * Formata data ISO YYYY-MM-DD como DD/MM/YYYY.
+ * Usa parsing manual para evitar variação de timezone (new Date("YYYY-MM-DD")
+ * interpreta como UTC meia-noite — safe aqui porque só precisamos da string).
+ */
+function formatDateBR(iso: string): string {
+  const [year, month, day] = iso.split("-");
+  return `${day}/${month}/${year}`;
+}
 
 export function buildWhatsappLink(args: {
   whatsappNumber: string;
   demandTitle: string;
   demandSlug: string;
   appUrl: string;
+  /** Campos opcionais da oferta híbrida (Bloco 4 Headline). */
+  offer?: OfferInput;
 }): string {
   const sanitized = args.whatsappNumber.replace(/\D/g, "");
-  const message = [
+  const baseUrl = args.appUrl.replace(/\/$/, "");
+
+  // Monta bloco de oferta somente quando ao menos um campo foi preenchido.
+  const hasOffer =
+    args.offer?.price !== undefined ||
+    args.offer?.deadline !== undefined ||
+    (args.offer?.message !== undefined && args.offer.message.trim().length > 0);
+
+  const offerLines: string[] = [];
+  if (hasOffer && args.offer) {
+    offerLines.push("─────────────────");
+    offerLines.push("Minha oferta:");
+    if (args.offer.price !== undefined) {
+      offerLines.push(`• Preço: ${formatPriceBRL(args.offer.price)}`);
+    }
+    if (args.offer.deadline !== undefined) {
+      offerLines.push(`• Prazo de entrega: ${formatDateBR(args.offer.deadline)}`);
+    }
+    if (args.offer.message !== undefined && args.offer.message.trim().length > 0) {
+      offerLines.push(`• ${args.offer.message.trim()}`);
+    }
+    offerLines.push("─────────────────");
+  }
+
+  const parts = [
     `Olá! Vi sua necessidade no GiroB2B:`,
     ``,
     `*${args.demandTitle}*`,
-    `${args.appUrl.replace(/\/$/, "")}/necessidade/${args.demandSlug}`,
+    `${baseUrl}/necessidade/${args.demandSlug}`,
     ``,
-    `Posso ajudar — quando podemos conversar?`,
-  ].join("\n");
+    ...offerLines,
+    ...(offerLines.length > 0 ? [``, `Quando podemos conversar?`] : [`Posso ajudar — quando podemos conversar?`]),
+  ];
+
+  const message = parts.join("\n");
   return `https://wa.me/${sanitized}?text=${encodeURIComponent(message)}`;
 }

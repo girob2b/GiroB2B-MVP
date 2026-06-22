@@ -132,7 +132,7 @@ export default function DemandPhotosUploader({
       )}
 
       {urls.length < max && (
-        <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 cursor-pointer hover:border-[color:var(--brand-green-300)] hover:bg-[color:var(--brand-green-50)]/40 transition-colors">
+        <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 cursor-pointer hover:border-[color:var(--brand-primary-300)] hover:bg-[color:var(--brand-primary-50)]/40 transition-colors">
           <input
             ref={fileInputRef}
             type="file"

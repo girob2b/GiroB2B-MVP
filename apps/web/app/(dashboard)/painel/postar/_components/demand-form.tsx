@@ -227,7 +227,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex.: 1.000 caixas de papelão 30x40 ondulado"
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
 
@@ -250,7 +250,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detalhes da demanda — quanto mais claro, melhor a qualidade dos contatos."
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
 
@@ -260,7 +260,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             name="category_id"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           >
             <option value="">Sem categoria</option>
             {categories.map((c) => (
@@ -332,7 +332,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                     onChange={(e) => updateItem(idx, { description: e.target.value })}
                     maxLength={300}
                     placeholder="Ex.: Caixa papelão ondulado 30x40x25"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                   />
                 </Field>
 
@@ -346,7 +346,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                       value={it.quantity}
                       onChange={(e) => updateItem(idx, { quantity: e.target.value })}
                       placeholder="Ex.: 1000"
-                      className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                      className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                     />
                   </Field>
                   <Field label="Unidade" htmlFor={`item-unit-${idx}`}>
@@ -357,7 +357,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                       onChange={(e) => updateItem(idx, { unit: e.target.value })}
                       maxLength={20}
                       placeholder="un, kg, m²…"
-                      className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                      className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                     />
                   </Field>
                 </div>
@@ -374,7 +374,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                     maxLength={1000}
                     rows={2}
                     placeholder="Ex.: papelão duplex 350g, impressão 1 cor"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                   />
                 </Field>
               </div>
@@ -401,7 +401,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder="Ex.: 1000"
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                 />
               </Field>
               <Field label="Unidade" htmlFor="unit">
@@ -412,7 +412,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
                   placeholder="Ex.: unid, kg, m"
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                 />
               </Field>
             </>
@@ -431,7 +431,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               value={budgetReais}
               onChange={(e) => setBudgetReais(e.target.value)}
               placeholder="Ex.: 5000.00"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
         </div>
@@ -443,7 +443,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             type="date"
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
       </section>
@@ -460,7 +460,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Ex.: São Paulo"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="UF" htmlFor="delivery_state" error={state?.errors?.delivery_state?.[0]}>
@@ -469,7 +469,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               name="delivery_state"
               value={stateUf}
               onChange={(e) => setStateUf(e.target.value)}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             >
               <option value="">—</option>
               {BR_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
@@ -491,7 +491,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               rows={2}
               value={paymentTerms}
               onChange={(e) => setPaymentTerms(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
 
@@ -503,7 +503,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               rows={2}
               value={deliveryTerms}
               onChange={(e) => setDeliveryTerms(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
 
@@ -515,7 +515,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
               rows={2}
               value={requiredDocs}
               onChange={(e) => setRequiredDocs(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
 
@@ -523,12 +523,12 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             {/* attachment_url = object_path. RLS exige match exato (SecRev C1). */}
             <input type="hidden" name="attachment_url" value={attachmentPath ?? ""} />
             {attachmentPath ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-[color:var(--brand-green-300)] bg-[color:var(--brand-green-50)] px-3 py-2">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-[color:var(--brand-primary-300)] bg-[color:var(--brand-primary-50)] px-3 py-2">
                 <a
                   href={attachmentPublicUrl ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-green-700)] hover:underline"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-primary-700)] hover:underline"
                 >
                   <FileText className="h-4 w-4" /> {attachmentName ?? "anexo.pdf"}
                 </a>
@@ -543,7 +543,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             ) : (
               <label
                 htmlFor="attachment"
-                className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-[color:var(--brand-green-400)] hover:text-[color:var(--brand-green-700)]"
+                className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-[color:var(--brand-primary-400)] hover:text-[color:var(--brand-primary-700)]"
               >
                 {uploading ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Enviando…</>
@@ -583,7 +583,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             placeholder="11999999999"
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
       </section>
@@ -597,16 +597,16 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
             required
             checked={lgpd}
             onChange={(e) => setLgpd(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-primary-600)] focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
           <span className="leading-relaxed">
             Autorizo a publicação desta demanda no GiroB2B e a exibição do meu WhatsApp para
             fornecedores assinantes da plataforma entrarem em contato. Li e aceito a{" "}
-            <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+            <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
               Política de Privacidade
             </Link>{" "}
             e os{" "}
-            <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+            <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
               Termos de Uso
             </Link>
             .
@@ -627,7 +627,7 @@ export default function DemandForm({ categories, defaults }: DemandFormProps) {
         <button
           type="submit"
           disabled={pending || uploading}
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-green-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-primary-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-50"
         >
           {pending ? (
             <span className="inline-flex items-center gap-2">

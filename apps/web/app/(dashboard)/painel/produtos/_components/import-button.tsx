@@ -12,7 +12,7 @@ export default function ImportButton() {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="rounded-xl h-10 px-5 gap-2 border-slate-200 hover:border-[color:var(--brand-green-400)] hover:text-[color:var(--brand-green-700)]"
+        className="rounded-xl h-10 px-5 gap-2 border-slate-200 hover:border-[color:var(--brand-primary-400)] hover:text-[color:var(--brand-primary-700)]"
       >
         <FileSpreadsheet className="w-4 h-4" />
         Importar Planilha

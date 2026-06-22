@@ -214,6 +214,48 @@ export async function approveWaitlistEntry(
   return {};
 }
 
+export async function notifyWaitlistEntry(
+  waitlistId: string,
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    await assertSession();
+
+    const webAppUrl = process.env.WEB_APP_URL;
+    const adminSecret = process.env.ADMIN_API_SECRET;
+
+    if (!webAppUrl || !adminSecret) {
+      return {
+        ok: false,
+        message: "Configuração de servidor incompleta (WEB_APP_URL / ADMIN_API_SECRET).",
+      };
+    }
+
+    const res = await fetch(
+      `${webAppUrl}/api/admin/waitlist/${waitlistId}/notify`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminSecret}`,
+        },
+        cache: "no-store",
+      },
+    );
+
+    const json = (await res.json().catch(() => ({
+      ok: false,
+      message: `Erro HTTP ${res.status}`,
+    }))) as { ok: boolean; message: string };
+
+    return json;
+  } catch (e) {
+    return {
+      ok: false,
+      message: e instanceof Error ? e.message : "Erro desconhecido ao notificar vendedor.",
+    };
+  }
+}
+
 export async function unapproveWaitlistEntry(
   waitlistId: string
 ): Promise<{ error?: string }> {

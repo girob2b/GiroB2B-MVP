@@ -66,7 +66,7 @@ function Field({
           defaultValue={defaultValue ?? ""}
           placeholder={placeholder}
           readOnly={readOnly}
-          className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition read-only:bg-slate-50 read-only:text-slate-500 read-only:cursor-not-allowed"
+          className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)] focus:border-transparent transition read-only:bg-slate-50 read-only:text-slate-500 read-only:cursor-not-allowed"
         />
       )}
     </div>
@@ -89,8 +89,8 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
   const PLAN_LABELS: Record<string, { label: string; color: string }> = {
     free:    { label: "Gratuito", color: "bg-slate-100 text-slate-600 border-slate-200" },
     starter: { label: "Starter",  color: "bg-slate-100 text-slate-700 border-slate-200" },
-    pro:     { label: "Pro",      color: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
-    premium: { label: "Premium",  color: "bg-[color:var(--brand-green-100)] text-[color:var(--brand-green-700)] border-[color:var(--brand-green-200)]" },
+    pro:     { label: "Pro",      color: "bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] border-[color:var(--brand-primary-200)]" },
+    premium: { label: "Premium",  color: "bg-[color:var(--brand-primary-100)] text-[color:var(--brand-primary-700)] border-[color:var(--brand-primary-200)]" },
   };
   const plan = PLAN_LABELS[supplier.plan] ?? PLAN_LABELS.free;
 
@@ -100,7 +100,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
       <div className="rounded-2xl border border-border bg-white shadow-sm p-6">
         <h2 className="text-base font-semibold text-slate-900 mb-4">Perfil da empresa</h2>
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[color:var(--brand-green-100)] flex items-center justify-center text-[color:var(--brand-green-700)] font-bold text-2xl shrink-0 border border-[color:var(--brand-green-200)]">
+          <div className="w-16 h-16 rounded-2xl bg-[color:var(--brand-primary-100)] flex items-center justify-center text-[color:var(--brand-primary-700)] font-bold text-2xl shrink-0 border border-[color:var(--brand-primary-200)]">
             {supplier.trade_name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0 space-y-2">
@@ -109,7 +109,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
               <p className="text-xs text-slate-500 truncate">{supplier.company_name}</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[color:var(--brand-green-50)] text-[color:var(--brand-green-700)] border border-[color:var(--brand-green-200)]">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[color:var(--brand-primary-50)] text-[color:var(--brand-primary-700)] border border-[color:var(--brand-primary-200)]">
                 {userRole ? (ROLE_LABELS[userRole] ?? userRole) : "Vendedor"}
               </span>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.color}`}>
@@ -132,7 +132,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
           </div>
           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,var(--brand-green-500),var(--brand-green-600))] transition-all"
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--brand-primary-500),var(--brand-primary-600))] transition-all"
               style={{ width: `${supplier.profile_completeness}%` }}
             />
           </div>
@@ -177,7 +177,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
                       id="situacao_fiscal"
                       name="situacao_fiscal"
                       defaultValue={supplier.situacao_fiscal ?? ""}
-                      className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
+                      className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)] focus:border-transparent transition"
                     >
                       <option value="">Selecione o regime tributário</option>
                       {SITUACAO_FISCAL.map(sf => (
@@ -208,7 +208,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
                     id="state"
                     name="state"
                     defaultValue={supplier.state ?? ""}
-                    className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] focus:border-transparent transition"
+                    className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)] focus:border-transparent transition"
                   >
                     <option value="">Selecione o estado</option>
                     {ESTADOS.map(uf => (
@@ -232,7 +232,7 @@ export default function AccountForm({ supplier, userRole }: { supplier: AccountF
                   name="allow_relisting"
                   value="true"
                   defaultChecked={supplier.allow_relisting}
-                  className="mt-1 w-4 h-4 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+                  className="mt-1 w-4 h-4 rounded border-slate-300 text-[color:var(--brand-primary-600)] focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
                 />
                 <span className="flex-1">
                   <span className="block text-sm font-medium text-slate-800 group-hover:text-slate-900">

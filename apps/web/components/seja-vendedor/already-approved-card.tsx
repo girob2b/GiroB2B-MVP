@@ -108,9 +108,9 @@ function CheckModal({ onClose }: { onClose: () => void }) {
 
         {/* Estado: aprovado */}
         {result.status === "approved" && (
-          <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] p-4 space-y-3">
+          <div className="rounded-xl border border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)] p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-[color:var(--brand-green-700)]" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-[color:var(--brand-primary-700)]" />
               <div>
                 <p className="text-sm font-bold text-slate-900">Tudo certo! Você está aprovado.</p>
                 <p className="text-xs text-slate-600 mt-1">
@@ -120,7 +120,7 @@ function CheckModal({ onClose }: { onClose: () => void }) {
             </div>
             <a
               href={`/cadastro/vendedor?supplier_token=${result.token}`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-5 py-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-5 py-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)]"
             >
               Continuar pra criar conta <ArrowRight className="h-4 w-4" />
             </a>
@@ -194,7 +194,7 @@ function CheckModal({ onClose }: { onClose: () => void }) {
                   autoFocus
                   disabled={result.status === "checking"}
                   placeholder="seu@empresa.com.br"
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)] disabled:opacity-60"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)] disabled:opacity-60"
                 />
               </div>
             </div>
@@ -209,7 +209,7 @@ function CheckModal({ onClose }: { onClose: () => void }) {
               <button
                 type="submit"
                 disabled={result.status === "checking"}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-green-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-primary-600)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-60"
               >
                 {result.status === "checking" ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Verificando…</>

@@ -43,7 +43,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               required
               maxLength={120}
               placeholder="Ex.: João Silva"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="Email" htmlFor="guest_email" required error={state?.errors?.guest_email?.[0]}>
@@ -54,7 +54,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               required
               defaultValue={defaults.guest_email ?? ""}
               placeholder="seu@empresa.com.br"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="WhatsApp" htmlFor="guest_whatsapp" required help="Apenas números com DDD." error={state?.errors?.guest_whatsapp?.[0]}>
@@ -65,7 +65,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               inputMode="numeric"
               pattern="\d{10,14}"
               placeholder="11999999999"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
         </div>
@@ -84,7 +84,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             maxLength={120}
             defaultValue={defaults.title}
             placeholder="Ex.: 1.000 caixas de papelão"
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
 
@@ -99,7 +99,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             maxLength={5000}
             rows={5}
             placeholder="Detalhes da demanda — quanto mais claro, melhor a qualidade dos contatos."
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
         </Field>
 
@@ -108,7 +108,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             id="category_id"
             name="category_id"
             defaultValue={defaults.category_id}
-            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           >
             <option value="">Selecionar (opcional)</option>
             {categories.map((c) => (
@@ -126,7 +126,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               min={0}
               step="any"
               placeholder="Ex.: 1000"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="Unidade" htmlFor="unit">
@@ -135,7 +135,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               name="unit"
               maxLength={40}
               placeholder="Ex.: unid, kg, m"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="Orçamento (R$)" htmlFor="budget_max_reais">
@@ -146,7 +146,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               min={0}
               step="0.01"
               placeholder="Ex.: 5000.00"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
         </div>
@@ -157,7 +157,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               id="deadline"
               name="deadline"
               type="date"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="Cidade" htmlFor="delivery_city" className="sm:col-span-1">
@@ -166,7 +166,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               name="delivery_city"
               maxLength={120}
               placeholder="Ex.: São Paulo"
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             />
           </Field>
           <Field label="UF" htmlFor="delivery_state">
@@ -174,7 +174,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
               id="delivery_state"
               name="delivery_state"
               defaultValue={defaults.delivery_state}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
             >
               <option value="">—</option>
               {BR_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
@@ -190,16 +190,16 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
             type="checkbox"
             name="lgpd_consent"
             required
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-green-600)] focus:ring-2 focus:ring-[color:var(--brand-green-500)]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[color:var(--brand-primary-600)] focus:ring-2 focus:ring-[color:var(--brand-primary-500)]"
           />
           <span className="leading-relaxed">
             Autorizo a publicação desta demanda no GiroB2B e a exibição do meu WhatsApp para
             fornecedores assinantes da plataforma entrarem em contato. Li e aceito a{" "}
-            <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+            <Link href="/privacidade" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
               Política de Privacidade
             </Link>{" "}
             e os{" "}
-            <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-green-700)] underline">
+            <Link href="/termos" target="_blank" className="font-semibold text-[color:var(--brand-primary-700)] underline">
               Termos de Uso
             </Link>
             .
@@ -217,7 +217,7 @@ export default function GuestDemandForm({ categories, defaults }: Props) {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-green-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)] disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-[color:var(--brand-primary-600)] px-5 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)] disabled:opacity-50"
         >
           {pending ? (
             <span className="inline-flex items-center gap-2">

@@ -179,6 +179,7 @@ export default async function AdminWaitlistPage({ searchParams }: WaitlistPagePr
                       <WaitlistRowActions
                         waitlistId={row.id}
                         email={row.email}
+                        role={row.role}
                         approvedAt={row.approved_at}
                       />
                     </td>

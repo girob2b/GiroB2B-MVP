@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Eye, MessageCircle, Plus, BadgeCheck, ShieldAlert } from "lucide-react";
+import { Eye, MessageCircle, Plus, BadgeCheck, ShieldAlert, ClipboardList, Inbox } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listMyDemands } from "@/lib/services/demands";
@@ -75,6 +75,24 @@ export default async function NecessidadesPage({
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
+      {/* Tabs: Minhas demandas | Ofertas recebidas */}
+      <nav className="flex gap-1 border-b border-slate-200 -mt-2" aria-label="Seções do painel do comprador">
+        <span
+          aria-current="page"
+          className="inline-flex items-center gap-1.5 px-4 py-3 text-sm font-semibold text-brand-700 border-b-2 border-brand-600 -mb-px"
+        >
+          <ClipboardList className="h-4 w-4" aria-hidden="true" />
+          Minhas demandas
+        </span>
+        <Link
+          href="/painel/necessidades/ofertas"
+          className="inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <Inbox className="h-4 w-4" aria-hidden="true" />
+          Ofertas recebidas
+        </Link>
+      </nav>
+
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-slate-900">Minhas demandas</h1>
@@ -84,7 +102,7 @@ export default async function NecessidadesPage({
         </div>
         <Link
           href="/painel/postar"
-          className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+          className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand-primary-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)]"
         >
           <Plus className="h-4 w-4" /> Publicar demanda
         </Link>
@@ -105,8 +123,8 @@ export default async function NecessidadesPage({
         />
       ) : (
         isVerified && (
-          <div className="rounded-xl border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-4 py-3 text-sm text-[color:var(--brand-green-800)] flex items-start gap-3">
-            <BadgeCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-green-700)]" />
+          <div className="rounded-xl border border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)] px-4 py-3 text-sm text-[color:var(--brand-primary-800)] flex items-start gap-3">
+            <BadgeCheck className="h-5 w-5 shrink-0 text-[color:var(--brand-primary-700)]" />
             <p>
               <strong>Comprador Verificado.</strong> Suas demandas aparecem em destaque para os
               vendedores assinantes.
@@ -123,7 +141,7 @@ export default async function NecessidadesPage({
           </p>
           <Link
             href="/painel/postar"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand-green-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-green-700)]"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[color:var(--brand-primary-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--brand-primary-700)]"
           >
             <Plus className="h-4 w-4" /> Começar agora
           </Link>

@@ -94,7 +94,7 @@ export default function ImportCatalogClient({ products }: ImportCatalogClientPro
                 <button
                   onClick={() => handleImport(p.id)}
                   disabled={isLoading || loadingId !== null}
-                  className="w-full h-9 rounded-xl bg-[color:var(--brand-green-600)] hover:bg-[color:var(--brand-green-700)] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full h-9 rounded-xl bg-[color:var(--brand-primary-600)] hover:bg-[color:var(--brand-primary-700)] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
                 >
                   {isLoading ? (
                     <>

@@ -13,6 +13,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Heading usa a mesma fonte do body (DM Sans). Serif foi revertida após
+   * feedback visual (#21 Instrument_Serif — Vitor: "está péssima" 2026-06-22). */
   --font-heading: var(--font-sans);
 
   /* ── Brand tokens (BRIEF_MARCA 2026-04-17 — B teal + dourado) ──────── */
@@ -21,6 +23,7 @@
   --color-brand-100: var(--brand-primary-100);
   --color-brand-200: var(--brand-primary-200);
   --color-brand-300: var(--brand-primary-300);
+  --color-brand-400: var(--brand-primary-400);
   --color-brand-500: var(--brand-primary-500);
   --color-brand-600: var(--brand-primary-600);
   --color-brand-700: var(--brand-primary-700);
@@ -31,6 +34,7 @@
   --color-gold-100: var(--brand-accent-100);
   --color-gold-200: var(--brand-accent-200);
   --color-gold-300: var(--brand-accent-300);
+  --color-gold-400: var(--brand-accent-400);
   --color-gold-500: var(--brand-accent-500);
   --color-gold-600: var(--brand-accent-600);
   --color-gold-700: var(--brand-accent-700);
@@ -38,6 +42,15 @@
   --color-gold-900: var(--brand-accent-900);
   --color-surface: var(--brand-surface);
   --color-ink: var(--brand-ink);
+
+  /* ── WhatsApp brand green — usado só no CTA "Contatar via WhatsApp".
+   * Cor oficial do WhatsApp (#25D366) + escuro pra hover/contraste AA.
+   * Texto branco sobre #128C3F ≈ 4.9:1 (passa WCAG AA). ──────────────── */
+  --color-whatsapp:      #25d366;
+  --color-whatsapp-600:  #1aa850;
+  --color-whatsapp-700:  #128c3f;
+  --color-whatsapp-50:   #e8faf0;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -113,14 +126,15 @@
   --sidebar-ring: oklch(0.708 0 0);
   /* ── Brand primary / accent / surface / ink ──────────────────────
    * Sao aliases sobre os tokens compartilhados (packages/shared/design/tokens.css).
-   * Mantidos pra nao quebrar os 142+ usages de --brand-primary-* / --brand-green-*
-   * espalhados pelo app. Novas telas devem usar tokens semanticos
+   * Mantidos pra nao quebrar os 142+ usages de --brand-primary-* espalhados pelo app.
+   * Novas telas devem usar tokens semanticos
    * (--surface, --ink-primary, --action-primary-bg, etc). */
   --brand-primary:     var(--brand-600);
   --brand-primary-50:  var(--brand-50);
   --brand-primary-100: var(--brand-100);
   --brand-primary-200: var(--brand-200);
   --brand-primary-300: var(--brand-300);
+  --brand-primary-400: var(--brand-400);
   --brand-primary-500: var(--brand-500);
   --brand-primary-600: var(--brand-600);
   --brand-primary-700: var(--brand-700);
@@ -132,6 +146,7 @@
   --brand-accent-100: var(--accent-100);
   --brand-accent-200: var(--accent-200);
   --brand-accent-300: var(--accent-300);
+  --brand-accent-400: var(--accent-400);
   --brand-accent-500: var(--accent-500);
   --brand-accent-600: var(--accent-600);
   --brand-accent-700: var(--accent-700);
@@ -140,18 +155,6 @@
 
   --brand-surface: var(--neutral-100);
   --brand-ink:     var(--neutral-900);
-
-  /* ── Legacy alias: --brand-green-* aponta para --brand-primary-* ── */
-  /* Mantido por compat (142 usages em 20 arquivos). Novas telas devem usar --brand-primary-*. */
-  --brand-green-50:  var(--brand-primary-50);
-  --brand-green-100: var(--brand-primary-100);
-  --brand-green-200: var(--brand-primary-200);
-  --brand-green-300: var(--brand-primary-300);
-  --brand-green-500: var(--brand-primary-500);
-  --brand-green-600: var(--brand-primary-600);
-  --brand-green-700: var(--brand-primary-700);
-  --brand-green-800: var(--brand-primary-800);
-  --brand-green-900: var(--brand-primary-900);
 }
 
 .dark {
@@ -370,8 +373,11 @@
   }
 
   .btn-gold {
-    @apply bg-[color:var(--brand-accent-600)] text-white font-semibold
-           hover:bg-[color:var(--brand-accent-700)] transition-colors;
+    /* accent-600 (#C08A2E) sobre branco = ~4.08:1 (reprova AA).
+     * Trocado pra text-neutral-900 sobre accent-500 (~4.8:1 ≥ AA).
+     * Hover: accent-600 (mais escuro) mantém contraste >= AA. */
+    @apply bg-[color:var(--brand-accent-500)] text-neutral-900 font-semibold
+           hover:bg-[color:var(--brand-accent-600)] transition-colors;
   }
 
   .btn-outline {

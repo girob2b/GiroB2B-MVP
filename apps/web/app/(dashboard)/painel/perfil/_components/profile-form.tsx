@@ -14,6 +14,7 @@ import {
   type UpdateBuyerHabitsState,
 } from "@/app/actions/user";
 import AccountForm, { type AccountFormSupplier } from "./account-form";
+import PublicProfileToggle from "./public-profile-toggle";
 
 export interface Buyer {
   id: string;
@@ -129,7 +130,7 @@ function CompanyDataForm({ buyer }: { buyer: Buyer }) {
             <CardTitle className="text-base">Dados da empresa</CardTitle>
             {buyer.is_company_verified ? (
               <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--brand-green-200)] bg-[color:var(--brand-green-50)] px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-green-700)]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--brand-primary-200)] bg-[color:var(--brand-primary-50)] px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-primary-700)]"
                 title="CNPJ ativo na Receita Federal — fornecedores veem este selo nas suas cotações."
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
@@ -277,6 +278,7 @@ export default function ProfileForm({
   lastRoleChangeAt,
   pendingRoleRequest,
   initialSegmentChosen,
+  publicProfile,
 }: {
   buyer: Buyer;
   supplier: AccountFormSupplier | null;
@@ -284,6 +286,8 @@ export default function ProfileForm({
   lastRoleChangeAt: string | null;
   pendingRoleRequest: PendingRoleRequest | null;
   initialSegmentChosen: boolean;
+  /** Estado do opt-in de perfil público; null = migration 050 não disponível. */
+  publicProfile: { optIn: boolean; slug: string | null } | null;
 }) {
   const hasSupplier = !!supplier;
   // `buyer` aqui pode ser uma row real OU derivada do supplier (em supplier-only).
@@ -335,7 +339,16 @@ export default function ProfileForm({
 
       {/* 3. Conteúdo da face única (buyer OU supplier — sem switch de visão) */}
       {effectiveView === "buyer" && hasBuyer && (
-        <BuyerHabitsForm buyer={buyer} />
+        <>
+          <BuyerHabitsForm buyer={buyer} />
+          {publicProfile && (
+            <PublicProfileToggle
+              initialOptIn={publicProfile.optIn}
+              initialSlug={publicProfile.slug}
+              canEnable={Boolean(buyer.cnpj && buyer.company_name)}
+            />
+          )}
+        </>
       )}
 
       {effectiveView === "supplier" && hasSupplier && supplier && (

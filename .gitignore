@@ -67,6 +67,9 @@ ARCHITECTURE.md
 
 # ─── Brainstorm / work sessions Vex (outputs internos, não código) ───────────
 /work/
+/brainstorming/
+/dev-build/
+supabase/.temp/
 
 # ─── Landing page (repo separado, não faz parte do monorepo) ─────────────────
 /apps/girob2b-landing-page/

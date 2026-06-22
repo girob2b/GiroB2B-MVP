@@ -269,22 +269,22 @@ export default function BuyerRegisterForm({ inModal = false, next = null }: Buye
       <button
         type="button"
         onClick={handleSkip}
-        className="group flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-green-600)] bg-[color:var(--brand-green-50)] px-4 py-3.5 text-left shadow-sm transition hover:bg-[color:var(--brand-green-100)] hover:shadow-md"
+        className="group flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-[color:var(--brand-primary-600)] bg-[color:var(--brand-primary-50)] px-4 py-3.5 text-left shadow-sm transition hover:bg-[color:var(--brand-primary-100)] hover:shadow-md"
       >
         <span className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-green-600)] text-white">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-primary-600)] text-white">
             <Zap className="h-4 w-4" />
           </span>
           <span className="leading-tight">
-            <span className="block text-sm font-bold text-[color:var(--brand-green-800)]">
+            <span className="block text-sm font-bold text-[color:var(--brand-primary-800)]">
               Continuar sem cadastro
             </span>
-            <span className="block text-xs text-[color:var(--brand-green-700)]">
+            <span className="block text-xs text-[color:var(--brand-primary-700)]">
               Publique sua demanda agora — leva 1 minuto.
             </span>
           </span>
         </span>
-        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-green-700)] transition group-hover:translate-x-0.5">
+        <span aria-hidden className="text-lg font-bold text-[color:var(--brand-primary-700)] transition group-hover:translate-x-0.5">
           →
         </span>
       </button>
