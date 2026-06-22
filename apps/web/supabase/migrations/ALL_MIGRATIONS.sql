@@ -671,3 +671,569 @@ ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Buyers view own inquiries" ON inquiries;
 CREATE POLICY "Buyers view own inquiries" ON inquiries FOR SELECT
   USING (buyer_id IN (SELECT id FROM buyers WHERE user_id = auth.uid()));
+
+-- ─── Migration 046: supplier feed tracking ────────────────────────────────────
+ALTER TABLE suppliers
+  ADD COLUMN IF NOT EXISTS last_feed_view_at TIMESTAMPTZ;
+
+COMMENT ON COLUMN suppliers.last_feed_view_at IS
+  'Timestamp da última vez que o supplier carregou o feed /painel/leads.
+   Usado para calcular "N demandas novas desde sua última visita".
+   NULL = nunca visitou. Atualizado via POST /api/supplier/feed-view.';
+
+CREATE INDEX IF NOT EXISTS idx_demands_created_open
+  ON demands (created_at DESC)
+  WHERE status = 'open' AND expires_at > NOW();
+
+CREATE INDEX IF NOT EXISTS idx_demand_contacts_supplier_demand
+  ON demand_contacts (supplier_id, demand_id);
+-- Migration 047: Bloco 3 — busca facetada + hub de categorias
+--
+-- Itens implementados:
+--   #7  busca-facetada-decente  — índice em contact_count para sort='contacts'
+--   #9  hub-categorias          — sem migration de schema nova (query via embedded count)
+--   #19 demandas-relacionadas   — param exclude_id em listPublicDemands (só TypeScript)
+--   #5  trust-badges (parcial)  — adicionar buyer_member_since à view demands_public
+--
+-- Aplicação MANUAL via Supabase SQL Editor (não há staging; preview = prod).
+-- Rollback comentado ao final.
+
+BEGIN;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Índice em demands.contact_count (suporte ao sort='contacts')
+--
+--    listPublicDemands com sort='contacts' ordena por contact_count DESC.
+--    Sem índice, Postgres faz seq scan em demands_public (view sobre demands).
+--    O índice parcial (WHERE status='open') cobre exatamente as rows da view.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE INDEX IF NOT EXISTS idx_demands_contact_count_open
+  ON demands (contact_count DESC)
+  WHERE status = 'open';
+
+COMMENT ON INDEX idx_demands_contact_count_open IS
+  'Índice parcial para ordenação por "mais contatadas" no feed público (#7 busca-facetada-decente).';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Adicionar buyer_member_since à view demands_public
+--
+--    Campo: buyers.created_at alias buyer_member_since.
+--    Permite badge "membro desde {ano}" no trust-badges (#5).
+--    NULL para guests (buyer_user_id IS NULL) — comportamento esperado.
+--
+--    A view é reconstruída com DROP + CREATE porque Postgres exige
+--    preservar a ordem das colunas existentes para OR REPLACE.
+--    whatsapp_number, guest_email, guest_whatsapp, guest_name continuam
+--    AUSENTES — gate de PII mantido.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+DROP VIEW IF EXISTS demands_public;
+
+CREATE VIEW demands_public AS
+SELECT
+  d.id,
+  d.slug,
+  d.title,
+  d.description,
+  d.category_id,
+  d.subcategory_slug,
+  d.quantity,
+  d.unit,
+  d.budget_max_cents,
+  d.deadline,
+  d.delivery_city,
+  d.delivery_state,
+  d.photos_urls,
+  d.kind,
+  d.items,
+  d.payment_terms,
+  d.delivery_terms,
+  d.required_docs,
+  d.attachment_url,
+  d.status,
+  d.views_count,
+  d.contact_count,
+  d.published_at,
+  d.expires_at,
+  d.created_at,
+  -- Verificado: buyer cadastrado + CNPJ + razão social preenchidos.
+  -- Guests (buyer_user_id IS NULL) nunca são verificados (COALESCE → FALSE).
+  COALESCE(
+    d.buyer_user_id IS NOT NULL
+      AND b.cnpj IS NOT NULL AND b.cnpj <> ''
+      AND b.company_name IS NOT NULL AND b.company_name <> '',
+    FALSE
+  ) AS buyer_is_verified,
+  -- Data de cadastro do comprador. NULL para guests.
+  -- Usado para badge "membro desde {ano}" no trust-badges (#5).
+  b.created_at AS buyer_member_since
+FROM demands d
+LEFT JOIN buyers b ON b.user_id = d.buyer_user_id
+WHERE d.status = 'open' AND d.expires_at > NOW();
+
+GRANT SELECT ON demands_public TO anon, authenticated;
+
+COMMENT ON VIEW demands_public IS
+  'Versão pública das demands abertas. Sem whatsapp_number, guest_email, guest_whatsapp, guest_name.
+   buyer_is_verified: TRUE quando buyer tem CNPJ+razão social (BrasilAPI off no MVP → quase sempre FALSE).
+   buyer_member_since: created_at do buyer cadastrado; NULL para guests.
+   Atualizada em 047 (2026-06-21): +buyer_member_since.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ROLLBACK (executar manualmente se precisar reverter):
+--
+-- DROP INDEX IF EXISTS idx_demands_contact_count_open;
+--
+-- DROP VIEW IF EXISTS demands_public;
+-- CREATE VIEW demands_public AS
+-- SELECT
+--   d.id, d.slug, d.title, d.description, d.category_id, d.subcategory_slug,
+--   d.quantity, d.unit, d.budget_max_cents, d.deadline,
+--   d.delivery_city, d.delivery_state, d.photos_urls,
+--   d.kind, d.items, d.payment_terms, d.delivery_terms, d.required_docs, d.attachment_url,
+--   d.status, d.views_count, d.contact_count,
+--   d.published_at, d.expires_at, d.created_at,
+--   COALESCE(
+--     d.buyer_user_id IS NOT NULL
+--       AND b.cnpj IS NOT NULL AND b.cnpj <> ''
+--       AND b.company_name IS NOT NULL AND b.company_name <> '',
+--     FALSE
+--   ) AS buyer_is_verified
+-- FROM demands d
+-- LEFT JOIN buyers b ON b.user_id = d.buyer_user_id
+-- WHERE d.status = 'open' AND d.expires_at > NOW();
+-- GRANT SELECT ON demands_public TO anon, authenticated;
+--
+-- ─────────────────────────────────────────────────────────────────────────────
+
+COMMIT;
+
+
+-- ============================================================
+-- Migration 048: demand_contacts offer fields + RPC update
+-- (Bloco 4 Headline — proposta híbrida, 2026-06-22)
+-- ============================================================
+
+-- Migration 048: demand_contacts — campos de oferta híbrida (Bloco 4 Headline)
+--
+-- Contexto: vendedor pode preencher preço/prazo/mensagem antes de abrir WhatsApp.
+-- Esses campos são opcionais e enriquecem a mensagem do WhatsApp (proposta híbrida).
+-- Não cria proposta on-platform — a oferta termina no WhatsApp. Respeita o pivot.
+--
+-- Aplicação MANUAL via Supabase SQL Editor (não há staging; preview = prod).
+-- URL: https://supabase.com/dashboard/project/kvxcdifargsjqjvusdfq/sql/new
+--
+-- Smoke SQL pós-aplicação:
+--   SELECT column_name FROM information_schema.columns
+--   WHERE table_name = 'demand_contacts'
+--     AND column_name IN ('offer_price_cents', 'offer_deadline', 'offer_message');
+--   -- Deve retornar 3 rows.
+--
+-- Rollback (seguro — sem dados destruídos, colunas nullable):
+--   ALTER TABLE demand_contacts
+--     DROP COLUMN IF EXISTS offer_price_cents,
+--     DROP COLUMN IF EXISTS offer_deadline,
+--     DROP COLUMN IF EXISTS offer_message;
+
+BEGIN;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Colunas de oferta em demand_contacts
+--
+--    Todas nullable — retrocompatível com contatos sem oferta.
+--    offer_price_cents: preço em centavos inteiros (evita float, alinhado ao Zod).
+--    offer_deadline: data de entrega prometida pelo vendedor.
+--    offer_message: mensagem curta personalizada (máx 300 chars — CHECK).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+ALTER TABLE demand_contacts
+  ADD COLUMN IF NOT EXISTS offer_price_cents BIGINT,
+  ADD COLUMN IF NOT EXISTS offer_deadline    DATE,
+  ADD COLUMN IF NOT EXISTS offer_message     TEXT
+    CONSTRAINT chk_offer_message_length CHECK (
+      offer_message IS NULL OR length(offer_message) <= 300
+    );
+
+COMMENT ON COLUMN demand_contacts.offer_price_cents IS
+  'Preço oferecido pelo supplier em centavos inteiros. NULL = sem preço informado.
+   Gerado a partir de OfferInput.price (lib/schemas/leads.ts) validado no Server Action.';
+
+COMMENT ON COLUMN demand_contacts.offer_deadline IS
+  'Prazo de entrega prometido pelo supplier. NULL = sem prazo informado.
+   Gerado a partir de OfferInput.deadline (YYYY-MM-DD).';
+
+COMMENT ON COLUMN demand_contacts.offer_message IS
+  'Mensagem personalizada curta do supplier (máx 300 chars). NULL = sem mensagem.
+   Gerado a partir de OfferInput.message. Inclusa no texto do WhatsApp.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Atualiza RPC register_demand_contact para aceitar os novos campos
+--
+--    Parâmetros novos têm DEFAULT NULL — chamadas sem eles continuam funcionando
+--    (retrocompatível com qualquer caller que não passe os novos params).
+--    SECURITY DEFINER + REVOKE ALL FROM PUBLIC: sem mudança de postura de segurança.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION register_demand_contact(
+  p_demand_id         UUID,
+  p_supplier_id       UUID,
+  p_supplier_user_id  UUID,
+  p_ip                TEXT   DEFAULT NULL,
+  p_user_agent        TEXT   DEFAULT NULL,
+  p_offer_price_cents BIGINT DEFAULT NULL,
+  p_offer_deadline    DATE   DEFAULT NULL,
+  p_offer_message     TEXT   DEFAULT NULL
+) RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_id UUID;
+BEGIN
+  INSERT INTO demand_contacts (
+    demand_id,
+    supplier_id,
+    supplier_user_id,
+    ip,
+    user_agent,
+    offer_price_cents,
+    offer_deadline,
+    offer_message
+  )
+  VALUES (
+    p_demand_id,
+    p_supplier_id,
+    p_supplier_user_id,
+    p_ip,
+    p_user_agent,
+    p_offer_price_cents,
+    p_offer_deadline,
+    p_offer_message
+  )
+  RETURNING id INTO v_id;
+
+  UPDATE demands SET contact_count = contact_count + 1 WHERE id = p_demand_id;
+
+  RETURN v_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION register_demand_contact(UUID, UUID, UUID, TEXT, TEXT, BIGINT, DATE, TEXT) FROM PUBLIC;
+-- Server Action chama via service_role (adminClient); não exposto ao client.
+
+COMMENT ON FUNCTION register_demand_contact IS
+  'Registra contato (click em "Contatar via WhatsApp") e incrementa contact_count atomicamente.
+   Aceita campos opcionais de oferta híbrida (Bloco 4 Headline): price_cents, deadline, message.
+   SECURITY DEFINER — executado como owner do schema. Chamado exclusivamente via adminClient.
+   Atualizado em migration 048 (2026-06-22): +offer_price_cents, +offer_deadline, +offer_message.';
+
+COMMIT;
+
+-- ============================================================
+-- Migration 049: índice em demand_contacts.supplier_user_id
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_demand_contacts_supplier_user_id
+  ON demand_contacts (supplier_user_id, clicked_at DESC);
+
+COMMENT ON INDEX idx_demand_contacts_supplier_user_id IS
+  'Suporta listSentOffers() — inbox "Propostas enviadas" do vendedor.
+   Filtra por supplier_user_id (auth.uid()) e ordena por clicked_at DESC.
+   Adicionado em migration 049 (2026-06-22).';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Migration 050: buyers public profile opt-in (LGPD-safe)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Migration 050: perfil público de empresa COMPRADORA por OPT-IN (LGPD-safe)
+--
+-- Decisão (2026-06-22): na home, abaixo do feed de demandas, exibir perfis de
+-- empresas COMPRADORAS — mas só as que (a) têm identidade de empresa real E
+-- (b) marcaram opt-in explícito ("quero aparecer como empresa pública").
+-- Isso resolve a LGPD: consentimento explícito de exposição pública, sem
+-- de-anonimizar todo comprador.
+--
+-- O "catálogo" da empresa compradora = perfil dela + demandas abertas dela
+-- (comprador não tem catálogo de produtos — espelha /fornecedor/[slug]).
+--
+-- REGRA DURA (LGPD):
+--   - Superfície pública expõe SÓ linhas opted-in (public_profile_opt_in=true).
+--   - SÓ campos não-PII: company_name, setor, cidade, UF, member_since, slug.
+--   - NUNCA email/telefone/whatsapp/cnpj/endereço/CEP/qualquer contato.
+--   - Default opt-in = false (privacidade por padrão).
+--
+-- ELEGIBILIDADE (caveat BrasilAPI):
+--   BrasilAPI está DESLIGADA no MVP → buyers.is_company_verified é quase sempre
+--   FALSE (só vira TRUE com validação externa de CNPJ, que não roda). Por isso o
+--   critério PRÁTICO de "identidade de empresa real" NÃO depende de
+--   is_company_verified: é (cnpj preenchido E company_name preenchido). Quando
+--   is_company_verified estiver disponível (BrasilAPI reativada), ele REFORÇA o
+--   critério mas não é obrigatório. Consequência esperada: a seção fica VAZIA
+--   até compradores preencherem CNPJ + razão social E ligarem o opt-in.
+--
+-- Aplicação MANUAL via Supabase Management API / SQL Editor (não há staging;
+-- preview da Vercel = banco de prod). Idempotente. Rollback comentado ao final.
+
+BEGIN;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 0. Helper de slugify: unaccent imutável (ASCII translit pt-BR).
+--    Definido ANTES de ser usado no backfill (seção 2) e na RPC (seção 4).
+--    Própria (não depende da extensão unaccent) e IMMUTABLE → pode ir em índice.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION unaccent_immutable(txt TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT translate(
+    txt,
+    'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
+    'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'
+  );
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Colunas de opt-in + consent versionado + slug em buyers
+--
+--    Espelha o padrão de consent versionado de demands
+--    (lgpd_consent / lgpd_consent_at / lgpd_consent_text_version, migration 036).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+ALTER TABLE public.buyers
+  ADD COLUMN IF NOT EXISTS public_profile_opt_in              BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_profile_consent_at          TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS public_profile_consent_text_version TEXT,
+  ADD COLUMN IF NOT EXISTS slug                                TEXT;
+
+COMMENT ON COLUMN public.buyers.public_profile_opt_in IS
+  'TRUE quando o comprador consentiu EXPLICITAMENTE em aparecer como empresa pública (home + /empresa/[slug]). Default FALSE (privacidade por padrão). Só o próprio buyer autenticado liga, e só com cnpj+company_name preenchidos. LGPD: este é o consentimento de exposição pública.';
+COMMENT ON COLUMN public.buyers.public_profile_consent_at IS
+  'Timestamp do consentimento de exposição pública. NULL enquanto opt-in nunca foi ligado.';
+COMMENT ON COLUMN public.buyers.public_profile_consent_text_version IS
+  'Versão do texto de consentimento aceito (ex: buyer-public-profile-v1-2026-06-22). Espelha demands.lgpd_consent_text_version. Auditável.';
+COMMENT ON COLUMN public.buyers.slug IS
+  'Slug público único do comprador, gerado a partir de company_name. Usado em /empresa/[slug]. NULL para buyers sem company_name.';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Backfill de slug a partir de company_name (idempotente, único)
+--
+--    Gera slug só pra quem tem company_name e ainda não tem slug.
+--    Colisão resolvida com sufixo numérico determinístico por row_number.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+WITH base AS (
+  SELECT
+    id,
+    -- slugify pt-BR: minúsculas, sem acento, só [a-z0-9-], colapsa hífens.
+    regexp_replace(
+      regexp_replace(
+        lower(unaccent_immutable(company_name)),
+        '[^a-z0-9]+', '-', 'g'
+      ),
+      '(^-+|-+$)', '', 'g'
+    ) AS raw_slug
+  FROM public.buyers
+  WHERE slug IS NULL
+    AND company_name IS NOT NULL
+    AND company_name <> ''
+),
+numbered AS (
+  SELECT
+    id,
+    CASE WHEN raw_slug = '' THEN 'empresa' ELSE left(raw_slug, 72) END AS base_slug,
+    row_number() OVER (
+      PARTITION BY CASE WHEN raw_slug = '' THEN 'empresa' ELSE left(raw_slug, 72) END
+      ORDER BY id
+    ) AS rn
+  FROM base
+)
+UPDATE public.buyers b
+SET slug = CASE WHEN n.rn = 1 THEN n.base_slug ELSE n.base_slug || '-' || n.rn END
+FROM numbered n
+WHERE b.id = n.id
+  AND NOT EXISTS (
+    -- defensivo: não colide com slug já existente fora do batch
+    SELECT 1 FROM public.buyers x
+    WHERE x.id <> b.id
+      AND x.slug = (CASE WHEN n.rn = 1 THEN n.base_slug ELSE n.base_slug || '-' || n.rn END)
+  );
+
+-- Índice único parcial: slug é único quando presente; permite múltiplos NULL.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_buyers_slug_unique
+  ON public.buyers (slug)
+  WHERE slug IS NOT NULL;
+
+-- Índice de apoio à elegibilidade pública (filtra opted-in rapidamente).
+CREATE INDEX IF NOT EXISTS idx_buyers_public_opt_in
+  ON public.buyers (public_profile_opt_in)
+  WHERE public_profile_opt_in = TRUE;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3. View buyers_public — espelha demands_public.
+--
+--    Expõe SÓ campos não-PII de compradores ELEGÍVEIS:
+--      company_name, sector_slugs, city, state, logo_url(*), open_demands_count,
+--      member_since (created_at), slug, is_company_verified.
+--    (*) buyers ainda não tem logo_url; expomos NULL como placeholder estável
+--        no contrato — quando a coluna existir, basta trocar a expressão.
+--
+--    Elegibilidade (WHERE):
+--      public_profile_opt_in = TRUE
+--      AND cnpj preenchido AND company_name preenchido  (identidade real)
+--      AND slug IS NOT NULL                             (tem URL pública)
+--
+--    NUNCA expõe: email, phone, cnpj, address, cep, whatsapp.
+--    open_demands_count = nº de demandas abertas e não expiradas do buyer
+--    (equivale ao WHERE de demands_public).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+DROP VIEW IF EXISTS buyers_public;
+
+CREATE VIEW buyers_public AS
+SELECT
+  b.slug,
+  b.company_name,
+  b.segments        AS sector_slugs,   -- category slugs de interesse (não-PII)
+  b.city,
+  b.state,
+  NULL::text        AS logo_url,       -- placeholder: buyers ainda não tem logo
+  b.is_company_verified,
+  b.created_at      AS member_since,
+  COALESCE(d.open_demands_count, 0) AS open_demands_count
+FROM public.buyers b
+LEFT JOIN LATERAL (
+  SELECT count(*) AS open_demands_count
+  FROM public.demands dd
+  WHERE dd.buyer_user_id = b.user_id
+    AND dd.status = 'open'
+    AND dd.expires_at > NOW()
+) d ON TRUE
+WHERE b.public_profile_opt_in = TRUE
+  AND b.slug IS NOT NULL
+  -- Identidade de empresa real (BrasilAPI off → não exige is_company_verified).
+  AND b.cnpj IS NOT NULL AND b.cnpj <> ''
+  AND b.company_name IS NOT NULL AND b.company_name <> '';
+
+GRANT SELECT ON buyers_public TO anon, authenticated;
+
+COMMENT ON VIEW buyers_public IS
+  'Vitrine pública de empresas COMPRADORAS opted-in (LGPD-safe). Espelha demands_public.
+   Expõe SÓ não-PII: company_name, sector_slugs, city, state, logo_url(placeholder NULL),
+   is_company_verified, member_since, open_demands_count, slug.
+   NUNCA email/phone/cnpj/address/cep/whatsapp.
+   WHERE: public_profile_opt_in=TRUE AND cnpj+company_name preenchidos AND slug presente.
+   BrasilAPI off → is_company_verified é só reforço, não requisito → seção fica vazia
+   até compradores preencherem CNPJ+razão social e ligarem o opt-in (esperado).
+   Criada em migration 050 (2026-06-22).';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4. RPC set_buyer_public_profile_opt_in — liga/desliga o opt-in com consent.
+--
+--    SECURITY DEFINER: grava em buyers (RLS only-own) garantindo que o caller
+--    é o próprio dono (auth.uid() = buyers.user_id). Quando opt_in=TRUE, exige
+--    cnpj + company_name preenchidos e grava consent_at + consent_text_version.
+--    Também gera o slug on-demand se ainda não existir.
+--
+--    GRANT EXECUTE só para authenticated (cada um age sobre a própria linha via
+--    auth.uid()) — segue o padrão de RPCs que tocam só o próprio dado.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION set_buyer_public_profile_opt_in(
+  p_opt_in BOOLEAN,
+  p_consent_text_version TEXT DEFAULT NULL
+) RETURNS TABLE (slug TEXT, opt_in BOOLEAN)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id   UUID := auth.uid();
+  v_buyer     RECORD;
+  v_slug      TEXT;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'auth required' USING ERRCODE = '28000';
+  END IF;
+
+  SELECT b.id, b.cnpj, b.company_name, b.slug
+    INTO v_buyer
+  FROM public.buyers b
+  WHERE b.user_id = v_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'buyer profile not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_opt_in THEN
+    -- Identidade de empresa real exigida pra ligar (BrasilAPI off → não exige
+    -- is_company_verified; cnpj+company_name bastam).
+    IF v_buyer.cnpj IS NULL OR v_buyer.cnpj = ''
+       OR v_buyer.company_name IS NULL OR v_buyer.company_name = '' THEN
+      RAISE EXCEPTION 'cnpj and company_name required to opt in'
+        USING ERRCODE = 'P0001';
+    END IF;
+
+    -- Garante slug (gera se faltar).
+    v_slug := v_buyer.slug;
+    IF v_slug IS NULL THEN
+      v_slug := regexp_replace(
+        regexp_replace(lower(unaccent_immutable(v_buyer.company_name)), '[^a-z0-9]+', '-', 'g'),
+        '(^-+|-+$)', '', 'g'
+      );
+      IF v_slug = '' THEN v_slug := 'empresa'; END IF;
+      v_slug := left(v_slug, 72);
+      -- Resolve colisão com sufixo incremental.
+      WHILE EXISTS (SELECT 1 FROM public.buyers WHERE slug = v_slug AND user_id <> v_user_id) LOOP
+        v_slug := left(v_slug, 68) || '-' || floor(random() * 9000 + 1000)::int;
+      END LOOP;
+    END IF;
+
+    UPDATE public.buyers
+    SET public_profile_opt_in = TRUE,
+        public_profile_consent_at = NOW(),
+        public_profile_consent_text_version = COALESCE(p_consent_text_version, public_profile_consent_text_version),
+        slug = v_slug
+    WHERE user_id = v_user_id;
+
+    RETURN QUERY SELECT v_slug, TRUE;
+  ELSE
+    -- Desligar: mantém slug e consent histórico (auditável), só vira o flag.
+    UPDATE public.buyers
+    SET public_profile_opt_in = FALSE
+    WHERE user_id = v_user_id;
+
+    RETURN QUERY SELECT v_buyer.slug, FALSE;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION set_buyer_public_profile_opt_in(BOOLEAN, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION set_buyer_public_profile_opt_in(BOOLEAN, TEXT) TO authenticated;
+
+COMMENT ON FUNCTION set_buyer_public_profile_opt_in IS
+  'Liga/desliga o opt-in de perfil público do buyer autenticado (auth.uid()).
+   opt_in=TRUE exige cnpj+company_name, grava consent_at + consent_text_version, gera slug.
+   opt_in=FALSE só desliga o flag (mantém slug e consent histórico, auditável).
+   SECURITY DEFINER, GRANT EXECUTE só authenticated — age sobre a própria linha.
+   Migration 050 (2026-06-22).';
+
+COMMIT;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ROLLBACK (executar manualmente se precisar reverter):
+--
+-- DROP VIEW IF EXISTS buyers_public;
+-- DROP FUNCTION IF EXISTS set_buyer_public_profile_opt_in(BOOLEAN, TEXT);
+-- DROP INDEX IF EXISTS idx_buyers_slug_unique;
+-- DROP INDEX IF EXISTS idx_buyers_public_opt_in;
+-- ALTER TABLE public.buyers
+--   DROP COLUMN IF EXISTS public_profile_opt_in,
+--   DROP COLUMN IF EXISTS public_profile_consent_at,
+--   DROP COLUMN IF EXISTS public_profile_consent_text_version,
+--   DROP COLUMN IF EXISTS slug;
+-- -- (unaccent_immutable pode ser mantida; é inócua e reutilizável.)
+-- ─────────────────────────────────────────────────────────────────────────────
