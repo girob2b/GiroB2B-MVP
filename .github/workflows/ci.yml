@@ -44,13 +44,15 @@ jobs:
         run: pnpm --filter @girob2b/web build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
-          # Envs públicos do Supabase precisam estar nos secrets do repo.
-          # Service role só vai pra steps que precisam (não pra build estático).
+          # Envs do Supabase nos secrets do repo. O build prefetcha rotas (ex:
+          # /categoria/[slug] via generateStaticParams) usando createAdminClient,
+          # então o SERVICE_ROLE_KEY é OBRIGATÓRIO no build — não só os NEXT_PUBLIC.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: https://app.girob2b.com.br
           NEXT_PUBLIC_APP_NAME: GiroB2B
-          AUTH_REDIRECT_BASE_URL: http://localhost:3000
+          AUTH_REDIRECT_BASE_URL: https://app.girob2b.com.br
 
   # ─── Admin (Next.js — apps/admin) — type-check + lint ──────────────────────
   admin:
