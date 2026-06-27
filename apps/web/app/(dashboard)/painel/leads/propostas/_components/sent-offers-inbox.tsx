@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   SendHorizonal,
   Building2,
+  CreditCard,
   MapPin,
   CalendarDays,
   MessageSquare,
@@ -14,6 +15,16 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { formatPriceBRL } from "@/lib/format-price";
+
+// Labels PT-BR para condições de pagamento (espelham OfferPaymentMethod).
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  a_vista: "À vista",
+  pix: "Pix",
+  boleto: "Boleto",
+  cartao: "Cartão",
+  parcelado: "Parcelado",
+  faturado_30d: "Fat. 30d",
+};
 
 // ─── Tipos (espelham o contrato 00-contrato.md) ───────────────────────────────
 
@@ -33,6 +44,8 @@ interface SentOffer {
     price_cents: number | null;
     deadline: string | null;
     message: string | null;
+    /** Condições de pagamento aceitas pelo vendedor (migration 051). NULL = não informado. */
+    payment_methods: string[] | null;
   };
 }
 
@@ -259,6 +272,26 @@ function SentOfferCard({ offer }: { offer: SentOffer }) {
               <div className="flex items-start gap-1.5 text-sm text-slate-700">
                 <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                 <p className="leading-relaxed line-clamp-3">{o.message}</p>
+              </div>
+            )}
+
+            {/* Formas de pagamento aceitas */}
+            {o.payment_methods && o.payment_methods.length > 0 && (
+              <div className="space-y-1">
+                <p className="flex items-center gap-1 text-xs text-slate-400">
+                  <CreditCard className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  Formas de pagamento
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {o.payment_methods.map((m) => (
+                    <span
+                      key={m}
+                      className="inline-flex items-center rounded-full border border-brand-100 bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700"
+                    >
+                      {PAYMENT_METHOD_LABELS[m] ?? m}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>

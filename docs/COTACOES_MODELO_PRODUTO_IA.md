@@ -2,6 +2,12 @@
 
 Data: 2026-04-11
 
+> **⚠️ Pré-pivot.** O fluxo de ENTRADA deste doc (comprador escolhendo produtos no
+> *Explorar*) foi superseded pelo modelo buyer-first/feed-first atual. A visão pós-pivot do
+> comparador de cotações (entrada via **demanda**, WhatsApp secundário, pesos configuráveis,
+> proximidade por região) está em **`COMPARADOR_COTACOES.md`**. Este doc continua válido
+> como referência de: score ponderado, faseamento de IA, glossário e modelo de dados.
+
 Este documento registra a decisao de produto para reestruturar a area de cotacoes do GiroB2B. Ele foi escrito para uma proxima IA continuar a implementacao com o menor risco possivel.
 
 ## Problema atual

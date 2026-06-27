@@ -5,11 +5,21 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarClock, DollarSign, Loader2, Lock, MessageSquare } from "lucide-react";
+import {
+  CalendarClock,
+  CreditCard,
+  DollarSign,
+  Loader2,
+  Lock,
+  MessageSquare,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 import { contactDemandAction } from "@/app/actions/leads";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatPriceBRL } from "@/lib/format-price";
+import { OfferPaymentMethod } from "@/lib/schemas/leads";
 import {
   Dialog,
   DialogContent,
@@ -23,8 +33,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-// Schema do form de oferta — idêntico ao OfferSchema do backend, mas com
-// campos como strings no formulário (inputs são string; convertemos antes de enviar).
+// Labels PT-BR para cada condição de pagamento.
+// Espelham OfferPaymentMethod — não duplicar os valores, apenas traduzir.
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  a_vista: "À vista",
+  pix: "Pix",
+  boleto: "Boleto bancário",
+  cartao: "Cartão de crédito/débito",
+  parcelado: "Parcelado",
+  faturado_30d: "Faturado 30 dias",
+};
+
+// Schema do form de oferta — campos de texto/data como string no formulário;
+// payment_methods é gerenciado em estado separado (não faz parte deste schema).
 const OfferFormSchema = z.object({
   // R$ como string no form; convertemos para centavos (int) antes de enviar.
   priceInput: z
@@ -57,7 +78,6 @@ type OfferFormValues = z.input<typeof OfferFormSchema>;
  */
 function parsePriceToCents(raw: string | undefined): number | undefined {
   if (!raw) return undefined;
-  // Remove pontos de milhar, substitui vírgula decimal por ponto
   const normalized = raw.replace(/\./g, "").replace(",", ".");
   const value = parseFloat(normalized);
   if (isNaN(value) || value <= 0) return undefined;
@@ -74,6 +94,20 @@ export default function ContactButton({ demandId, canContact, hasSupplier }: Pro
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  // Condições de pagamento selecionadas — gerenciadas aqui para poder resetar
+  // junto com o fechamento do dialog (onSuccess).
+  const [paymentMethods, setPaymentMethods] = useState<OfferPaymentMethod[]>([]);
+
+  function togglePaymentMethod(method: OfferPaymentMethod) {
+    setPaymentMethods((prev) =>
+      prev.includes(method) ? prev.filter((m) => m !== method) : [...prev, method]
+    );
+  }
+
+  function handleSuccess() {
+    setOpen(false);
+    setPaymentMethods([]);
+  }
 
   // Estado BLOQUEADO — assinatura inativa ou sem cadastro de vendedor.
   // Contraste: text-slate-700 sobre slate-100 com borda slate-300 ≈ 5.9:1 (passa WCAG AA).
@@ -84,34 +118,35 @@ export default function ContactButton({ demandId, canContact, hasSupplier }: Pro
         onClick={() => router.push("/seja-vendedor")}
         aria-label={
           hasSupplier
-            ? "Assine para contatar este comprador via WhatsApp"
-            : "Cadastre-se como vendedor para contatar compradores"
+            ? "Assine para enviar cotações para este comprador"
+            : "Cadastre-se como vendedor para enviar cotações"
         }
         className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200"
       >
         <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {hasSupplier ? "Assine para contatar" : "Cadastre-se como vendedor"}
+        {hasSupplier ? "Assine para enviar cotações" : "Cadastre-se como vendedor"}
       </button>
     );
   }
 
   // Estado ATIVO — assinante com subscription_status active ou trialing.
-  // Abre um Dialog com form de oferta (todos os campos opcionais).
+  // CTA primário "Enviar cotação" abre o Dialog com form estruturado.
+  // WhatsApp é acionado no submit (dentro do Dialog) — ação secundária ao form.
   return (
     <>
-      {/* Trigger: CTA primário dominante */}
+      {/* Trigger: CTA primário — abre o form de cotação */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         disabled={pending}
-        aria-label="Contatar este comprador via WhatsApp"
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-whatsapp-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-whatsapp-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-whatsapp-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-label="Enviar cotação para este comprador"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <WhatsAppIcon className="h-4 w-4 shrink-0" />
-        Contatar via WhatsApp
+        <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
+        Enviar cotação
       </button>
 
-      {/* Dialog de proposta híbrida */}
+      {/* Dialog de cotação estruturada */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="sm:max-w-md"
@@ -119,10 +154,10 @@ export default function ContactButton({ demandId, canContact, hasSupplier }: Pro
           aria-describedby="offer-dialog-desc"
         >
           <DialogHeader>
-            <DialogTitle id="offer-dialog-title">Sua proposta (opcional)</DialogTitle>
+            <DialogTitle id="offer-dialog-title">Enviar cotação</DialogTitle>
             <DialogDescription id="offer-dialog-desc">
-              Adicione preço, prazo ou uma mensagem curta pra enriquecer o contato pelo WhatsApp.
-              Todos os campos são opcionais — você pode enviar sem preencher nada.
+              Preencha os campos opcionais da sua cotação — preço, prazo, formas de pagamento e
+              uma mensagem curta. Você pode enviar sem preencher nada.
             </DialogDescription>
           </DialogHeader>
 
@@ -130,7 +165,9 @@ export default function ContactButton({ demandId, canContact, hasSupplier }: Pro
             demandId={demandId}
             pending={pending}
             startTransition={startTransition}
-            onSuccess={() => setOpen(false)}
+            onSuccess={handleSuccess}
+            paymentMethods={paymentMethods}
+            onTogglePaymentMethod={togglePaymentMethod}
           />
         </DialogContent>
       </Dialog>
@@ -138,16 +175,25 @@ export default function ContactButton({ demandId, canContact, hasSupplier }: Pro
   );
 }
 
-// ─── Sub-componente: form de oferta ──────────────────────────────────────────
+// ─── Sub-componente: form de cotação ────────────────────────────────────────
 
 interface OfferFormProps {
   demandId: string;
   pending: boolean;
   startTransition: (fn: () => void) => void;
   onSuccess: () => void;
+  paymentMethods: OfferPaymentMethod[];
+  onTogglePaymentMethod: (method: OfferPaymentMethod) => void;
 }
 
-function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormProps) {
+function OfferForm({
+  demandId,
+  pending,
+  startTransition,
+  onSuccess,
+  paymentMethods,
+  onTogglePaymentMethod,
+}: OfferFormProps) {
   const {
     register,
     handleSubmit,
@@ -159,7 +205,6 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
   });
 
   const priceInputValue = watch("priceInput");
-  // Preview do preço formatado como BRL
   const pricePreview = (() => {
     const cents = parsePriceToCents(priceInputValue);
     return cents !== undefined ? formatPriceBRL(cents) : null;
@@ -168,14 +213,19 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
   function onSubmit(values: OfferFormValues) {
     const priceCents = parsePriceToCents(values.priceInput);
 
-    // Monta o objeto de oferta — omite campos vazios para deixar o backend
-    // receber undefined (comportamento de oferta simples retrocompatível).
+    // Monta o objeto de oferta — inclui campos não-vazios + payment_methods.
+    // Se nenhum campo foi preenchido, enviar undefined (contato simples retrocompatível).
     const offer =
-      priceCents !== undefined || values.deadline || values.message
+      priceCents !== undefined ||
+      values.deadline ||
+      values.message ||
+      paymentMethods.length > 0
         ? {
             price: priceCents,
             deadline: values.deadline || undefined,
             message: values.message || undefined,
+            payment_methods:
+              paymentMethods.length > 0 ? paymentMethods : undefined,
           }
         : undefined;
 
@@ -195,7 +245,10 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
       <div className="space-y-4">
         {/* Preço */}
         <div className="space-y-1.5">
-          <Label htmlFor="offer-price" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <Label
+            htmlFor="offer-price"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
             <DollarSign className="h-3.5 w-3.5" aria-hidden="true" />
             Preço (R$)
           </Label>
@@ -224,7 +277,10 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
 
         {/* Prazo */}
         <div className="space-y-1.5">
-          <Label htmlFor="offer-deadline" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <Label
+            htmlFor="offer-deadline"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
             <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
             Prazo de entrega
           </Label>
@@ -243,9 +299,36 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
           )}
         </div>
 
+        {/* Formas de pagamento que o vendedor aceita */}
+        <fieldset className="space-y-2">
+          <legend className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+            <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />
+            Formas de pagamento que você aceita
+          </legend>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {OfferPaymentMethod.options.map((method) => (
+              <label
+                key={method}
+                htmlFor={`pm-${method}`}
+                className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 hover:text-slate-900"
+              >
+                <Checkbox
+                  id={`pm-${method}`}
+                  checked={paymentMethods.includes(method)}
+                  onCheckedChange={() => onTogglePaymentMethod(method)}
+                />
+                {PAYMENT_METHOD_LABELS[method]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         {/* Mensagem curta */}
         <div className="space-y-1.5">
-          <Label htmlFor="offer-message" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <Label
+            htmlFor="offer-message"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
             <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
             Mensagem curta
           </Label>
@@ -254,6 +337,7 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
       </div>
 
       <DialogFooter className="mt-4">
+        {/* Submit abre WhatsApp após gravar a cotação — ação principal do Dialog */}
         <Button
           type="submit"
           disabled={pending}
@@ -264,7 +348,7 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
           ) : (
             <WhatsAppIcon className="h-4 w-4 shrink-0" />
           )}
-          {pending ? "Abrindo WhatsApp…" : "Enviar proposta pelo WhatsApp"}
+          {pending ? "Enviando cotação…" : "Enviar cotação e abrir WhatsApp"}
         </Button>
       </DialogFooter>
     </form>
@@ -272,7 +356,6 @@ function OfferForm({ demandId, pending, startTransition, onSuccess }: OfferFormP
 }
 
 // Componente auxiliar para o textarea com contador de caracteres.
-// Separado para usar watch() sem poluir o componente pai.
 function MessageField({
   register,
   errors,

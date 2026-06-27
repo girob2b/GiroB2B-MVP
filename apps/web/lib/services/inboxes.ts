@@ -34,6 +34,8 @@ export interface SentOffer {
     price_cents: number | null;
     deadline: string | null;
     message: string | null;
+    /** Condições de pagamento aceitas pelo vendedor (migration 051). NULL = não informado. */
+    payment_methods: string[] | null;
   };
 }
 
@@ -76,6 +78,8 @@ export interface ReceivedOffer {
     price_cents: number | null;
     deadline: string | null;
     message: string | null;
+    /** Condições de pagamento aceitas pelo vendedor (migration 051). NULL = não informado. */
+    payment_methods: string[] | null;
   };
 }
 
@@ -112,6 +116,7 @@ export async function listSentOffers(supplierUserId: string): Promise<SentOffer[
        offer_price_cents,
        offer_deadline,
        offer_message,
+       offer_payment_methods,
        demands!inner (
          id,
          slug,
@@ -145,6 +150,7 @@ export async function listSentOffers(supplierUserId: string): Promise<SentOffer[
     offer_price_cents: number | null;
     offer_deadline: string | null;
     offer_message: string | null;
+    offer_payment_methods: string[] | null;
     demands: DemandJoin | DemandJoin[];
   };
 
@@ -202,6 +208,7 @@ export async function listSentOffers(supplierUserId: string): Promise<SentOffer[
         price_cents: row.offer_price_cents,
         deadline: row.offer_deadline,
         message: row.offer_message,
+        payment_methods: row.offer_payment_methods,
       },
     };
   });
@@ -263,6 +270,7 @@ export async function listReceivedOffers(
        offer_price_cents,
        offer_deadline,
        offer_message,
+       offer_payment_methods,
        suppliers!inner (
          id,
          trade_name,
@@ -293,6 +301,7 @@ export async function listReceivedOffers(
     offer_price_cents: number | null;
     offer_deadline: string | null;
     offer_message: string | null;
+    offer_payment_methods: string[] | null;
     suppliers: SupplierJoin | SupplierJoin[];
   };
 
@@ -336,6 +345,7 @@ export async function listReceivedOffers(
             price_cents: c.offer_price_cents,
             deadline: c.offer_deadline,
             message: c.offer_message,
+            payment_methods: c.offer_payment_methods,
           },
         };
       }),

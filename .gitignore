@@ -106,3 +106,7 @@ coverage/
 
 # ─── Fixtures de contrato (descartáveis — apagar antes de abrir PR) ──────────
 apps/web/tests/fixtures/api/*.json
+
+# ─── Painel de controle do app (skill memoria-projeto) ──────────────────────
+# Estado estruturado: features/bugs/decisões. Artefato Claude, não vai pro git.
+/_memoria/

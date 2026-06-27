@@ -1237,3 +1237,96 @@ COMMIT;
 --   DROP COLUMN IF EXISTS slug;
 -- -- (unaccent_immutable pode ser mantida; é inócua e reutilizável.)
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- ============================================================
+-- Migration 051 — demand_contacts: condições de pagamento aceitas pelo vendedor
+-- ============================================================
+
+-- Migration 051: demand_contacts — condições de pagamento aceitas pelo vendedor
+--
+-- Contexto (Fase 1 do comparador de cotações, branch feat/enviar-cotacao):
+-- Ao enviar uma cotação, o vendedor pode indicar quais condições de pagamento aceita
+-- (ex: pix, boleto, parcelado). Campo categórico — não entra no score ponderado do
+-- comparador; serve como filtro/match na Fase 2. Campo nullable, retrocompatível.
+--
+-- Valores canônicos (espelham OfferPaymentMethod em lib/schemas/leads.ts):
+--   a_vista | pix | boleto | cartao | parcelado | faturado_30d
+
+BEGIN;
+
+ALTER TABLE demand_contacts
+  ADD COLUMN IF NOT EXISTS offer_payment_methods TEXT[]
+    CONSTRAINT chk_offer_payment_methods_values CHECK (
+      offer_payment_methods IS NULL
+      OR offer_payment_methods <@ ARRAY['a_vista','pix','boleto','cartao','parcelado','faturado_30d']::TEXT[]
+    )
+    CONSTRAINT chk_offer_payment_methods_length CHECK (
+      offer_payment_methods IS NULL OR cardinality(offer_payment_methods) <= 6
+    );
+
+COMMENT ON COLUMN demand_contacts.offer_payment_methods IS
+  'Condições de pagamento que o supplier aceita para esta oferta (TEXT[], nullable).
+   Valores canônicos: a_vista | pix | boleto | cartao | parcelado | faturado_30d.
+   NULL = supplier não informou condições de pagamento (retrocompatível).
+   Categórico — não entra no score ponderado do comparador; serve como filtro/match (Fase 2).
+   Gerado a partir de OfferInput.payment_methods (lib/schemas/leads.ts).
+   Adicionado em migration 051 (2026-06-27).';
+
+DROP FUNCTION IF EXISTS register_demand_contact(UUID, UUID, UUID, TEXT, TEXT, BIGINT, DATE, TEXT);
+
+CREATE OR REPLACE FUNCTION register_demand_contact(
+  p_demand_id             UUID,
+  p_supplier_id           UUID,
+  p_supplier_user_id      UUID,
+  p_ip                    TEXT     DEFAULT NULL,
+  p_user_agent            TEXT     DEFAULT NULL,
+  p_offer_price_cents     BIGINT   DEFAULT NULL,
+  p_offer_deadline        DATE     DEFAULT NULL,
+  p_offer_message         TEXT     DEFAULT NULL,
+  p_offer_payment_methods TEXT[]   DEFAULT NULL
+) RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_id UUID;
+BEGIN
+  INSERT INTO demand_contacts (
+    demand_id,
+    supplier_id,
+    supplier_user_id,
+    ip,
+    user_agent,
+    offer_price_cents,
+    offer_deadline,
+    offer_message,
+    offer_payment_methods
+  )
+  VALUES (
+    p_demand_id,
+    p_supplier_id,
+    p_supplier_user_id,
+    p_ip,
+    p_user_agent,
+    p_offer_price_cents,
+    p_offer_deadline,
+    p_offer_message,
+    p_offer_payment_methods
+  )
+  RETURNING id INTO v_id;
+
+  UPDATE demands SET contact_count = contact_count + 1 WHERE id = p_demand_id;
+
+  RETURN v_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION register_demand_contact(UUID, UUID, UUID, TEXT, TEXT, BIGINT, DATE, TEXT, TEXT[]) FROM PUBLIC;
+
+COMMENT ON FUNCTION register_demand_contact IS
+  'Registra contato e incrementa contact_count atomicamente. Aceita campos de oferta:
+   price_cents, deadline, message (migration 048) e payment_methods TEXT[] (migration 051).
+   SECURITY DEFINER. Chamado exclusivamente via adminClient (service_role).
+   Atualizado em migration 051 (2026-06-27): +offer_payment_methods.';
+
+COMMIT;

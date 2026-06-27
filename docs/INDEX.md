@@ -35,7 +35,8 @@ Mapa de toda a doc do projeto. Atualizado em 2026-04-25.
 |---|---|
 | [MVP_SCOPE.md](MVP_SCOPE.md) | Escopo do MVP — tiers, features ativas e gated |
 | [WEB_SCRAPING.md](WEB_SCRAPING.md) | Spec da feature de pesquisa na web (T2-12) |
-| [COTACOES_MODELO_PRODUTO_IA.md](COTACOES_MODELO_PRODUTO_IA.md) | Modelo de IA para cotações |
+| [COMPARADOR_COTACOES.md](COMPARADOR_COTACOES.md) | **Visão pós-pivot** do comparador de cotações (entrada via demanda, WhatsApp secundário, pesos configuráveis) — não construir ainda |
+| [COTACOES_MODELO_PRODUTO_IA.md](COTACOES_MODELO_PRODUTO_IA.md) | Modelo de IA para cotações *(pré-pivot — ver COMPARADOR_COTACOES.md)* |
 | [superpowers/specs/2026-04-11-revenda-produtos-design.md](superpowers/specs/2026-04-11-revenda-produtos-design.md) | Spec da feature de revenda de produtos |
 
 ---
