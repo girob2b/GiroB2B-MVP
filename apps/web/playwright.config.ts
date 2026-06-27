@@ -1,16 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Playwright config — testes E2E mínimos do MVP.
+ * Playwright config — testes E2E do MVP pós-pivot (2026-06-27).
  *
- * Cobertura obrigatória (MVP_SCOPE.md §8): signup/login + criação de inquiry.
- * Por ora, focamos no que pode rodar sem confirmação por email real:
- *   - Validação client-side do form de cadastro
- *   - Página pública /explorar (estado vazio + filtros)
- *   - Página pública /produto/[slug] e /fornecedor/[slug]
+ * Cobertura atual (seed-independente):
+ *   - Validação client-side do form de cadastro (/cadastro)
+ *   - Login form render (/login?email=... para bypassar redirect)
+ *   - Página pública de descoberta /buscar (estrutural + redirect de /explorar)
+ *   - Redirects legados: /produto/[slug] → /fornecedor | /buscar
+ *   - Fornecedor not-found seed-independente
+ *   - Home: vitrine pública com PublicContactGate
+ *   - SEO: sitemap.xml + robots.txt
  *
- * Para testes que exigem sessão autenticada, popular `tests/.auth/` via
- * `globalSetup` quando tivermos conta de teste seedada no Supabase.
+ * Specs que exigem sessão autenticada (seed de conta):
+ *   - /painel/* — aguardando globalSetup com conta de teste seedada
+ *
+ * webServer: sobe o Next.js em modo dev antes de rodar os specs.
+ *   - Local: reuseExistingServer=true (aproveita o `pnpm dev` já rodando na 3000)
+ *   - CI: reuseExistingServer=false (fresh start — env vars injetadas pelo job)
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -22,7 +29,9 @@ export default defineConfig({
   reporter: process.env.CI ? "line" : [["list"], ["html", { open: "never" }]],
 
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
+    // Porta 3001 reservada para e2e (3000 pode estar ocupada por outros serviços locais).
+    // Em CI, E2E_BASE_URL não é definida → usa 3001 (consistente com webServer abaixo).
+    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3001",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -30,9 +39,26 @@ export default defineConfig({
 
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile-safari", use: { ...devices["iPhone 13"] } },
+    // mobile-safari requer webkit (não instalado no CI — omitido por padrão).
+    // Para rodar localmente: `pnpm --filter @girob2b/web exec playwright install webkit`
+    // { name: "mobile-safari", use: { ...devices["iPhone 13"] } },
   ],
 
-  // Não inicia servidor próprio — assume que `npm run dev` já está rodando.
-  // Para CI, montar pipeline que sobe o servidor antes (ex: `npm run build && npm run start`).
+  /**
+   * webServer — sobe o app antes de rodar qualquer spec.
+   *
+   * Usa `next dev` (sem build prévio): mais rápido para o conjunto atual de
+   * specs seed-independentes. O Next lê .env.local automaticamente em dev;
+   * no CI, as vars vêm dos env: do step (ver .github/workflows/ci.yml job e2e).
+   *
+   * timeout: 120s — suficiente para a compilação inicial do Next 16 em cold start.
+   */
+  webServer: {
+    // Porta 3001 reservada para e2e — evita conflito com outros serviços locais na 3000.
+    // Em CI não há conflito, mas manter 3001 para consistência local↔CI.
+    command: "pnpm dev -p 3001",
+    url: "http://localhost:3001",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });
