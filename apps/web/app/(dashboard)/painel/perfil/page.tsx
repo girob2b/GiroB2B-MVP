@@ -100,6 +100,28 @@ export default async function PerfilPage() {
     }
   }
 
+  // Preferências de ranqueamento do comparador (migration 052). Query isolada e
+  // tolerante: se as colunas não existem (migration pendente), o formulário não
+  // renderiza — não quebra a página. Só carrega para compradores.
+  let rankingWeights: { price: number; deadline: number; distance: number } | null = null;
+  let rankingPaymentPreference: string[] | null = null;
+  let rankingPrefsAvailable = false;
+  if (buyer) {
+    const rankingRes = await supabase
+      .from("buyers")
+      .select("ranking_weights, payment_preference")
+      .eq("user_id", userId)
+      .maybeSingle<{
+        ranking_weights: { price: number; deadline: number; distance: number } | null;
+        payment_preference: string[] | null;
+      }>();
+    if (!rankingRes.error) {
+      rankingPrefsAvailable = true;
+      rankingWeights = rankingRes.data?.ranking_weights ?? null;
+      rankingPaymentPreference = rankingRes.data?.payment_preference ?? null;
+    }
+  }
+
   const profileRes = await supabase
     .from("user_profiles")
     .select("last_role_change_at")
@@ -171,6 +193,11 @@ export default async function PerfilPage() {
           publicProfile={
             publicProfileAvailable
               ? { optIn: publicProfileOptIn, slug: publicProfileSlug }
+              : null
+          }
+          rankingPrefs={
+            rankingPrefsAvailable
+              ? { weights: rankingWeights, paymentPreference: rankingPaymentPreference }
               : null
           }
         />

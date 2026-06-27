@@ -13,6 +13,7 @@
     "build:admin": "pnpm --filter @girob2b/admin build",
     "lint": "pnpm --filter @girob2b/web lint",
     "lint:admin": "pnpm --filter @girob2b/admin lint",
+    "test:unit": "pnpm --filter @girob2b/web test:unit",
     "typecheck": "pnpm --filter @girob2b/web exec tsc --noEmit",
     "typecheck:admin": "pnpm --filter @girob2b/admin exec tsc --noEmit",
     "typecheck:ds": "pnpm --filter @girob2b/design-system exec tsc -b",
