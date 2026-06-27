@@ -1,90 +1,105 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Cobertura mínima do fluxo público de descoberta — coração do MVP.
+ * Cobertura do fluxo público de descoberta — pós-pivot (2026-06-27).
  *
- * Comportamento atual da busca (sessão 2026-04-26):
- *  - Digitar NÃO dispara busca. Só abre o dropdown de autocomplete.
- *  - Enter (ou clique numa sugestão) submete a query e dispara `/api/search`.
- *  - localStorage `girob2b_recent_searches` persiste históricos (max 5, mín 2 chars).
+ * HISTÓRICO DE STALENESS (2026-06-21 → 2026-06-27):
+ *   - A rota /explorar foi substituída por /buscar após o pivot 2026-05-07.
+ *     /explorar hoje faz redirect 307 para /buscar.
+ *   - O antigo UI de /explorar (autocomplete "Populares", dropdown de sugestões,
+ *     placeholder "Buscar produtos") foi completamente removido.
+ *   - A rota /fornecedor/[slug] existe mas é seed-dependent — substituída por
+ *     teste de not-found seed-independente.
+ *   - Specs reescritos em 2026-06-27 para refletir a UI atual.
  *
- * Inquiry em si exige sessão — fica para um spec separado quando tivermos
- * seed de conta no Supabase de staging.
+ * Seed-independente: nenhum spec depende de um slug ou email específico no banco.
+ * Specs autenticados (/painel/*) aguardam globalSetup com conta seedada.
  */
-test.describe("/explorar — estado público", () => {
+
+// ─── /buscar — descoberta pública de demandas ───────────────────────────────
+
+test.describe("/buscar — estrutura e acessibilidade", () => {
   test.beforeEach(async ({ page }) => {
-    // Histórico de buscas e proposals limpos pra cada test (evita flakiness).
-    await page.addInitScript(() => {
-      try {
-        localStorage.removeItem("girob2b_recent_searches");
-        localStorage.removeItem("girob2b_pending_proposal");
-        localStorage.removeItem("girob2b_pending_need");
-      } catch { /* ignore */ }
-    });
+    await page.goto("/buscar");
   });
 
-  test("renderiza header, busca e cards de sugestão quando não há query", async ({ page }) => {
-    await page.goto("/explorar");
-    await expect(page.getByRole("heading", { name: "Explorar", exact: true })).toBeVisible();
-    await expect(page.getByPlaceholder(/Buscar produtos/)).toBeVisible();
-    // Cards de "Ideias para começar" (recent-needs-suggestions)
-    await expect(page.getByText(/Ideias para come[çc]ar|Cota[çc][õo]es recentes/i)).toBeVisible();
-  });
-
-  test("focar input abre dropdown de autocomplete com sugestões populares", async ({ page }) => {
-    await page.goto("/explorar");
-    await page.getByPlaceholder(/Buscar produtos/).focus();
-    await expect(page.getByText(/^Populares$/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /Embalagens pl[áa]sticas/i })).toBeVisible();
-  });
-
-  test("digitar SEM Enter NÃO dispara busca (filtra dropdown apenas)", async ({ page }) => {
-    await page.goto("/explorar");
-    const input = page.getByPlaceholder(/Buscar produtos/);
-    await input.fill("Embalagens");
-    await expect(page.getByRole("button", { name: /Embalagens pl[áa]sticas/i })).toBeVisible();
-    // Página NÃO entrou em estado de resultado/empty — ainda está no idle.
-    await expect(page.getByText(/Nenhum fornecedor encontrado/i)).not.toBeVisible();
-  });
-
-  test("Enter dispara busca e mostra empty state quando query não retorna nada", async ({ page }) => {
-    await page.goto("/explorar");
-    const input = page.getByPlaceholder(/Buscar produtos/);
-    await input.fill("xyzzy-no-match-12345");
-    await input.press("Enter");
-    await expect(page.getByText(/Nenhum fornecedor encontrado/i)).toBeVisible({ timeout: 10_000 });
+  test("renderiza heading 'Demandas publicadas' e formulário de busca", async ({ page }) => {
     await expect(
-      page.getByRole("button", { name: /Adicionar [àa] lista de necessidades/i })
+      page.getByRole("heading", { name: /Demandas publicadas/i })
+    ).toBeVisible();
+    // Input de busca principal
+    await expect(
+      page.getByPlaceholder(/Buscar por título/i)
+    ).toBeVisible();
+    // Botão de submit do formulário de filtro (dentro do <main>)
+    // Há um segundo botão "Buscar" no header-search — usamos o de dentro do main
+    await expect(
+      page.getByRole("main").getByRole("button", { name: /^Buscar$/ })
     ).toBeVisible();
   });
 
-  test("clicar em sugestão Popular submete a busca diretamente", async ({ page }) => {
-    await page.goto("/explorar");
-    await page.getByPlaceholder(/Buscar produtos/).focus();
-    await page.getByRole("button", { name: /Embalagens pl[áa]sticas/i }).click();
-    await expect(page.getByPlaceholder(/Buscar produtos/)).toHaveValue(/Embalagens pl[áa]sticas/);
-    await expect(page.getByText(/\d+ resultados?/i)).toBeVisible({ timeout: 10_000 });
+  test("controles de filtro: categoria, UF e tipo de demanda estão acessíveis", async ({
+    page,
+  }) => {
+    await expect(page.getByRole("combobox", { name: /Categoria/i })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: /Estado/i })).toBeVisible();
+    await expect(
+      page.getByRole("combobox", { name: /Tipo de demanda/i })
+    ).toBeVisible();
   });
 
-  test("Esc fecha o dropdown de autocomplete", async ({ page }) => {
-    await page.goto("/explorar");
-    await page.getByPlaceholder(/Buscar produtos/).focus();
-    await expect(page.getByText(/^Populares$/i)).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.getByText(/^Populares$/i)).not.toBeVisible();
+  test("contador de demandas está presente (aria-live='polite')", async ({ page }) => {
+    // Contador "N demandas encontradas" — aparece sempre (0 ou mais).
+    // Há outro aria-live='polite' no sistema de notificações (Sonner) —
+    // usamos o <p> específico do contador de resultados.
+    const counter = page.locator('p[aria-live="polite"]');
+    await expect(counter).toBeVisible({ timeout: 10_000 });
+    // Texto começa com um número
+    await expect(counter).toHaveText(/^\d+ demanda/i, { timeout: 10_000 });
   });
 
-  test("clicar em sugestão Recent reusa a query (histórico pré-populado)", async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("girob2b_recent_searches", JSON.stringify(["Parafusos"]));
+  test("busca por termo inexistente exibe 'Nada encontrado'", async ({ page }) => {
+    await page.goto(`/buscar?q=xyzzy-nao-existe-girob2b-${Date.now()}`);
+    await expect(page.getByText(/Nada encontrado/i)).toBeVisible({
+      timeout: 10_000,
     });
-    await page.goto("/explorar");
-    await page.getByPlaceholder(/Buscar produtos/).focus();
-    await expect(page.getByText(/^Pesquisas anteriores$/i)).toBeVisible();
-    await page.getByRole("button", { name: /^Parafusos$/i }).click();
-    await expect(page.getByPlaceholder(/Buscar produtos/)).toHaveValue("Parafusos");
+    await expect(
+      page.getByText(/Tente outra categoria/i)
+    ).toBeVisible();
+  });
+
+  test("busca por query preserva o valor no input", async ({ page }) => {
+    const term = "embalagens";
+    await page.goto(`/buscar?q=${term}`);
+    const input = page.getByPlaceholder(/Buscar por título/i);
+    await expect(input).toHaveValue(term, { timeout: 5_000 });
   });
 });
+
+// ─── /explorar — redirect legado ────────────────────────────────────────────
+
+test.describe("/explorar — rota legada (redirect pós-pivot)", () => {
+  // /explorar foi pivot 2026-05-07: hoje redireciona para /buscar.
+  // Specs seed-resilientes: não testam conteúdo, só o comportamento de redirect.
+
+  test("redireciona para /buscar e exibe heading 'Demandas publicadas'", async ({ page }) => {
+    await page.goto("/explorar");
+    await expect(page).toHaveURL(/\/buscar/);
+    await expect(
+      page.getByRole("heading", { name: /Demandas publicadas/i })
+    ).toBeVisible();
+  });
+
+  test("nunca renderiza o heading 'Explorar' da UI pré-pivot", async ({ page }) => {
+    await page.goto("/explorar");
+    // UI antiga tinha heading exato "Explorar" — não deve mais aparecer
+    await expect(
+      page.getByRole("heading", { name: "Explorar", exact: true })
+    ).not.toBeVisible();
+  });
+});
+
+// ─── /produto/[slug] — redirect legado ──────────────────────────────────────
 
 test.describe("/produto/[slug] — rota legada (redirect pós-pivot)", () => {
   // O catálogo de produto foi removido no pivot 2026-05-07. A rota agora é
@@ -92,12 +107,16 @@ test.describe("/produto/[slug] — rota legada (redirect pós-pivot)", () => {
   // Specs seed-resilientes: não dependem de um slug específico do banco.
   const SLUG = "parafuso-m8-inox-25mm-sextavado";
 
-  test("nunca renderiza a página de produto — sempre redireciona pra fora de /produto", async ({ page }) => {
+  test("nunca renderiza a página de produto — sempre redireciona para fora de /produto", async ({
+    page,
+  }) => {
     await page.goto(`/produto/${SLUG}`);
     await expect(page).not.toHaveURL(/\/produto\//);
     await expect(page).toHaveURL(/\/(fornecedor|buscar)/);
-    // a CTA pré-pivot não pode mais existir em lugar nenhum
-    await expect(page.getByRole("button", { name: /Pedir cota[çc][ãa]o/i })).toHaveCount(0);
+    // CTA pré-pivot não pode mais existir
+    await expect(
+      page.getByRole("button", { name: /Pedir cota[çc][ãa]o/i })
+    ).toHaveCount(0);
   });
 
   test("slug inexistente cai em /buscar", async ({ page }) => {
@@ -106,27 +125,25 @@ test.describe("/produto/[slug] — rota legada (redirect pós-pivot)", () => {
   });
 });
 
-test.describe("/fornecedor/[slug] — página pública (não pode ficar vazia)", () => {
-  const SLUG = "vitor-de-souza-barreto-";
+// ─── /fornecedor/[slug] — página pública ────────────────────────────────────
 
-  test("mesmo com layout legado/desabilitado, hero e contato sempre aparecem", async ({ page }) => {
-    await page.goto(`/fornecedor/${SLUG}`);
-    await expect(page.getByRole("heading", { name: /Vitor de Souza Barreto/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /^Contato$/ })).toBeVisible();
-  });
+test.describe("/fornecedor/[slug] — rota pública", () => {
+  // Slug real depende de seed — testamos apenas o comportamento de not-found,
+  // que é seed-independente (qualquer slug inexistente aciona o not-found.tsx).
 
-  test("emite JSON-LD com schema Organization (RF-05.08)", async ({ page }) => {
-    await page.goto(`/fornecedor/${SLUG}`);
-    const ldScripts = page.locator('script[type="application/ld+json"]');
-    await expect(ldScripts.first()).toBeAttached();
-    const payload = await ldScripts.first().textContent();
-    expect(payload).toBeTruthy();
-    const json = JSON.parse(payload!);
-    const items = Array.isArray(json["@graph"]) ? json["@graph"] : [json];
-    const types = items.map((i: { "@type"?: string }) => i["@type"]);
-    expect(types).toContain("Organization");
-    expect(types).toContain("BreadcrumbList");
+  test("slug inexistente renderiza not-found com 'Vendedor não encontrado'", async ({
+    page,
+  }) => {
+    await page.goto(
+      `/fornecedor/slug-que-definitivamente-nao-existe-${Date.now()}`
+    );
+    // not-found.tsx de /fornecedor/[slug] exibe este heading
+    await expect(
+      page.getByRole("heading", { name: /Vendedor não encontrado/i })
+    ).toBeVisible({ timeout: 10_000 });
+    // Link de retorno para /buscar
+    await expect(
+      page.getByRole("link", { name: /Ver demandas/i })
+    ).toBeVisible();
   });
 });
-
-// [PIVOT 2026-05-07] Suíte do /painel/comparador removida junto com a feature.

@@ -105,9 +105,10 @@ jobs:
         run: pnpm --filter @girob2b/design-system exec tsc -b
 
   # ─── E2E (Playwright) — fluxos críticos ────────────────────────────────────
-  # Suite começa parcial (só specs sem dependência de seed). Promove a
-  # obrigatória em branch protection quando suite estabilizar (docs/release-
-  # process.md §5.2).
+  # Suite seed-independente. O playwright.config.ts sobe o app via webServer
+  # (next dev) antes de rodar os specs — não é necessário step de servidor manual.
+  # Promover a obrigatório em branch protection quando suite estabilizar
+  # (docs/release-process.md §5.2).
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
@@ -130,14 +131,24 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @girob2b/web exec playwright install --with-deps chromium
 
-      - name: Run E2E (specs sem dependência de seed)
-        # Lista explícita de specs que NÃO dependem de seed do banco.
-        # Ao adicionar novos specs autenticados, atualizar esta lista ou
-        # garantir que o globalSetup do Playwright cuide do seed.
-        run: pnpm --filter @girob2b/web exec playwright test tests/e2e/auth-validation.spec.ts
+      - name: Run E2E
+        # playwright.config.ts sobe o Next.js via webServer (next dev) e herda
+        # todos os env vars abaixo. reuseExistingServer=false em CI (fresh start).
+        # Todos os specs são seed-independentes; specs autenticados aguardam
+        # globalSetup com conta seedada (docs/release-process.md §5.2).
+        run: pnpm --filter @girob2b/web exec playwright test
         env:
+          # Supabase — obrigatórios para o app subir e servir páginas SSR/RSC
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # SERVICE_ROLE_KEY: usado pelo createAdminClient em RSCs de build-time
+          # (ex: /categoria/[slug], /buscar) — sem ele o app falha ao servir essas rotas
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # App — URLs e nome usados em metadata, redirects e callbacks de auth
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_APP_NAME: GiroB2B
+          AUTH_REDIRECT_BASE_URL: http://localhost:3000
+          NEXT_TELEMETRY_DISABLED: "1"
 
       - name: Upload Playwright report
         if: always()
