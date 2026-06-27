@@ -478,6 +478,7 @@ export async function registerContact(
     p_offer_price_cents: meta.offer?.price ?? null,
     p_offer_deadline: meta.offer?.deadline ?? null,
     p_offer_message: meta.offer?.message ?? null,
+    p_offer_payment_methods: meta.offer?.payment_methods ?? null,
   });
   if (error) throw new Error(error.message);
 }

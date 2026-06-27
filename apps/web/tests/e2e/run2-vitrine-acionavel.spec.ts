@@ -14,6 +14,13 @@ import { test, expect } from "@playwright/test";
  *     PublicContactGate (components/demands/public-contact-gate.tsx).
  *   - Specs de MockContactGate atualizados para refletir o comportamento real.
  *
+ * MUDANÇA Fase 1 comparador de cotações (2026-06-27):
+ *   - CTA primário mudou de "Contatar via WhatsApp" → "Enviar cotação".
+ *   - Botão usa brand-600 (teal) em vez de whatsapp-700 (verde).
+ *   - aria-label mudou para "Enviar cotação para este comprador…".
+ *   - O gate em si NÃO mudou: visitante anônimo → /seja-vendedor.
+ *   - Specs atualizados para usar aria-label*="Enviar cotação".
+ *
  * Premissa: banco pode estar vazio (sem seed). Asserções resilientes:
  *   - Quando não há demandas reais, mocks preenchem a vitrine (PublicContactGate).
  *   - Quando há demandas reais, o gate aparece nelas também (PublicContactGate).
@@ -35,9 +42,9 @@ test.describe("Home — vitrine com PublicContactGate", () => {
     page,
   }) => {
     // PublicContactGate renderiza Link (anchor) para /seja-vendedor.
-    // aria-label contém "Contatar este comprador" — comum a reais e mocks.
+    // aria-label contém "Enviar cotação" — comum a reais e mocks (Fase 1: 2026-06-27).
     const gates = page.locator(
-      'a[href="/seja-vendedor"][aria-label*="Contatar este comprador"]'
+      'a[href="/seja-vendedor"][aria-label*="Enviar cotação"]'
     );
     // Pode haver 0 (DB vazio sem mocks) a N gates. Quando existem, validamos:
     const count = await gates.count();
@@ -111,8 +118,9 @@ test.describe("/buscar — PublicContactGate em resultados", () => {
   test("PublicContactGate em /buscar aponta para /seja-vendedor", async ({ page }) => {
     await page.goto("/buscar");
     await page.waitForLoadState("domcontentloaded");
+    // CTA primário agora é "Enviar cotação" (Fase 1: 2026-06-27).
     const gates = page.locator(
-      'a[href="/seja-vendedor"][aria-label*="Contatar este comprador"]'
+      'a[href="/seja-vendedor"][aria-label*="Enviar cotação"]'
     );
     const count = await gates.count();
     if (count > 0) {

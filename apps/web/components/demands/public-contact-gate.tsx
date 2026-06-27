@@ -1,39 +1,38 @@
 import Link from "next/link";
-import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { Send } from "lucide-react";
 
 /**
- * Botão de contato para superfícies públicas (home, /buscar, /categoria, relacionadas).
+ * CTA primário "Enviar cotação" para superfícies públicas (home, /buscar, /categoria, relacionadas).
  *
  * Visitante anônimo / comprador logado / não-vendedor:
- * clicar → /seja-vendedor (funil de aquisição de vendedor).
+ * clicar → /seja-vendedor (funil de aquisição de vendedor — gate inalterado).
  *
- * Não replica a lógica de gate do ContactButton (que é para vendedores logados).
- * Esta é a CTA de aquisição de vendedores — "existe a demanda; você precisa de
- * conta de vendedor + plano para contatá-la". A home já redireciona logados pra
- * /painel, então na prática quem vê a home pública é sempre anônimo.
+ * Reframe Fase 1 do comparador de cotações (2026-06-27):
+ *   "Enviar cotação" substituiu "Contatar via WhatsApp" como CTA primário do card.
+ *   O WhatsApp foi movido para o detalhe da demanda (/necessidade/[slug]) — fora do card.
+ *   O gate permanece o mesmo: quem não tem conta de vendedor ativa vai para /seja-vendedor.
+ *   Na home, compradores logados já são redirecionados para /painel, então na prática
+ *   quem vê este botão é sempre anônimo ou comprador.
  *
- * Marca visual (2026-06-22): cara do WhatsApp — verde oficial #25D366 + ícone
- * da marca. Texto branco sobre whatsapp-700 (#128C3F) ≈ 4.9:1 (passa WCAG AA).
+ * Marca visual: bg-brand-600 (teal primário — token --brand-primary-600).
+ * Contraste: texto branco sobre brand-600 ≈ 4.5:1 (passa WCAG AA).
  * Sempre habilitado: o gate acontece no destino (/seja-vendedor), não no botão.
  */
 export function PublicContactGate() {
   return (
     <Link
       href="/seja-vendedor"
-      aria-label="Contatar este comprador via WhatsApp — precisa de conta de vendedor com plano ativo"
-      className="inline-flex min-h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-whatsapp-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-whatsapp-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-whatsapp-700 focus-visible:ring-offset-2"
+      aria-label="Enviar cotação para este comprador — precisa de conta de vendedor com plano ativo"
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
     >
-      <WhatsAppIcon className="h-4 w-4 shrink-0" />
-      Contatar via WhatsApp
+      <Send className="h-4 w-4 shrink-0" aria-hidden="true" />
+      Enviar cotação
     </Link>
   );
 }
 
 /**
- * Mantido por compatibilidade de import. Desde 2026-06-22 os cards de exemplo
- * da home usam o MESMO CTA funcional do WhatsApp (sem etiqueta "exemplo", sem
- * estado desabilitado) — então este é um alias do PublicContactGate.
- *
+ * Mantido por compatibilidade de import. Alias de PublicContactGate.
  * @deprecated use `PublicContactGate` diretamente.
  */
 export function MockContactGate() {
