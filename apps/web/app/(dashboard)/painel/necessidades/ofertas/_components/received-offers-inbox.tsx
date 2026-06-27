@@ -14,6 +14,7 @@ import {
   AlertCircle,
   ClipboardList,
   ExternalLink,
+  BarChart2,
 } from "lucide-react";
 import { formatPriceBRL } from "@/lib/format-price";
 
@@ -245,6 +246,15 @@ function DemandGroup({ group }: { group: ReceivedOfferGroup }) {
           <span className="text-xs text-slate-500">
             {offers.length} oferta{offers.length === 1 ? "" : "s"}
           </span>
+          {/* Link para o comparador desta demanda */}
+          <Link
+            href={`/painel/necessidades/ofertas/comparar/${demand.id}`}
+            className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
+            title="Ver cotações ranqueadas pelo seu critério"
+          >
+            <BarChart2 className="h-3 w-3" aria-hidden="true" />
+            Comparar
+          </Link>
         </div>
       </div>
 

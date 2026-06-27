@@ -15,6 +15,7 @@ import {
 } from "@/app/actions/user";
 import AccountForm, { type AccountFormSupplier } from "./account-form";
 import PublicProfileToggle from "./public-profile-toggle";
+import { RankingPrefsForm } from "./ranking-prefs-form";
 
 export interface Buyer {
   id: string;
@@ -279,6 +280,7 @@ export default function ProfileForm({
   pendingRoleRequest,
   initialSegmentChosen,
   publicProfile,
+  rankingPrefs,
 }: {
   buyer: Buyer;
   supplier: AccountFormSupplier | null;
@@ -288,6 +290,14 @@ export default function ProfileForm({
   initialSegmentChosen: boolean;
   /** Estado do opt-in de perfil público; null = migration 050 não disponível. */
   publicProfile: { optIn: boolean; slug: string | null } | null;
+  /**
+   * Preferências de ranqueamento do comparador (migration 052).
+   * null = migration não disponível → RankingPrefsForm não renderiza.
+   */
+  rankingPrefs: {
+    weights: { price: number; deadline: number; distance: number } | null;
+    paymentPreference: string[] | null;
+  } | null;
 }) {
   const hasSupplier = !!supplier;
   // `buyer` aqui pode ser uma row real OU derivada do supplier (em supplier-only).
@@ -346,6 +356,14 @@ export default function ProfileForm({
               initialOptIn={publicProfile.optIn}
               initialSlug={publicProfile.slug}
               canEnable={Boolean(buyer.cnpj && buyer.company_name)}
+            />
+          )}
+          {/* Preferências do Comparador de Cotações — só aparece quando
+              migration 052 está aplicada (rankingPrefs !== null). */}
+          {rankingPrefs && (
+            <RankingPrefsForm
+              initialWeights={rankingPrefs.weights}
+              initialPaymentPreference={rankingPrefs.paymentPreference}
             />
           )}
         </>

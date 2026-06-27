@@ -104,6 +104,34 @@ jobs:
       - name: Type-check
         run: pnpm --filter @girob2b/design-system exec tsc -b
 
+  # ─── Unit (Vitest) — lógica pura, zero secrets ────────────────────────────
+  # Cobre scoreOffers (lib/ranking/score.ts) + RankingWeightsSchema.
+  # Determinístico: sem I/O, sem Supabase, sem variáveis de ambiente.
+  # TZ=UTC garantido via vitest.config.ts (env.TZ) para cálculos de data limpos.
+  unit:
+    name: Unit (Vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Unit tests (Vitest)
+        run: pnpm --filter @girob2b/web test:unit
+
   # ─── E2E (Playwright) — fluxos críticos ────────────────────────────────────
   # Suite seed-independente. O playwright.config.ts sobe o app via webServer
   # (next dev) antes de rodar os specs — não é necessário step de servidor manual.
