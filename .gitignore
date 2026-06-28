@@ -110,3 +110,8 @@ apps/web/tests/fixtures/api/*.json
 # ─── Painel de controle do app (skill memoria-projeto) ──────────────────────
 # Estado estruturado: features/bugs/decisões. Artefato Claude, não vai pro git.
 /_memoria/
+
+# ─── apps/scraper removido (2026-06-28) — remanescente físico do searxng/ é de ──
+# uid de container (não-removível sem sudo); ignorar pra não re-trackear. Vitor
+# limpa o resto do disco com `sudo rm -rf apps/scraper`.
+/apps/scraper/

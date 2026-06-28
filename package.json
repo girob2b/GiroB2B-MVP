@@ -7,7 +7,6 @@
     "dev:web": "pnpm --filter @girob2b/web dev",
     "dev:admin": "pnpm --filter @girob2b/admin dev",
     "dev:ds": "pnpm --filter @girob2b/design-system dev",
-    "dev:scraper": "pnpm --filter @girob2b/scraper dev",
     "build": "pnpm --filter @girob2b/web build",
     "build:web": "pnpm --filter @girob2b/web build",
     "build:admin": "pnpm --filter @girob2b/admin build",
