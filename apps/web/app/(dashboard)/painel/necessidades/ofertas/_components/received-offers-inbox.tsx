@@ -228,7 +228,7 @@ function DemandGroup({ group }: { group: ReceivedOfferGroup }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-slate-100 bg-slate-50">
         <div className="min-w-0">
           <Link
-            href={`/necessidade/${demand.slug}`}
+            href={`/demanda/${demand.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-slate-900 hover:underline inline-flex items-center gap-1.5 leading-snug"

@@ -9,7 +9,7 @@ import { Send } from "lucide-react";
  *
  * Reframe Fase 1 do comparador de cotações (2026-06-27):
  *   "Enviar cotação" substituiu "Contatar via WhatsApp" como CTA primário do card.
- *   O WhatsApp foi movido para o detalhe da demanda (/necessidade/[slug]) — fora do card.
+ *   O WhatsApp foi movido para o detalhe da demanda (/demanda/[slug]) — fora do card.
  *   O gate permanece o mesmo: quem não tem conta de vendedor ativa vai para /seja-vendedor.
  *   Na home, compradores logados já são redirecionados para /painel, então na prática
  *   quem vê este botão é sempre anônimo ou comprador.

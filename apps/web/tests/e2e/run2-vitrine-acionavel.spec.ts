@@ -67,13 +67,13 @@ test.describe("Home — vitrine com PublicContactGate", () => {
     await expect(disabledExampleBtns).toHaveCount(0);
   });
 
-  test("card de demanda: corpo é Link para /necessidade/[slug] sem link aninhado", async ({
+  test("card de demanda: corpo é Link para /demanda/[slug] sem link aninhado", async ({
     page,
   }) => {
     // Verifica que não há link aninhado (HTML inválido: <a> dentro de <a>).
-    // O corpo do DemandCard real é um <Link> para /necessidade/*;
+    // O corpo do DemandCard real é um <Link> para /demanda/*;
     // o gate de ação (PublicContactGate) fica fora dele.
-    const demandLinks = page.locator('a[href^="/necessidade/"]');
+    const demandLinks = page.locator('a[href^="/demanda/"]');
     const count = await demandLinks.count();
     if (count > 0) {
       const nestedLinks = demandLinks.first().locator("a");
@@ -107,7 +107,8 @@ test.describe("/buscar — PublicContactGate em resultados", () => {
   }) => {
     await page.goto("/buscar");
     await page.waitForLoadState("domcontentloaded");
-    const demandLinks = page.locator('a[href^="/necessidade/"]');
+    const demandLinks = page.locator('a[href^="/demanda/"]');
+
     const count = await demandLinks.count();
     if (count > 0) {
       const nestedLinks = demandLinks.first().locator("a");
@@ -126,5 +127,28 @@ test.describe("/buscar — PublicContactGate em resultados", () => {
     if (count > 0) {
       await expect(gates.first()).toHaveAttribute("href", "/seja-vendedor");
     }
+  });
+});
+
+test.describe("/necessidade/[slug] — redirect shim (SEO safety)", () => {
+  test("redireciona /necessidade/<slug> → /demanda/<slug> (308 permanente)", async ({
+    page,
+  }) => {
+    // Usa slug fictício: o shim faz permanentRedirect antes de qualquer DB lookup,
+    // então qualquer slug aciona o redirect. O destino /demanda/<slug> pode
+    // renderizar not-found — o que importa é a URL final ser /demanda/*.
+    const slug = "redirect-shim-test-slug";
+    await page.goto(`/necessidade/${slug}`);
+    await expect(page).toHaveURL(`/demanda/${slug}`);
+  });
+
+  test("nenhum link público aponta para /necessidade/ (fora do shim)", async ({
+    page,
+  }) => {
+    // Garante que a home não tem mais links /necessidade/* no DOM.
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    const oldLinks = page.locator('a[href^="/necessidade/"]');
+    await expect(oldLinks).toHaveCount(0);
   });
 });

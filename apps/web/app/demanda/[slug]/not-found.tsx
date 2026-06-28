@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Search, FileQuestion } from "lucide-react";
 
 /**
- * not-found para /necessidade/[slug].
+ * not-found para /demanda/[slug].
  * Quando getDemandBySlug retorna null e notFound() é chamado.
  * Sem GuestShell aqui — o not-found de rota aninhada herda o layout pai.
  * CTA buyer-first: publicar demanda ou ver o feed.

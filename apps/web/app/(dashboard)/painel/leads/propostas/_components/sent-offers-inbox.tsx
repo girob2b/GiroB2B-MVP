@@ -202,7 +202,7 @@ function SentOfferCard({ offer }: { offer: SentOffer }) {
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <Link
-                href={`/necessidade/${demand.slug}`}
+                href={`/demanda/${demand.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-slate-900 hover:underline line-clamp-2 leading-snug"

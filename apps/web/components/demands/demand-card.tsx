@@ -48,7 +48,7 @@ interface DemandCardProps {
  *   - CTA com a cara do WhatsApp (verde), via slot `action`.
  *
  * Princípio: o card é um teaser. Detalhes completos (itens, documentos,
- * descrição) ficam na página de detalhe (/necessidade/[slug]).
+ * descrição) ficam na página de detalhe (/demanda/[slug]).
  *
  * Estrutura fixa para altura uniforme (flex flex-col h-full):
  *   1. Eyebrow "DEMANDA ABERTA" + linha de badges (verificado / nova / estruturada)
@@ -83,7 +83,7 @@ export function DemandCard({ demand, categoryName, action }: DemandCardProps) {
   return (
     <div className="flex h-full flex-col gap-0">
       <Link
-        href={`/necessidade/${demand.slug}`}
+        href={`/demanda/${demand.slug}`}
         className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gold-200 bg-white pl-1.5 transition-all hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-[0_6px_20px_-6px_rgb(180_120_10/0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 ${
           action != null ? "rounded-b-none border-b-0" : ""
         }`}

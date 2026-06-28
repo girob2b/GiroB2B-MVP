@@ -297,7 +297,7 @@ export interface DemandFeedFilters {
   only_since?: string | null;
   /**
    * #19 demandas-relacionadas — exclui uma demand específica do resultado.
-   * Usado em /necessidade/[slug] para não exibir a própria demand como relacionada.
+   * Usado em /demanda/[slug] para não exibir a própria demand como relacionada.
    */
   exclude_id?: string | null;
   /**
@@ -622,7 +622,7 @@ export function buildWhatsappLink(args: {
     `Olá! Vi sua necessidade no GiroB2B:`,
     ``,
     `*${args.demandTitle}*`,
-    `${baseUrl}/necessidade/${args.demandSlug}`,
+    `${baseUrl}/demanda/${args.demandSlug}`,
     ``,
     ...offerLines,
     ...(offerLines.length > 0 ? [``, `Quando podemos conversar?`] : [`Posso ajudar — quando podemos conversar?`]),

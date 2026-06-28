@@ -487,7 +487,7 @@ export function DemandComparator({ demandId }: { demandId: string }) {
         <p className="mt-2 text-sm text-slate-500 max-w-sm mx-auto">
           Quando vendedores enviarem cotações para{" "}
           <Link
-            href={`/necessidade/${demand.slug}`}
+            href={`/demanda/${demand.slug}`}
             className="text-brand-700 underline underline-offset-2"
             target="_blank"
             rel="noopener noreferrer"
@@ -522,7 +522,7 @@ export function DemandComparator({ demandId }: { demandId: string }) {
             <p className="text-sm font-medium text-slate-700">
               Ranqueamento de{" "}
               <Link
-                href={`/necessidade/${demand.slug}`}
+                href={`/demanda/${demand.slug}`}
                 className="text-brand-700 underline underline-offset-2"
                 target="_blank"
                 rel="noopener noreferrer"
