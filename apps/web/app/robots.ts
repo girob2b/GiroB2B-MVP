@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 /**
  * Robots policy.
  * Indexáveis no modelo pós-pivot (2026-05-07): feed de demandas (/buscar),
- * detalhe da demanda (/necessidade/[slug]), categorias (/categoria/[slug])
+ * detalhe da demanda (/demanda/[slug]), categorias (/categoria/[slug])
  * e perfil do fornecedor (/fornecedor/[slug]).
  * /explorar e /produto/ são rotas legadas que hoje redirecionam — mantidas no
  * allow porque o redirect é inofensivo (e a suíte SEO ainda checa /produto/).
@@ -20,7 +20,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/buscar",
-          "/necessidade/",
+          "/demanda/",
           "/categoria/",
           "/fornecedor/",
           "/explorar",

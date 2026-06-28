@@ -148,7 +148,7 @@ export async function createDemandAction(
   }
 
   revalidatePath("/painel/necessidades");
-  revalidatePath(`/necessidade/${slug}`);
+  revalidatePath(`/demanda/${slug}`);
   redirect("/painel/necessidades?published=1");
 }
 
@@ -254,6 +254,6 @@ export async function createGuestDemandAction(
     return { message: e instanceof Error ? e.message : "Erro ao publicar a demanda." };
   }
 
-  revalidatePath(`/necessidade/${slug}`);
-  redirect(`/necessidade/${slug}?guest_published=1`);
+  revalidatePath(`/demanda/${slug}`);
+  redirect(`/demanda/${slug}?guest_published=1`);
 }
