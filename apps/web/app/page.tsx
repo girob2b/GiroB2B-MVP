@@ -21,7 +21,7 @@ import { listPublicDemands } from "@/lib/services/demands";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { PublicCompaniesSection } from "@/components/buyers/public-companies-section";
 
-const VITRINE_SLOTS = 8;
+const VITRINE_SLOTS = 16;
 
 export const metadata: Metadata = {
   title: "GiroB2B — Demandas B2B ao vivo. Publique o que precisa, vendedores te contatam.",
